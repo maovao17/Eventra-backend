@@ -15,7 +15,7 @@ If pnpm is not installed:
 npm install -g pnpm
 ```
 
-#3. Create .env File
+# 3. Create .env File
 
 Create a .env file in the root folder:
 ```bash
@@ -27,7 +27,7 @@ DB_NAME=eventra_db
 DB_URI=mongodb://eventra_user:your_password@localhost:27017/eventra_db?authSource=admin
 ```
 
-#4. Start MongoDB Using Docker
+# 4. Start MongoDB Using Docker
 Download Docker before running the below command
 
 Start MongoDB
@@ -47,7 +47,7 @@ docker ps
 
 You should see a container named eventra.
 
-#5. Start the Backend
+# 5. Start the Backend
 Development mode
 For now run this command to check
 ```bash
