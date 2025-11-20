@@ -1,3 +1,7 @@
+# 0. Fork the Repository 
+Click on the fork option above, which will create a clone of this repository in your github account
+Then clone that repository on you loacl machine
+
 # 1. Clone the Repository
 ```bash
 git clone <your-repo-url>
