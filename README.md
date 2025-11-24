@@ -42,8 +42,8 @@ DB_URI=mongodb://eventra_user:your_password@localhost:27017/eventra_db?authSourc
 Make the following changes in docker-compose.yml
 
 ```bash
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: DB_PASSWORD
+MONGO_INITDB_ROOT_USERNAME: root
+MONGO_INITDB_ROOT_PASSWORD: DB_PASSWORD
 ```
 
 Start MongoDB
