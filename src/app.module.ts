@@ -2,20 +2,24 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
-import { CustomiseEventModule } from './customise-event/customise-event.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-
-    MongooseModule.forRoot(
-      'mongodb://Sybil:jeni23@localhost:27017/Eventra38?authSource=admin'
-    ),
-
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const uri = configService.get<string>('DB_URI');
+        if (!uri) {
+          throw new Error('Environment variable DB_URI is not set');
+        }
+        return { uri };
+      },
+    }),
     UserModule,
-    CustomiseEventModule,
   ],
   controllers: [AppController],
   providers: [AppService],
