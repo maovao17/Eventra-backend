@@ -1,59 +1,43 @@
-# Here all the files and directories that should be ignored by Git are listed.
-# Don't make any changes here.
+version: "3.8"
 
-# compiled output
-/dist
-/node_modules
-/build
+services:
+  mongo:
+    image: mongo:6
+    container_name: eventra
+    restart: always
+    environment:
+     MONGO_INITDB_ROOT_USERNAME: daaniela_31
+     MONGO_INITDB_ROOT_PASSWORD: dan123
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
 
-# Logs
-logs
-*.log
-npm-debug.log*
-pnpm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
+volumes:
+  mongo_data:
+    
 
-# OS
-.DS_Store
+import { VendorModule } from './vendor/vendor.module';
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UserModule } from './user/user.module';
 
-# Tests
-/coverage
-/.nyc_output
+@Module({
+  imports: [
+    // load .env and make it available everywhere
+    ConfigModule.forRoot({ isGlobal: true }),
 
-# IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+    // use the DB_URI from .env
+    MongooseModule.forRoot(process.env.DB_URI as string),
 
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+    UserModule,
+    VendorModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
 
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
-# temp directory
-.temp
-.tmp
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
