@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Delete, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -7,14 +7,21 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UserController {
   constructor(private readonly userservice: UserService) {}
 
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.userservice.create(createUserDto);
   }
 
   @Get()
-  list(@Query('limit') limit = '20', @Query('offset') offset = '0') {
+  list(
+    @Query('limit') limit = '20',
+    @Query('offset') offset = '0',
+    @Query('userId') userId?: string,
+  ) {
+    if (userId) {
+      return this.userservice.findByUserId(userId);
+    }
+
     const l = Number(limit);
     const o = Number(offset);
     return this.userservice.findAll(isNaN(l) ? 20 : l, isNaN(o) ? 0 : o);
@@ -25,7 +32,6 @@ export class UserController {
     return this.userservice.findById(id);
   }
 
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.userservice.update(id, updateUserDto);

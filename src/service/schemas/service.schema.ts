@@ -12,8 +12,8 @@ export class Service {
   @Prop({ required: true, trim: true })
   category: string;
 
-  @Prop({ required: true })
-  price: number;
+  @Prop({ required: false })
+  price?: number;
 
   @Prop({ required: false, trim: true })
   pricingModel?: string;
@@ -21,14 +21,14 @@ export class Service {
   @Prop({ required: false, trim: true })
   description?: string;
 
-  @Prop({ type: Object, required: true })
-  location: Record<string, any>;
+  @Prop({ type: Object, required: false })
+  location?: Record<string, any>;
 
   @Prop({ required: false, trim: true, validate: { validator: (v: string) => !v || validator.isURL(v, { require_protocol: true }), message: 'Invalid image URL' } })
   image?: string;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Vendor', required: true })
-  vendor_Id: MongooseSchema.Types.ObjectId;
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Vendor', required: false })
+  vendor_Id?: MongooseSchema.Types.ObjectId;
 }
 
 export const ServiceSchema = SchemaFactory.createForClass(Service);

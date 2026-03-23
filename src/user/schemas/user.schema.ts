@@ -1,6 +1,4 @@
 // This is a schema, it is defining the Users attribites For example take it as blueprint of user, this is how it will be store in the database
-
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import * as validator from 'validator';
@@ -35,6 +33,15 @@ export class User {
         },
     })
     profile_photo?: string;
+
+    @Prop({ required: true })
+    userId: string;
+
+    @Prop({ required: true, enum: ['customer', 'vendor'] })
+    role: string;
+
+    @Prop({ required: false, trim: true })
+    businessName?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

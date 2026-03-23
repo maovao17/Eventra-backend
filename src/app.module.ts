@@ -2,29 +2,35 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { ServiceModule } from './service/service.module';
 import { CartModule } from './cart/cart.module';
+import { VendorModule } from './vendor/vendor.module';
+import { BookingModule } from './booking/booking.module';
+import { EventModule } from './event/event.module';
+import { RequestModule } from './request/request.module';
+import { PaymentModule } from './payment/payment.module';
+import { PayoutModule } from './payout/payout.module';
+import { NotificationModule } from './notification/notification.module';
+import { ReviewModule } from './review/review.module';
+import { AuthModule } from './auth/auth.module';
 
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    MongooseModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const uri = configService.get<string>('DB_URI');
-        if (!uri) {
-          throw new Error('Environment variable DB_URI is not set');
-        }
-        return { uri };
-      },
-    }),
+    MongooseModule.forRoot('mongodb://localhost:27017/eventra'),
     UserModule,
     ServiceModule,
     CartModule,
+    VendorModule,
+    BookingModule,
+    EventModule,
+    RequestModule,
+    PaymentModule,
+    ReviewModule,
+    PayoutModule,
+    NotificationModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

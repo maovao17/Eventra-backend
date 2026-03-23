@@ -41,3 +41,4 @@ import { UserModule } from './user/user.module';
 })
 export class AppModule {}
 
+node_modules

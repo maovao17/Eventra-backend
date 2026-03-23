@@ -17,6 +17,17 @@ export class UserService {
 
   async create(dto: CreateUserDto) {
     try {
+      const existingUser = await this.userModel.findOne({ userId: dto.userId }).exec();
+      if (existingUser) {
+        existingUser.name = dto.name;
+        existingUser.phoneNumber = dto.phoneNumber;
+        existingUser.role = dto.role;
+        existingUser.businessName = dto.businessName;
+        existingUser.profile_photo = dto.profile_photo;
+        await existingUser.save();
+        return this.sanitize(existingUser);
+      }
+
       const createUser = await this.userModel.create(dto);
       return this.sanitize(createUser);
     } catch (err: any) {
@@ -30,9 +41,9 @@ export class UserService {
     }
   }
 
-  async findAll(limit = 20, offset = 0) {
+  async findAll(limit = 20, offset = 0, filters: Record<string, any> = {}) {
     const users = await this.userModel
-      .find()
+      .find(filters)
       .skip(offset)
       .limit(limit)
       .sort({ createdAt: -1 })
@@ -48,7 +59,13 @@ export class UserService {
   }
 
   async findByPhone(phone_number: string) {
-    return this.userModel.findOne({ phone_number }).exec();
+    return this.userModel.findOne({ phoneNumber: phone_number }).exec();
+  }
+
+  async findByUserId(userId: string) {
+    const user = await this.userModel.findOne({ userId }).exec();
+    if (!user) throw new NotFoundException('User not found');
+    return this.sanitize(user);
   }
 
   async update(id: string, dto: UpdateUserDto) {

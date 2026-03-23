@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { CreateCartDto } from './dto/create-cart.dto';
 import { UpdateCartDto } from './dto/update-cart.dto';
@@ -7,53 +7,44 @@ import { UpdateCartDto } from './dto/update-cart.dto';
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   @Post()
-  create(@Body() dto: CreateCartDto) {
-    return this.cartService.create(dto);
+  create(@Body() createCartDto: CreateCartDto) {
+    return this.cartService.create(createCartDto);
   }
 
   @Get()
-  list(@Query('limit') limit = '20', @Query('offset') offset = '0') {
-    const l = Number(limit);
-    const o = Number(offset);
-    return this.cartService.findAll(isNaN(l) ? 20 : l, isNaN(o) ? 0 : o);
+  findAll(@Query('userId') userId?: string) {
+    if (userId) return this.cartService.findByUser(userId);
+    return this.cartService.findAll();
   }
 
   @Get(':id')
-  get(@Param('id') id: string) {
-    return this.cartService.findById(id);
+  findOne(@Param('id') id: string) {
+    return this.cartService.findOne(id);
   }
 
-  @Get('user/:user_id')
-  getByUserId(@Param('user_id') user_id: string) {
-    return this.cartService.findByUserId(user_id);
+  @Get('user/:userId/event/:eventId')
+  findByUserAndEvent(@Param('userId') userId: string, @Param('eventId') eventId: string) {
+    return this.cartService.findByUserAndEvent(userId, eventId);
   }
 
-  @Get('session/:session_id')
-  getBySessionId(@Param('session_id') session_id: string) {
-    return this.cartService.findBySessionId(session_id);
-  }
-
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateCartDto) {
-    return this.cartService.update(id, dto);
+  update(@Param('id') id: string, @Body() updateCartDto: UpdateCartDto) {
+    return this.cartService.update(id, updateCartDto);
   }
 
-  @Post(':id/items')
-  addItem(@Param('id') id: string, @Body() item: any) {
-    return this.cartService.addItem(id, item);
+  @Post(':userId/:eventId/add')
+  addItem(
+    @Param('userId') userId: string,
+    @Param('eventId') eventId: string,
+    @Body() body: { vendorId: string; serviceId: string; serviceName: string; price: number }
+  ) {
+    return this.cartService.addItem(userId, eventId, body.vendorId, body.serviceId, body.serviceName, body.price);
   }
 
-  @Delete(':id/items/:itemIndex')
-  removeItem(@Param('id') id: string, @Param('itemIndex') itemIndex: string) {
-    return this.cartService.removeItem(id, Number(itemIndex));
-  }
-
-  @Delete(':id/clear')
-  clearCart(@Param('id') id: string) {
-    return this.cartService.clearCart(id);
+  @Delete(':id/item/:itemIndex')
+  removeItem(@Param('id') id: string, @Param('itemIndex') itemIndex: number) {
+    return this.cartService.removeItem(id, itemIndex);
   }
 
   @Delete(':id')

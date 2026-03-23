@@ -1,79 +1,33 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsArray, IsObject, IsMongoId, IsEnum, Min } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsArray, ValidateNested, IsOptional, IsEnum, IsMongoId } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CartItemDto {
-  @IsMongoId()
-  item_id: string;
-
-  @IsEnum(['service', 'product', 'custom_event', 'template_addon'])
-  item_type: string;
-
-  @IsOptional()
-  @IsMongoId()
-  vendor_id?: string;
-
-  @IsString()
+class CartItemDto {
   @IsNotEmpty()
-  name: string;
+  @IsString()
+  vendorId: string;
 
-  @Type(() => Number)
+  @IsNotEmpty()
+  @IsString()
+  serviceId: string;
+
   @IsNumber()
-  @Min(1)
-  qty: number;
-
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  unit_price: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  tax_amount?: number;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  discounted_amount?: number;
-
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  total_price: number;
-
-  @IsOptional()
-  @IsObject()
-  meta?: Record<string, any>;
+  price: number;
 }
 
 export class CreateCartDto {
-  @IsOptional()
-  @IsMongoId()
-  user_id?: string;
-
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
-  session_id?: string;
+  userId: string;
+
+  @IsNotEmpty()
+  @IsString()
+  eventId: string;
 
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CartItemDto)
   items: CartItemDto[];
 
-  @IsOptional()
-  @IsString()
-  currency?: string;
-
-  @IsOptional()
-  @IsString()
-  @IsEnum(['active', 'checked_out', 'expired', 'abandoned'])
-  status?: string;
-
-  @IsOptional()
-  @IsString()
-  coupon_code?: string;
-
-  @IsOptional()
-  @IsString()
-  notes?: string;
+  @IsNumber()
+  totalAmount: number;
 }

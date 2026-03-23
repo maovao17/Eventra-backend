@@ -12,7 +12,8 @@ export class CreateServiceDto {
 
   @Type(() => Number)
   @IsNumber()
-  price: number;
+  @IsOptional()
+  price?: number;
 
   @IsOptional()
   @IsString()
@@ -23,12 +24,14 @@ export class CreateServiceDto {
   description?: string;
 
   @IsObject()
-  location: Record<string, any>;
+  @IsOptional()
+  location?: Record<string, any>;
 
   @IsOptional()
   @IsUrl({ require_protocol: true })
   image?: string;
 
   @IsMongoId()
-  vendor_Id: string;
+  @IsOptional()
+  vendor_Id?: string;
 }
