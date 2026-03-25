@@ -74,10 +74,16 @@ export class BookingController {
     return this.bookingService.update(id, dto);
   }
 
+  @Patch(':id/payout')
+  async markPayoutPaid(@Param('id') id: string) {
+    return this.bookingService.markPayoutPaid(id);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.bookingService.remove(id);
   }
+
 
   private async saveUpload(file: any, req: any) {
     const uploadsDir = join(process.cwd(), 'uploads');

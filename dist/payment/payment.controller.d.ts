@@ -1,5 +1,7 @@
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { CreateOrderDto } from './dto/create-order.dto';
+import { VerifyPaymentDto } from './dto/verify-payment.dto';
 export declare class PaymentController {
     private readonly paymentService;
     constructor(paymentService: PaymentService);
@@ -12,5 +14,16 @@ export declare class PaymentController {
         totalRevenue: number;
         successfulPayments: number;
         failedPayments: number;
+    }>;
+    createOrder(createOrderDto: CreateOrderDto): Promise<{
+        orderId: string;
+        amount: number;
+    }>;
+    verify(dto: VerifyPaymentDto): Promise<{
+        success: boolean;
+        message: string;
+    } | {
+        success: boolean;
+        message?: undefined;
     }>;
 }

@@ -4,7 +4,7 @@
 import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
 
 export class CreateUserDto {
-  @IsString()
+@IsString()
   @IsNotEmpty()
   phoneNumber: string;
 

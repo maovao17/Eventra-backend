@@ -25,6 +25,13 @@ let BookingService = class BookingService {
     vendorModel;
     userService;
     notificationService;
+    validTransitions = {
+        pending: ["accepted", "cancelled"],
+        accepted: ["confirmed", "cancelled"],
+        confirmed: ["completed"],
+        completed: [],
+        cancelled: [],
+    };
     constructor(bookingModel, vendorModel, userService, notificationService) {
         this.bookingModel = bookingModel;
         this.vendorModel = vendorModel;
@@ -97,7 +104,13 @@ let BookingService = class BookingService {
         if (booking.status === 'rejected' || booking.status === 'cancelled') {
             throw new common_1.BadRequestException('Rejected/cancelled bookings cannot be accepted');
         }
-        booking.status = 'accepted';
+        const newStatus = 'accepted';
+        const currentStatus = booking.status;
+        if (!this.validTransitions[currentStatus]?.includes(newStatus)) {
+            console.warn("Invalid transition:", currentStatus, "→", newStatus);
+            return booking;
+        }
+        booking.status = newStatus;
         await booking.save();
         await this.notificationService.create({
             userId: booking.customerId,
@@ -112,7 +125,13 @@ let BookingService = class BookingService {
         if (booking.status === 'confirmed' || booking.status === 'completed') {
             throw new common_1.BadRequestException('Confirmed/completed bookings cannot be rejected');
         }
-        booking.status = 'rejected';
+        const newStatus = 'rejected';
+        const currentStatus = booking.status;
+        if (!this.validTransitions[currentStatus]?.includes(newStatus)) {
+            console.warn("Invalid transition:", currentStatus, "→", newStatus);
+            return booking;
+        }
+        booking.status = newStatus;
         await booking.save();
         await this.notificationService.create({
             userId: booking.customerId,
@@ -127,7 +146,13 @@ let BookingService = class BookingService {
         if (booking.status !== 'confirmed' && booking.status !== 'accepted') {
             throw new common_1.BadRequestException('Only accepted/confirmed bookings can be completed');
         }
-        booking.status = 'completed';
+        const newStatus = 'completed';
+        const currentStatus = booking.status;
+        if (!this.validTransitions[currentStatus]?.includes(newStatus)) {
+            console.warn("Invalid transition:", currentStatus, "→", newStatus);
+            return booking;
+        }
+        booking.status = newStatus;
         await booking.save();
         await this.notificationService.create({
             userId: booking.customerId,
@@ -143,6 +168,9 @@ let BookingService = class BookingService {
         booking.completionImages.push(imageUrl);
         await booking.save();
         return booking;
+    }
+    async markPayoutPaid(id) {
+        return this.bookingModel.findByIdAndUpdate(id, { payoutStatus: "paid" }, { new: true });
     }
     async remove(id) {
         const deleted = await this.bookingModel.findByIdAndDelete(id).exec();

@@ -27,6 +27,7 @@ let Booking = class Booking {
     paymentStatus;
     eventDetails;
     completionImages;
+    payoutStatus;
 };
 exports.Booking = Booking;
 __decorate([
@@ -98,6 +99,10 @@ __decorate([
     (0, mongoose_1.Prop)({ type: [String], default: [] }),
     __metadata("design:type", Array)
 ], Booking.prototype, "completionImages", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false, default: "pending", enum: ["pending", "paid"] }),
+    __metadata("design:type", String)
+], Booking.prototype, "payoutStatus", void 0);
 exports.Booking = Booking = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Booking);

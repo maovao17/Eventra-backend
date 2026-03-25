@@ -15,6 +15,14 @@ import { NotificationService } from '../notification/notification.service';
 
 @Injectable()
 export class BookingService {
+  private readonly validTransitions = {
+    pending: ["accepted", "cancelled"],
+    accepted: ["confirmed", "cancelled"],
+    confirmed: ["completed"],
+    completed: [],
+    cancelled: [],
+  };
+
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
@@ -100,7 +108,14 @@ export class BookingService {
       throw new BadRequestException('Rejected/cancelled bookings cannot be accepted');
     }
 
-    booking.status = 'accepted';
+    const newStatus = 'accepted';
+    const currentStatus = booking.status;
+    if (!this.validTransitions[currentStatus]?.includes(newStatus)) {
+      console.warn("Invalid transition:", currentStatus, "→", newStatus);
+      return booking;
+    }
+
+    booking.status = newStatus;
     await booking.save();
 
     await this.notificationService.create({
@@ -120,7 +135,14 @@ export class BookingService {
       throw new BadRequestException('Confirmed/completed bookings cannot be rejected');
     }
 
-    booking.status = 'rejected';
+    const newStatus = 'rejected';
+    const currentStatus = booking.status;
+    if (!this.validTransitions[currentStatus]?.includes(newStatus)) {
+      console.warn("Invalid transition:", currentStatus, "→", newStatus);
+      return booking;
+    }
+
+    booking.status = newStatus;
     await booking.save();
 
     await this.notificationService.create({
@@ -140,7 +162,14 @@ export class BookingService {
       throw new BadRequestException('Only accepted/confirmed bookings can be completed');
     }
 
-    booking.status = 'completed';
+    const newStatus = 'completed';
+    const currentStatus = booking.status;
+    if (!this.validTransitions[currentStatus]?.includes(newStatus)) {
+      console.warn("Invalid transition:", currentStatus, "→", newStatus);
+      return booking;
+    }
+
+    booking.status = newStatus;
     await booking.save();
 
     await this.notificationService.create({
@@ -161,11 +190,20 @@ export class BookingService {
     return booking;
   }
 
+  async markPayoutPaid(id: string) {
+    return this.bookingModel.findByIdAndUpdate(
+      id,
+      { payoutStatus: "paid" },
+      { new: true }
+    );
+  }
+
   async remove(id: string) {
     const deleted = await this.bookingModel.findByIdAndDelete(id).exec();
     if (!deleted) throw new NotFoundException('Booking not found');
     return deleted;
   }
+
 
   private async validateVendorActor(actorUserId: string | undefined, vendorId: string) {
     if (!actorUserId) {

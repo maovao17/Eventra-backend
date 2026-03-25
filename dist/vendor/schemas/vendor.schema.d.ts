@@ -65,6 +65,7 @@ export declare class Vendor {
     gallery?: string[];
     reviews?: any[];
     verified?: boolean;
+    status: string;
     bankDetails?: VendorBankDetails;
 }
 export declare const VendorSchema: MongooseSchema<Vendor, import("mongoose").Model<Vendor, any, any, any, Document<unknown, any, Vendor, any, {}> & Vendor & Required<{

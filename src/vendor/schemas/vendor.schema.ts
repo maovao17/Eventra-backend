@@ -166,8 +166,11 @@ export class Vendor {
   @Prop({ type: [Object], default: [] })
   reviews?: any[];
 
-  @Prop({ default: false })
+@Prop({ default: false })
   verified?: boolean;
+
+  @Prop({ default: 'pending', enum: ['pending', 'approved', 'rejected'] })
+  status: string;
 
   @Prop({ type: VendorBankDetails, default: {} })
   bankDetails?: VendorBankDetails;

@@ -1,19 +1,16 @@
 import {
-  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { Vendor, VendorDocument } from './schemas/vendor.schema';
-import { CreateVendorDto } from './dto/create-vendor.dto';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
 
 import { Booking, BookingDocument } from '../booking/schemas/booking.schema';
 import { Request, RequestDocument } from '../request/schemas/request.schema';
-import { Service, ServiceDocument } from '../service/schemas/service.schema';
 import { Review, ReviewDocument } from '../review/schemas/review.schema';
 import {
   Notification,
@@ -34,9 +31,6 @@ export class VendorService {
     @InjectModel(Request.name)
     private readonly requestModel: Model<RequestDocument>,
 
-    @InjectModel(Service.name)
-    private readonly serviceModel: Model<ServiceDocument>,
-
     @InjectModel(Review.name)
     private readonly reviewModel: Model<ReviewDocument>,
 
@@ -44,10 +38,18 @@ export class VendorService {
     private readonly notificationModel: Model<NotificationDocument>,
 
     private readonly userService: UserService,
-  ) {}
+  ) { }
 
   // =========================
-  // 🔹 BASIC PROFILE
+  // ✅ CREATE
+  // =========================
+
+  async create(dto: any) {
+    return this.vendorModel.create(dto);
+  }
+
+  // =========================
+  // ✅ GET / CREATE PROFILE
   // =========================
 
   async getOrCreateVendorProfile(userId: string): Promise<VendorDocument> {
@@ -67,9 +69,7 @@ export class VendorService {
         description: '',
         category: [],
         services: [],
-        servicesOffered: [],
         portfolio: [],
-        kycDocs: [],
         rating: 0,
       });
     }
@@ -77,11 +77,15 @@ export class VendorService {
     return vendor;
   }
 
-  async getVendorMe(userId: string) {
+  async getByUserId(userId: string) {
     return this.getOrCreateVendorProfile(userId);
   }
 
-  async updateVendorMe(userId: string, dto: UpdateVendorDto) {
+  // =========================
+  // ✅ UPDATE PROFILE
+  // =========================
+
+  async updateByUserId(userId: string, dto: UpdateVendorDto) {
     const vendor = await this.getOrCreateVendorProfile(userId);
 
     Object.assign(vendor, dto);
@@ -92,62 +96,81 @@ export class VendorService {
   }
 
   // =========================
-  // 🔹 DASHBOARD (FIXED)
+  // ✅ DASHBOARD (STABLE)
   // =========================
 
   async getDashboard(userId: string) {
-    const vendor = await this.vendorModel.findOne({ userId });
+    try {
+      const vendor = await this.vendorModel.findOne({ userId });
 
-    if (!vendor) {
-      throw new NotFoundException('Vendor not found');
+      if (!vendor) {
+        return this.emptyDashboard();
+      }
+
+      const vendorId = String(vendor?._id);
+      console.log("Dashboard vendorId:", vendorId);
+
+      const bookings = await this.bookingModel.find({ vendorId: vendorId || "" });
+
+      const pendingRequests = await this.requestModel.countDocuments({
+        vendorId,
+        status: 'pending',
+      });
+
+      const pendingBookings = bookings.filter(
+        (b) => b.status === 'pending',
+      ).length;
+
+      const completedBookings = bookings.filter(
+        (b) => b.status === 'completed',
+      ).length;
+
+      const revenue = bookings.reduce(
+        (sum, b) => sum + (b.amount || b.price || 0),
+        0,
+      );
+
+      const now = new Date();
+
+      const monthlyRevenue = bookings
+        .filter((b) => {
+          const d = new Date((b as any).createdAt || new Date());
+          return (
+            d.getMonth() === now.getMonth() &&
+            d.getFullYear() === now.getFullYear()
+          );
+        })
+        .reduce((sum, b) => sum + (b.amount || b.price || 0), 0);
+
+      return {
+        totalBookings: bookings.length,
+        pendingRequests,
+        pendingBookings,
+        completedBookings,
+        revenue,
+        monthlyRevenue,
+        rating: vendor.rating || 0,
+      };
+    } catch (err) {
+      console.error('🔥 DASHBOARD ERROR:', err);
+      return this.emptyDashboard();
     }
+  }
 
-    const vendorId = String(vendor._id);
-
-    const bookings = await this.bookingModel.find({ vendorId });
-
-    const pendingRequests = await this.requestModel.countDocuments({
-      vendorId,
-      status: 'pending',
-    });
-
-    const pendingBookings = bookings.filter(
-      (b) => b.status === 'pending',
-    ).length;
-
-    const completedBookings = bookings.filter(
-      (b) => b.status === 'completed',
-    ).length;
-
-    const revenue = bookings
-      .filter((b) => ['accepted', 'completed'].includes(b.status))
-      .reduce((sum, b) => sum + (b.amount || b.price || 0), 0);
-
-    const now = new Date();
-
-    const monthlyRevenue = bookings
-      .filter((b) => {
-        const d = new Date(b.createdAt);
-        return (
-          d.getMonth() === now.getMonth() &&
-          d.getFullYear() === now.getFullYear()
-        );
-      })
-      .reduce((sum, b) => sum + (b.amount || b.price || 0), 0);
-
+  private emptyDashboard() {
     return {
-      totalBookings: bookings.length,
-      pendingRequests,
-      pendingBookings,
-      completedBookings,
-      revenue,
-      monthlyRevenue,
-      rating: vendor.rating || 0,
+      totalBookings: 0,
+      pendingRequests: 0,
+      pendingBookings: 0,
+      completedBookings: 0,
+      revenue: 0,
+      monthlyRevenue: 0,
+      rating: 0,
     };
   }
 
   // =========================
-  // 🔹 BOOKINGS
+  // ✅ BOOKINGS
   // =========================
 
   async getVendorBookings(userId: string) {
@@ -177,22 +200,19 @@ export class VendorService {
     return booking;
   }
 
-  // =========================
-  // 🔹 REVIEWS
-  // =========================
+
 
   async getVendorReviews(userId: string) {
     const vendor = await this.vendorModel.findOne({ userId });
 
-    return this.reviewModel.find({ vendorId: vendor._id });
+    return this.reviewModel.find({ vendorId: vendor?._id });
   }
-
 
 
   async getVendorNotifications(userId: string) {
     const vendor = await this.vendorModel.findOne({ userId });
 
-    return this.notificationModel.find({ vendorId: vendor._id });
+    return this.notificationModel.find({ vendorId: vendor?._id });
   }
 
   async markVendorNotificationRead(userId: string, id: string) {
@@ -204,5 +224,63 @@ export class VendorService {
     await notif.save();
 
     return notif;
+  }
+
+  // =========================
+  // 🔥 COMPATIBILITY METHODS (DO NOT REMOVE)
+  // =========================
+
+  // used in request.service
+  async findOne(id: string) {
+    return this.vendorModel.findById(id);
+  }
+
+  // used in multiple places
+  async findByUserIdOrThrow(userId: string) {
+    const vendor = await this.vendorModel.findOne({ userId });
+    if (!vendor) throw new NotFoundException('Vendor not found');
+    return vendor;
+  }
+
+  // already exists but re-exposed safely
+  async findByUserId(userId: string) {
+    return this.vendorModel.findOne({ userId });
+  }
+
+  // used in review.service
+  async update(vendorId: string, data: any) {
+    return this.vendorModel.findByIdAndUpdate(vendorId, data, { new: true });
+  }
+
+  // used in seed
+  async findAll() {
+    return this.vendorModel.find();
+  }
+
+  // admin panel
+  async getPendingVendors() {
+    return this.vendorModel.find({ status: 'pending' });
+  }
+
+  // admin approval
+  async approveVendor(id: string) {
+    return this.vendorModel.findByIdAndUpdate(
+      id,
+      { status: 'approved' },
+      { new: true },
+    );
+  }
+
+  // admin rejection
+  async rejectVendor(id: string) {
+    return this.vendorModel.findByIdAndUpdate(
+      id,
+      { status: 'rejected' },
+      { new: true },
+    );
+  }
+
+  async getAllVendors() {
+    return this.vendorModel.find({});
   }
 }

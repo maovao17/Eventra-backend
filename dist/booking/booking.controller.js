@@ -57,6 +57,9 @@ let BookingController = class BookingController {
     update(id, dto) {
         return this.bookingService.update(id, dto);
     }
+    async markPayoutPaid(id) {
+        return this.bookingService.markPayoutPaid(id);
+    }
     remove(id) {
         return this.bookingService.remove(id);
     }
@@ -140,6 +143,13 @@ __decorate([
     __metadata("design:paramtypes", [String, update_booking_dto_1.UpdateBookingDto]),
     __metadata("design:returntype", void 0)
 ], BookingController.prototype, "update", null);
+__decorate([
+    (0, common_1.Patch)(':id/payout'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], BookingController.prototype, "markPayoutPaid", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id')),

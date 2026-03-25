@@ -172,6 +172,7 @@ let Vendor = class Vendor {
     gallery;
     reviews;
     verified;
+    status;
     bankDetails;
 };
 exports.Vendor = Vendor;
@@ -283,6 +284,10 @@ __decorate([
     (0, mongoose_1.Prop)({ default: false }),
     __metadata("design:type", Boolean)
 ], Vendor.prototype, "verified", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 'pending', enum: ['pending', 'approved', 'rejected'] }),
+    __metadata("design:type", String)
+], Vendor.prototype, "status", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ type: VendorBankDetails, default: {} }),
     __metadata("design:type", VendorBankDetails)

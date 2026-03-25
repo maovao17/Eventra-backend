@@ -16,6 +16,8 @@ exports.PaymentController = void 0;
 const common_1 = require("@nestjs/common");
 const payment_service_1 = require("./payment.service");
 const create_payment_dto_1 = require("./dto/create-payment.dto");
+const create_order_dto_1 = require("./dto/create-order.dto");
+const verify_payment_dto_1 = require("./dto/verify-payment.dto");
 let PaymentController = class PaymentController {
     paymentService;
     constructor(paymentService) {
@@ -43,6 +45,12 @@ let PaymentController = class PaymentController {
     }
     getRevenue() {
         return this.paymentService.getRevenue();
+    }
+    async createOrder(createOrderDto) {
+        return this.paymentService.createRazorpayOrder(createOrderDto.amount);
+    }
+    async verify(dto) {
+        return this.paymentService.verifyPayment(dto);
     }
 };
 exports.PaymentController = PaymentController;
@@ -90,6 +98,20 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], PaymentController.prototype, "getRevenue", null);
+__decorate([
+    (0, common_1.Post)('create-order'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [create_order_dto_1.CreateOrderDto]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "createOrder", null);
+__decorate([
+    (0, common_1.Post)('verify'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [verify_payment_dto_1.VerifyPaymentDto]),
+    __metadata("design:returntype", Promise)
+], PaymentController.prototype, "verify", null);
 exports.PaymentController = PaymentController = __decorate([
     (0, common_1.Controller)('payments'),
     __metadata("design:paramtypes", [payment_service_1.PaymentService])

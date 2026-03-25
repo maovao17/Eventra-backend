@@ -22,6 +22,7 @@ export declare class Booking {
         guests?: number;
     };
     completionImages?: string[];
+    payoutStatus?: string;
 }
 export declare const BookingSchema: import("mongoose").Schema<Booking, import("mongoose").Model<Booking, any, any, any, Document<unknown, any, Booking, any, {}> & Booking & {
     _id: import("mongoose").Types.ObjectId;

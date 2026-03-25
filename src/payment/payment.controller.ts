@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { CreateOrderDto } from './dto/create-order.dto';
+import { VerifyPaymentDto } from './dto/verify-payment.dto';
 
 @Controller('payments')
 export class PaymentController {
@@ -38,4 +40,15 @@ export class PaymentController {
   getRevenue() {
     return this.paymentService.getRevenue();
   }
+
+@Post('create-order')
+  async createOrder(@Body() createOrderDto: CreateOrderDto) {
+    return this.paymentService.createRazorpayOrder(createOrderDto.amount);
+  }
+
+  @Post('verify')
+  async verify(@Body() dto: VerifyPaymentDto) {
+    return this.paymentService.verifyPayment(dto);
+  }
 }
+

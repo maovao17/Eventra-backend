@@ -64,6 +64,9 @@ export class Booking {
 
   @Prop({ type: [String], default: [] })
   completionImages?: string[];
+
+  @Prop({ required: false, default: "pending", enum: ["pending", "paid"] })
+  payoutStatus?: string;
 }
 
 export const BookingSchema = SchemaFactory.createForClass(Booking);
