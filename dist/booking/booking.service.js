@@ -20,21 +20,25 @@ const booking_schema_1 = require("./schemas/booking.schema");
 const user_service_1 = require("../user/user.service");
 const vendor_schema_1 = require("../vendor/schemas/vendor.schema");
 const notification_service_1 = require("../notification/notification.service");
+const event_schema_1 = require("../event/schemas/event.schema");
 let BookingService = class BookingService {
     bookingModel;
     vendorModel;
+    eventModel;
     userService;
     notificationService;
     validTransitions = {
-        pending: ["accepted", "cancelled"],
-        accepted: ["confirmed", "cancelled"],
-        confirmed: ["completed"],
+        pending: ["accepted", "rejected", "cancelled"],
+        accepted: ["confirmed", "rejected", "cancelled"],
+        rejected: [],
+        confirmed: ["completed", "cancelled"],
         completed: [],
         cancelled: [],
     };
-    constructor(bookingModel, vendorModel, userService, notificationService) {
+    constructor(bookingModel, vendorModel, eventModel, userService, notificationService) {
         this.bookingModel = bookingModel;
         this.vendorModel = vendorModel;
+        this.eventModel = eventModel;
         this.userService = userService;
         this.notificationService = notificationService;
     }
@@ -43,7 +47,7 @@ let BookingService = class BookingService {
             ...dto,
             amount: dto.amount ?? dto.price ?? 0,
             price: dto.price ?? dto.amount ?? 0,
-            status: 'pending',
+            status: dto.status ?? 'pending',
             paymentStatus: 'pending',
             eventDetails: {
                 type: dto.eventType ?? '',
@@ -61,7 +65,23 @@ let BookingService = class BookingService {
         if (existingBooking) {
             return existingBooking;
         }
-        const booking = await this.create({ ...dto, status: 'pending' });
+        const [vendor, event] = await Promise.all([
+            this.vendorModel.findById(dto.vendorId).exec(),
+            this.eventModel.findById(dto.eventId).exec(),
+        ]);
+        const booking = await this.create({
+            ...dto,
+            amount: dto.amount ?? vendor?.price ?? 0,
+            price: dto.price ?? vendor?.price ?? 0,
+            date: dto.date ?? event?.eventDate ?? (event?.date ? new Date(event.date).toISOString() : ''),
+            location: dto.location ??
+                String(event?.location?.label ??
+                    event?.location?.address ??
+                    ''),
+            eventType: dto.eventType ?? event?.eventType ?? '',
+            guests: dto.guests ?? Number(event?.guestCount ?? 0),
+            status: 'accepted',
+        });
         await this.notificationService.create({
             userId: dto.customerId,
             type: 'new-booking-request',
@@ -101,6 +121,9 @@ let BookingService = class BookingService {
     async accept(id, actorUserId) {
         const booking = await this.findById(id);
         await this.validateVendorActor(actorUserId, booking.vendorId);
+        if (booking.status === 'accepted') {
+            return booking;
+        }
         if (booking.status === 'rejected' || booking.status === 'cancelled') {
             throw new common_1.BadRequestException('Rejected/cancelled bookings cannot be accepted');
         }
@@ -122,6 +145,9 @@ let BookingService = class BookingService {
     async reject(id, actorUserId) {
         const booking = await this.findById(id);
         await this.validateVendorActor(actorUserId, booking.vendorId);
+        if (booking.status === 'rejected') {
+            return booking;
+        }
         if (booking.status === 'confirmed' || booking.status === 'completed') {
             throw new common_1.BadRequestException('Confirmed/completed bookings cannot be rejected');
         }
@@ -143,8 +169,8 @@ let BookingService = class BookingService {
     async complete(id, actorUserId) {
         const booking = await this.findById(id);
         await this.validateVendorActor(actorUserId, booking.vendorId);
-        if (booking.status !== 'confirmed' && booking.status !== 'accepted') {
-            throw new common_1.BadRequestException('Only accepted/confirmed bookings can be completed');
+        if (booking.status !== 'confirmed') {
+            throw new common_1.BadRequestException('Only confirmed bookings can be completed');
         }
         const newStatus = 'completed';
         const currentStatus = booking.status;
@@ -197,7 +223,9 @@ exports.BookingService = BookingService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(booking_schema_1.Booking.name)),
     __param(1, (0, mongoose_1.InjectModel)(vendor_schema_1.Vendor.name)),
+    __param(2, (0, mongoose_1.InjectModel)(event_schema_1.Event.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         user_service_1.UserService,
         notification_service_1.NotificationService])

@@ -1,7 +1,11 @@
 export declare class UpdateEventDto {
+    name?: string;
     status?: string;
     eventDate?: string;
     eventType?: string;
-    price?: number;
+    budget?: number;
+    guestCount?: number;
+    location?: Record<string, any>;
+    coverImage?: string;
     services?: string[];
 }

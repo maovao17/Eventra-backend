@@ -13,6 +13,7 @@ const booking_controller_1 = require("./booking.controller");
 const booking_service_1 = require("./booking.service");
 const booking_schema_1 = require("./schemas/booking.schema");
 const vendor_schema_1 = require("../vendor/schemas/vendor.schema");
+const event_schema_1 = require("../event/schemas/event.schema");
 const user_module_1 = require("../user/user.module");
 const notification_module_1 = require("../notification/notification.module");
 let BookingModule = class BookingModule {
@@ -24,6 +25,7 @@ exports.BookingModule = BookingModule = __decorate([
             mongoose_1.MongooseModule.forFeature([
                 { name: booking_schema_1.Booking.name, schema: booking_schema_1.BookingSchema },
                 { name: vendor_schema_1.Vendor.name, schema: vendor_schema_1.VendorSchema },
+                { name: event_schema_1.Event.name, schema: event_schema_1.EventSchema },
             ]),
             user_module_1.UserModule,
             notification_module_1.NotificationModule,

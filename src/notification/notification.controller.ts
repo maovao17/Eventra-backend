@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
+import { FirebaseAuthGuard } from '../auth/firebase.guard';
+import { AdminGuard } from '../auth/admin.guard';
 
 @Controller('notifications')
 export class NotificationController {
@@ -19,6 +21,7 @@ export class NotificationController {
   }
 
   @Post('run-reminders')
+  @UseGuards(FirebaseAuthGuard, AdminGuard)
   runReminders() {
     return this.notificationService.generateEventReminders();
   }

@@ -3,4 +3,5 @@ export declare class VerifyPaymentDto {
     razorpay_payment_id: string;
     razorpay_signature: string;
     bookingId: string;
+    amount?: number;
 }

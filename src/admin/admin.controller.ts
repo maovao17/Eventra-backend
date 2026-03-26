@@ -3,15 +3,18 @@ import {
   Get,
   Patch,
   Param,
-  Inject,
+  UseGuards,
 } from '@nestjs/common';
 
+import { FirebaseAuthGuard } from '../auth/firebase.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import { VendorService } from '../vendor/vendor.service';
 import { UserService } from '../user/user.service';
 import { BookingService } from '../booking/booking.service';
 import { PaymentService } from '../payment/payment.service';
 
 @Controller('admin')
+@UseGuards(FirebaseAuthGuard, AdminGuard)
 export class AdminController {
   constructor(
     private readonly vendorService: VendorService,

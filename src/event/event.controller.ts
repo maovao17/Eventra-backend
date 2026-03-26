@@ -26,8 +26,6 @@ export class EventController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateEventDto) {
-    console.log("PATCH EVENT - ID:", id);
-    console.log("PATCH EVENT - Raw Body:", JSON.stringify(dto, null, 2));
     return this.eventService.update(id, dto);
   }
 

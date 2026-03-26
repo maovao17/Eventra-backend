@@ -108,7 +108,6 @@ export class VendorService {
       }
 
       const vendorId = String(vendor?._id);
-      console.log("Dashboard vendorId:", vendorId);
 
       const bookings = await this.bookingModel.find({ vendorId: vendorId || "" });
 
@@ -152,7 +151,7 @@ export class VendorService {
         rating: vendor.rating || 0,
       };
     } catch (err) {
-      console.error('🔥 DASHBOARD ERROR:', err);
+      console.error('Dashboard error:', err);
       return this.emptyDashboard();
     }
   }

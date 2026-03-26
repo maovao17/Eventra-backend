@@ -4,6 +4,7 @@ import { BookingController } from './booking.controller';
 import { BookingService } from './booking.service';
 import { Booking, BookingSchema } from './schemas/booking.schema';
 import { Vendor, VendorSchema } from '../vendor/schemas/vendor.schema';
+import { Event, EventSchema } from '../event/schemas/event.schema';
 import { UserModule } from '../user/user.module';
 import { NotificationModule } from '../notification/notification.module';
 
@@ -12,6 +13,7 @@ import { NotificationModule } from '../notification/notification.module';
     MongooseModule.forFeature([
       { name: Booking.name, schema: BookingSchema },
       { name: Vendor.name, schema: VendorSchema },
+      { name: Event.name, schema: EventSchema },
     ]),
     UserModule,
     NotificationModule,

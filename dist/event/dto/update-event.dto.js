@@ -12,13 +12,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateEventDto = void 0;
 const class_validator_1 = require("class-validator");
 class UpdateEventDto {
+    name;
     status;
     eventDate;
     eventType;
-    price;
+    budget;
+    guestCount;
+    location;
+    coverImage;
     services;
 }
 exports.UpdateEventDto = UpdateEventDto;
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateEventDto.prototype, "name", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsEnum)(['draft', 'planning', 'confirmed', 'ongoing', 'completed', 'cancelled']),
@@ -38,7 +47,22 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
-], UpdateEventDto.prototype, "price", void 0);
+], UpdateEventDto.prototype, "budget", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], UpdateEventDto.prototype, "guestCount", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsObject)(),
+    __metadata("design:type", Object)
+], UpdateEventDto.prototype, "location", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateEventDto.prototype, "coverImage", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),

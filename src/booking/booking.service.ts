@@ -12,13 +12,15 @@ import { UpdateBookingDto } from './dto/update-booking.dto';
 import { UserService } from '../user/user.service';
 import { Vendor, VendorDocument } from '../vendor/schemas/vendor.schema';
 import { NotificationService } from '../notification/notification.service';
+import { Event, EventDocument } from '../event/schemas/event.schema';
 
 @Injectable()
 export class BookingService {
   private readonly validTransitions = {
-    pending: ["accepted", "cancelled"],
-    accepted: ["confirmed", "cancelled"],
-    confirmed: ["completed"],
+    pending: ["accepted", "rejected", "cancelled"],
+    accepted: ["confirmed", "rejected", "cancelled"],
+    rejected: [],
+    confirmed: ["completed", "cancelled"],
     completed: [],
     cancelled: [],
   };
@@ -26,6 +28,7 @@ export class BookingService {
   constructor(
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
+    @InjectModel(Event.name) private eventModel: Model<EventDocument>,
     private userService: UserService,
     private notificationService: NotificationService,
   ) {}
@@ -35,7 +38,7 @@ export class BookingService {
       ...dto,
       amount: dto.amount ?? dto.price ?? 0,
       price: dto.price ?? dto.amount ?? 0,
-      status: 'pending',
+      status: (dto as any).status ?? 'pending',
       paymentStatus: 'pending',
       eventDetails: {
         type: dto.eventType ?? '',
@@ -55,7 +58,27 @@ export class BookingService {
       return existingBooking;
     }
 
-    const booking = await this.create({ ...dto, status: 'pending' } as any);
+    const [vendor, event] = await Promise.all([
+      this.vendorModel.findById(dto.vendorId).exec(),
+      this.eventModel.findById(dto.eventId).exec(),
+    ]);
+
+    const booking = await this.create({
+      ...dto,
+      amount: dto.amount ?? vendor?.price ?? 0,
+      price: dto.price ?? vendor?.price ?? 0,
+      date: dto.date ?? event?.eventDate ?? (event?.date ? new Date(event.date).toISOString() : ''),
+      location:
+        dto.location ??
+        String(
+          event?.location?.label ??
+          event?.location?.address ??
+          '',
+      ),
+      eventType: dto.eventType ?? event?.eventType ?? '',
+      guests: dto.guests ?? Number(event?.guestCount ?? 0),
+      status: 'accepted',
+    } as any);
 
     await this.notificationService.create({
       userId: dto.customerId,
@@ -104,6 +127,10 @@ export class BookingService {
     const booking = await this.findById(id);
     await this.validateVendorActor(actorUserId, booking.vendorId);
 
+    if (booking.status === 'accepted') {
+      return booking;
+    }
+
     if (booking.status === 'rejected' || booking.status === 'cancelled') {
       throw new BadRequestException('Rejected/cancelled bookings cannot be accepted');
     }
@@ -130,6 +157,10 @@ export class BookingService {
   async reject(id: string, actorUserId?: string) {
     const booking = await this.findById(id);
     await this.validateVendorActor(actorUserId, booking.vendorId);
+
+    if (booking.status === 'rejected') {
+      return booking;
+    }
 
     if (booking.status === 'confirmed' || booking.status === 'completed') {
       throw new BadRequestException('Confirmed/completed bookings cannot be rejected');
@@ -158,8 +189,8 @@ export class BookingService {
     const booking = await this.findById(id);
     await this.validateVendorActor(actorUserId, booking.vendorId);
 
-    if (booking.status !== 'confirmed' && booking.status !== 'accepted') {
-      throw new BadRequestException('Only accepted/confirmed bookings can be completed');
+    if (booking.status !== 'confirmed') {
+      throw new BadRequestException('Only confirmed bookings can be completed');
     }
 
     const newStatus = 'completed';

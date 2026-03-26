@@ -6,6 +6,10 @@ export class UpdateBookingDto {
   status?: string;
 
   @IsOptional()
+  @IsEnum(['pending', 'partial', 'paid'])
+  paymentStatus?: string;
+
+  @IsOptional()
   @IsString()
   note?: string;
 

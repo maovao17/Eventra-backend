@@ -16,6 +16,8 @@ exports.NotificationController = void 0;
 const common_1 = require("@nestjs/common");
 const notification_service_1 = require("./notification.service");
 const create_notification_dto_1 = require("./dto/create-notification.dto");
+const firebase_guard_1 = require("../auth/firebase.guard");
+const admin_guard_1 = require("../auth/admin.guard");
 let NotificationController = class NotificationController {
     notificationService;
     constructor(notificationService) {
@@ -65,6 +67,7 @@ __decorate([
 ], NotificationController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Post)('run-reminders'),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, admin_guard_1.AdminGuard),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)

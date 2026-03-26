@@ -5,6 +5,7 @@ import { UpdateEventDto } from './dto/update-event.dto';
 export declare class EventService {
     private eventModel;
     constructor(eventModel: Model<EventDocument>);
+    private normalizeLocation;
     create(dto: CreateEventDto): Promise<import("mongoose").Document<unknown, {}, EventDocument, {}, {}> & Event & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {

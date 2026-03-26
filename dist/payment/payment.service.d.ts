@@ -31,8 +31,10 @@ export declare class PaymentService {
     verifyPayment(dto: VerifyPaymentDto): Promise<{
         success: boolean;
         message: string;
+        paymentId?: undefined;
     } | {
         success: boolean;
+        paymentId: string | undefined;
         message?: undefined;
     }>;
 }

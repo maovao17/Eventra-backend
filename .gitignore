@@ -1,46 +1,7 @@
-version: "3.8"
-
-services:
-  mongo:
-    image: mongo:6
-    container_name: eventra
-    restart: always
-    environment:
-     MONGO_INITDB_ROOT_USERNAME: daaniela_31
-     MONGO_INITDB_ROOT_PASSWORD: dan123
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-
-volumes:
-  mongo_data:
-    
-
-import { VendorModule } from './vendor/vendor.module';
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { MongooseModule } from '@nestjs/mongoose';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UserModule } from './user/user.module';
-
-@Module({
-  imports: [
-    // load .env and make it available everywhere
-    ConfigModule.forRoot({ isGlobal: true }),
-
-    // use the DB_URI from .env
-    MongooseModule.forRoot(process.env.DB_URI as string),
-
-    UserModule,
-    VendorModule,
-  ],
-  controllers: [AppController],
-  providers: [AppService],
-})
-export class AppModule {}
-
 node_modules
-
+dist
+.env
 serviceAccountKey.json
+uploads
+coverage
+.DS_Store

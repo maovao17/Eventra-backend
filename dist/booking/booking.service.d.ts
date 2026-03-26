@@ -5,13 +5,15 @@ import { UpdateBookingDto } from './dto/update-booking.dto';
 import { UserService } from '../user/user.service';
 import { VendorDocument } from '../vendor/schemas/vendor.schema';
 import { NotificationService } from '../notification/notification.service';
+import { EventDocument } from '../event/schemas/event.schema';
 export declare class BookingService {
     private bookingModel;
     private vendorModel;
+    private eventModel;
     private userService;
     private notificationService;
     private readonly validTransitions;
-    constructor(bookingModel: Model<BookingDocument>, vendorModel: Model<VendorDocument>, userService: UserService, notificationService: NotificationService);
+    constructor(bookingModel: Model<BookingDocument>, vendorModel: Model<VendorDocument>, eventModel: Model<EventDocument>, userService: UserService, notificationService: NotificationService);
     create(dto: CreateBookingDto): Promise<import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {

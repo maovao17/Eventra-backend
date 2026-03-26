@@ -13,18 +13,23 @@ const vendor_module_1 = require("../vendor/vendor.module");
 const user_module_1 = require("../user/user.module");
 const booking_module_1 = require("../booking/booking.module");
 const payment_module_1 = require("../payment/payment.module");
+const auth_module_1 = require("../auth/auth.module");
+const admin_guard_1 = require("../auth/admin.guard");
+const firebase_guard_1 = require("../auth/firebase.guard");
 let AdminModule = class AdminModule {
 };
 exports.AdminModule = AdminModule;
 exports.AdminModule = AdminModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            auth_module_1.AuthModule,
             vendor_module_1.VendorModule,
             user_module_1.UserModule,
             booking_module_1.BookingModule,
             payment_module_1.PaymentModule,
         ],
         controllers: [admin_controller_1.AdminController],
+        providers: [admin_guard_1.AdminGuard, firebase_guard_1.FirebaseAuthGuard],
     })
 ], AdminModule);
 //# sourceMappingURL=admin.module.js.map

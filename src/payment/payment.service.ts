@@ -50,6 +50,10 @@ export class PaymentService {
       throw new ForbiddenException('Customers can only pay for their own bookings');
     }
 
+    if (booking.paymentStatus === 'paid') {
+      throw new BadRequestException('This booking has already been paid');
+    }
+
     if (booking.requestId !== createPaymentDto.requestId) {
       throw new BadRequestException('Booking does not match request');
     }
@@ -59,11 +63,18 @@ export class PaymentService {
       throw new BadRequestException('Payment is allowed only after request acceptance');
     }
 
+    if (!['accepted', 'confirmed'].includes(booking.status)) {
+      throw new BadRequestException('Booking is not ready for payment');
+    }
+
     const createdPayment = new this.paymentModel(createPaymentDto);
     const savedPayment = await createdPayment.save();
 
     if (createPaymentDto.status === 'success') {
-      await this.bookingService.update(createPaymentDto.bookingId, { status: 'confirmed' });
+      await this.bookingService.update(createPaymentDto.bookingId, {
+        status: 'confirmed',
+        paymentStatus: 'paid',
+      });
     }
 
     return savedPayment;
@@ -121,7 +132,7 @@ export class PaymentService {
 
       return {
         orderId: order.id,
-        amount: order.amount,
+        amount: Number(order.amount),
       };
     } catch (error) {
       throw new BadRequestException(`Failed to create order: ${error.message}`);
@@ -140,13 +151,33 @@ export class PaymentService {
       return { success: false, message: 'Invalid signature' };
     }
 
-    // Update booking
+    const booking = await this.bookingService.findById(dto.bookingId);
+
+    if (booking.paymentStatus === 'paid') {
+      const existingPayment = await this.paymentModel
+        .findOne({ bookingId: dto.bookingId, status: 'success' })
+        .sort({ createdAt: -1 })
+        .exec();
+
+      return {
+        success: true,
+        paymentId: existingPayment ? String(existingPayment._id) : undefined,
+      };
+    }
+
+    const payment = await this.paymentModel.create({
+      bookingId: dto.bookingId,
+      customerId: booking.customerId,
+      requestId: booking.requestId,
+      amount: Number(dto.amount ?? booking.amount ?? booking.price ?? 0),
+      status: 'success',
+    });
+
     await this.bookingService.update(dto.bookingId, {
       status: 'confirmed',
       paymentStatus: 'paid',
     });
 
-    return { success: true };
+    return { success: true, paymentId: String(payment._id) };
   }
 }
-

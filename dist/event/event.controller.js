@@ -35,8 +35,6 @@ let EventController = class EventController {
         return this.eventService.findById(id);
     }
     update(id, dto) {
-        console.log("PATCH EVENT - ID:", id);
-        console.log("PATCH EVENT - Raw Body:", JSON.stringify(dto, null, 2));
         return this.eventService.update(id, dto);
     }
     remove(id) {

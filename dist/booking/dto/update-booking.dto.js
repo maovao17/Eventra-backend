@@ -13,6 +13,7 @@ exports.UpdateBookingDto = void 0;
 const class_validator_1 = require("class-validator");
 class UpdateBookingDto {
     status;
+    paymentStatus;
     note;
     amount;
     price;
@@ -27,6 +28,11 @@ __decorate([
     (0, class_validator_1.IsEnum)(['pending', 'accepted', 'rejected', 'confirmed', 'completed', 'cancelled']),
     __metadata("design:type", String)
 ], UpdateBookingDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(['pending', 'partial', 'paid']),
+    __metadata("design:type", String)
+], UpdateBookingDto.prototype, "paymentStatus", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),

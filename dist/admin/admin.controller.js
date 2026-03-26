@@ -14,6 +14,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminController = void 0;
 const common_1 = require("@nestjs/common");
+const firebase_guard_1 = require("../auth/firebase.guard");
+const admin_guard_1 = require("../auth/admin.guard");
 const vendor_service_1 = require("../vendor/vendor.service");
 const user_service_1 = require("../user/user.service");
 const booking_service_1 = require("../booking/booking.service");
@@ -89,6 +91,7 @@ __decorate([
 ], AdminController.prototype, "getPayments", null);
 exports.AdminController = AdminController = __decorate([
     (0, common_1.Controller)('admin'),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, admin_guard_1.AdminGuard),
     __metadata("design:paramtypes", [vendor_service_1.VendorService,
         user_service_1.UserService,
         booking_service_1.BookingService,

@@ -40,13 +40,27 @@ const path_1 = require("path");
 const fs_1 = require("fs");
 const express_1 = require("express");
 const admin = __importStar(require("firebase-admin"));
-const path = __importStar(require("path"));
 async function bootstrap() {
-    admin.initializeApp({
-        credential: admin.credential.cert(require(path.join(__dirname, '../serviceAccountKey.json'))),
-    });
+    if (!admin.apps.length) {
+        const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || (0, path_1.join)(process.cwd(), 'serviceAccountKey.json');
+        if ((0, fs_1.existsSync)(serviceAccountPath)) {
+            admin.initializeApp({
+                credential: admin.credential.cert(require(serviceAccountPath)),
+            });
+        }
+        else {
+            admin.initializeApp();
+        }
+    }
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
-    app.enableCors();
+    const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean);
+    app.enableCors({
+        origin: allowedOrigins,
+        credentials: true,
+    });
     const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads');
     if (!(0, fs_1.existsSync)(uploadsDir)) {
         (0, fs_1.mkdirSync)(uploadsDir, { recursive: true });

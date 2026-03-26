@@ -9,30 +9,48 @@ import { UpdateEventDto } from './dto/update-event.dto';
 export class EventService {
   constructor(@InjectModel(Event.name) private eventModel: Model<EventDocument>) {}
 
-  async create(dto: CreateEventDto) {
-    try {
-      console.log("RAW DTO:", dto);
-
-      const parsed = {
-        name: dto.name,
-        date: new Date(dto.date), // 🔥 FIX DATE
-        budget: Number(dto.budget), // 🔥 FIX NUMBER
-        services: dto.services || []
-      };
-
-      console.log("PARSED DTO:", parsed);
-
-      const createdEvent = new this.eventModel(parsed);
-
-      const saved = await createdEvent.save();
-
-      console.log("SAVED EVENT:", saved);
-
-      return saved;
-    } catch (error) {
-      console.error("CREATE EVENT ERROR:", error);
-      throw error;
+  private normalizeLocation(location: unknown) {
+    if (!location) {
+      return {};
     }
+
+    if (typeof location === 'string') {
+      return { label: location };
+    }
+
+    if (typeof location === 'object' && !Array.isArray(location)) {
+      return location;
+    }
+
+    return {};
+  }
+
+  async create(dto: CreateEventDto) {
+    const eventDate = dto.eventDate ?? dto.date;
+    if (!eventDate) {
+      throw new BadRequestException('eventDate is required');
+    }
+
+    const parsedDate = new Date(eventDate);
+    if (Number.isNaN(parsedDate.getTime())) {
+      throw new BadRequestException('Invalid event date');
+    }
+
+    const createdEvent = new this.eventModel({
+      customerId: dto.customerId,
+      name: dto.name,
+      date: parsedDate,
+      eventDate,
+      eventType: dto.eventType ?? 'Custom',
+      location: this.normalizeLocation(dto.location),
+      status: dto.status ?? 'draft',
+      budget: Number(dto.budget),
+      guestCount: Number(dto.guestCount ?? 0),
+      coverImage: dto.coverImage ?? '',
+      services: dto.services ?? [],
+    });
+
+    return createdEvent.save();
   }
 
   async findAll() {
@@ -50,15 +68,21 @@ export class EventService {
   }
 
   async update(id: string, dto: UpdateEventDto) {
-    console.log("UPDATE EVENT - ID:", id);
-    console.log("UPDATE EVENT - DTO:", dto);
-    console.log("UPDATE EVENT - Services type:", Array.isArray(dto.services) ? "array" : typeof dto.services);
-    if (dto.services) {
-      console.log("UPDATE EVENT - Services length:", dto.services.length);
-      console.log("UPDATE EVENT - Services content:", dto.services);
+    const updatePayload: Record<string, any> = { ...dto };
+
+    if (dto.eventDate) {
+      const parsedDate = new Date(dto.eventDate);
+      if (Number.isNaN(parsedDate.getTime())) {
+        throw new BadRequestException('Invalid event date');
+      }
+      updatePayload.date = parsedDate;
     }
 
-    const updated = await this.eventModel.findByIdAndUpdate(id, dto, { new: true }).exec();
+    if (dto.location !== undefined) {
+      updatePayload.location = this.normalizeLocation(dto.location);
+    }
+
+    const updated = await this.eventModel.findByIdAndUpdate(id, updatePayload, { new: true }).exec();
     if (!updated) throw new NotFoundException('Event not found');
     return updated;
   }

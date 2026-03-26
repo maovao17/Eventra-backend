@@ -76,7 +76,6 @@ let VendorService = class VendorService {
                 return this.emptyDashboard();
             }
             const vendorId = String(vendor?._id);
-            console.log("Dashboard vendorId:", vendorId);
             const bookings = await this.bookingModel.find({ vendorId: vendorId || "" });
             const pendingRequests = await this.requestModel.countDocuments({
                 vendorId,
@@ -104,7 +103,7 @@ let VendorService = class VendorService {
             };
         }
         catch (err) {
-            console.error('🔥 DASHBOARD ERROR:', err);
+            console.error('Dashboard error:', err);
             return this.emptyDashboard();
         }
     }

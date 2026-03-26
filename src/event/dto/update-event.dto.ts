@@ -1,6 +1,10 @@
-import { IsArray, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class UpdateEventDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
   @IsOptional()
   @IsEnum(['draft', 'planning', 'confirmed', 'ongoing', 'completed', 'cancelled'])
   status?: string;
@@ -15,7 +19,19 @@ export class UpdateEventDto {
 
   @IsOptional()
   @IsNumber()
-  price?: number;
+  budget?: number;
+
+  @IsOptional()
+  @IsNumber()
+  guestCount?: number;
+
+  @IsOptional()
+  @IsObject()
+  location?: Record<string, any>;
+
+  @IsOptional()
+  @IsString()
+  coverImage?: string;
 
   @IsOptional()
   @IsArray()

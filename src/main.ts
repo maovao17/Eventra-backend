@@ -5,17 +5,31 @@ import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 import { static as expressStatic } from 'express';
 import * as admin from 'firebase-admin';
-import * as path from 'path';
 
 async function bootstrap() {
-  admin.initializeApp({
-  credential: admin.credential.cert(
-    require(path.join(__dirname, '../serviceAccountKey.json'))
-  ),
-});
+  if (!admin.apps.length) {
+    const serviceAccountPath =
+      process.env.FIREBASE_SERVICE_ACCOUNT_PATH || join(process.cwd(), 'serviceAccountKey.json');
+
+    if (existsSync(serviceAccountPath)) {
+      admin.initializeApp({
+        credential: admin.credential.cert(require(serviceAccountPath)),
+      });
+    } else {
+      admin.initializeApp();
+    }
+  }
 
   const app = await NestFactory.create(AppModule);
-  app.enableCors();
+  const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+  });
   const uploadsDir = join(process.cwd(), 'uploads');
   if (!existsSync(uploadsDir)) {
     mkdirSync(uploadsDir, { recursive: true });
