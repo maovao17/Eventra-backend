@@ -1,54 +1,161 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Query,
+  Req,
+  UseGuards,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { RequestService } from './request.service';
 import { CreateRequestDto } from './dto/create-request.dto';
-import { UpdateRequestDto } from './dto/update-request.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { VendorService } from '../vendor/vendor.service';
+import { FirebaseAuthGuard } from '../auth/firebase.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+
+type AuthenticatedUser = {
+  uid: string
+  role: 'customer' | 'vendor' | 'admin'
+}
 
 @Controller('requests')
 export class RequestController {
-  constructor(private readonly requestService: RequestService) {}
+  constructor(
+    private readonly requestService: RequestService,
+    private readonly vendorService: VendorService,
+  ) {}
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('customer')
   @Post()
-  create(@Body() createRequestDto: CreateRequestDto) {
-    return this.requestService.create(createRequestDto);
+  create(@Req() req: { user: AuthenticatedUser }, @Body() createRequestDto: CreateRequestDto) {
+    return this.requestService.create({
+      ...createRequestDto,
+      customerId: req.user.uid,
+    });
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('vendor')
   @Get('vendor')
-  findForVendor(@Req() req) {
-    return this.requestService.findByVendorUser(req.user.id);
+  findForVendor(@Req() req: { user: AuthenticatedUser }) {
+    return this.requestService.findByVendorUser(req.user.uid);
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('customer', 'vendor', 'admin')
   @Get()
-  findAll(@Query('userId') userId?: string, @Query('vendorId') vendorId?: string, @Query('eventId') eventId?: string) {
-    if (userId) return this.requestService.findByUser(userId);
-    if (vendorId) return this.requestService.findByVendor(vendorId);
-    if (eventId) return this.requestService.findByEvent(eventId);
-    return this.requestService.findAll();
+  async findAll(
+    @Req() req: { user: AuthenticatedUser },
+    @Query('eventId') eventId?: string,
+    @Query('userId') userId?: string,
+    @Query('vendorId') vendorId?: string,
+  ) {
+    if (req.user.role === 'admin') {
+      return this.requestService.findByQuery({
+        customerId: userId,
+        vendorId,
+        eventId,
+      });
+    }
+
+    if (req.user.role === 'vendor') {
+      const vendor = await this.vendorService.findByUserId(req.user.uid);
+      if (!vendor) {
+        throw new NotFoundException('Vendor profile not found');
+      }
+      const ownVendorId = String(vendor._id);
+
+      if (vendorId && String(vendorId) !== ownVendorId) {
+        throw new ForbiddenException(
+          'You can only query your own vendor requests',
+        );
+      }
+
+      const queryVendorId = vendorId || ownVendorId;
+
+      if (eventId) {
+        return this.requestService
+          .findByQuery({ vendorId: queryVendorId, eventId })
+          .then((requests) =>
+            requests.map((request) => ({
+              ...request.toObject(),
+              vendor: vendor,
+            })),
+          );
+      }
+
+      return this.requestService.findByVendorUser(req.user.uid);
+    }
+
+    // customer
+    if (userId && String(userId) !== String(req.user.uid)) {
+      throw new ForbiddenException(
+        'Customers can only query their own requests',
+      );
+    }
+
+    const queryCustomerId = String(req.user.uid);
+
+    if (vendorId || eventId) {
+      return this.requestService.findByQuery({
+        customerId: queryCustomerId,
+        vendorId,
+        eventId,
+      });
+    }
+
+    return this.requestService.findByUser(queryCustomerId);
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('customer', 'vendor', 'admin')
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.requestService.findOne(id);
+  async findOne(@Req() req, @Param('id') id: string) {
+    const request = await this.requestService.findOne(id);
+
+    if (req.user.role === 'admin') {
+      return request;
+    }
+
+    if (
+      req.user.role === 'customer' &&
+      String(request.customerId) === String(req.user.uid)
+    ) {
+      return request;
+    }
+
+    if (req.user.role === 'vendor') {
+      const vendorRequests = await this.requestService.findByVendorUser(
+        req.user.uid,
+      );
+      const allowedRequest = vendorRequests.find(
+        (item) => String(item._id) === String(id),
+      );
+      if (allowedRequest) {
+        return request;
+      }
+    }
+
+    throw new ForbiddenException('You do not have access to this request');
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRequestDto: UpdateRequestDto) {
-    return this.requestService.update(id, updateRequestDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.requestService.remove(id);
-  }
-
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('vendor')
   @Patch(':id/accept')
-  accept(@Param('id') id: string, @Body('actorUserId') actorUserId?: string) {
-    return this.requestService.accept(id, actorUserId);
+  accept(@Req() req, @Param('id') id: string) {
+    return this.requestService.accept(id, req.user.uid);
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('vendor')
   @Patch(':id/reject')
-  reject(@Param('id') id: string, @Body('actorUserId') actorUserId?: string) {
-    return this.requestService.reject(id, actorUserId);
+  reject(@Req() req, @Param('id') id: string) {
+    return this.requestService.reject(id, req.user.uid);
   }
 }

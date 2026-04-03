@@ -7,6 +7,7 @@ import { Vendor, VendorSchema } from '../vendor/schemas/vendor.schema';
 import { Event, EventSchema } from '../event/schemas/event.schema';
 import { UserModule } from '../user/user.module';
 import { NotificationModule } from '../notification/notification.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { NotificationModule } from '../notification/notification.module';
     ]),
     UserModule,
     NotificationModule,
+    AuthModule,
   ],
   controllers: [BookingController],
   providers: [BookingService],

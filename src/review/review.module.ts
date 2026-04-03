@@ -6,6 +6,7 @@ import { Review, ReviewSchema } from './schemas/review.schema';
 import { BookingModule } from '../booking/booking.module';
 import { UserModule } from '../user/user.module';
 import { VendorModule } from '../vendor/vendor.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { VendorModule } from '../vendor/vendor.module';
     BookingModule,
     UserModule,
     VendorModule,
+    AuthModule,
   ],
   controllers: [ReviewController],
   providers: [ReviewService],

@@ -3,10 +3,12 @@ import { Model } from 'mongoose';
 import { Notification, NotificationDocument } from './schemas/notification.schema';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { BookingDocument } from '../booking/schemas/booking.schema';
+import { EventsGateway } from '../events/events.gateway';
 export declare class NotificationService implements OnModuleInit {
     private notificationModel;
     private bookingModel;
-    constructor(notificationModel: Model<NotificationDocument>, bookingModel: Model<BookingDocument>);
+    private eventsGateway;
+    constructor(notificationModel: Model<NotificationDocument>, bookingModel: Model<BookingDocument>, eventsGateway: EventsGateway);
     onModuleInit(): void;
     create(createNotificationDto: CreateNotificationDto): Promise<Notification>;
     generateEventReminders(): Promise<void>;

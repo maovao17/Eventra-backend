@@ -82,7 +82,9 @@ let EventService = class EventService {
         if (dto.location !== undefined) {
             updatePayload.location = this.normalizeLocation(dto.location);
         }
-        const updated = await this.eventModel.findByIdAndUpdate(id, updatePayload, { new: true }).exec();
+        const updated = await this.eventModel
+            .findByIdAndUpdate(id, updatePayload, { new: true })
+            .exec();
         if (!updated)
             throw new common_1.NotFoundException('Event not found');
         return updated;

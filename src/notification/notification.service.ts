@@ -1,32 +1,51 @@
 import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Notification, NotificationDocument } from './schemas/notification.schema';
+import {
+  Notification,
+  NotificationDocument,
+} from './schemas/notification.schema';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { Booking, BookingDocument } from '../booking/schemas/booking.schema';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class NotificationService implements OnModuleInit {
   constructor(
-    @InjectModel(Notification.name) private notificationModel: Model<NotificationDocument>,
+    @InjectModel(Notification.name)
+    private notificationModel: Model<NotificationDocument>,
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
+    private eventsGateway: EventsGateway,
   ) {}
 
   onModuleInit() {
     void this.generateEventReminders();
-    const interval = setInterval(() => {
-      void this.generateEventReminders();
-    }, 12 * 60 * 60 * 1000);
+    const interval = setInterval(
+      () => {
+        void this.generateEventReminders();
+      },
+      12 * 60 * 60 * 1000,
+    );
     interval.unref();
   }
 
-  async create(createNotificationDto: CreateNotificationDto): Promise<Notification> {
+  async create(
+    createNotificationDto: CreateNotificationDto,
+  ): Promise<Notification> {
     const createdNotification = new this.notificationModel({
       ...createNotificationDto,
       read: false,
       createdAt: new Date(),
     });
-    return createdNotification.save();
+    const saved = await createdNotification.save();
+    this.eventsGateway.broadcastNotification({
+      message: saved.message,
+      type: saved.type,
+      bookingId: saved.bookingId ? String(saved.bookingId) : undefined,
+      vendorId: saved.vendorId ? String(saved.vendorId) : undefined,
+      userId: saved.userId ? String(saved.userId) : undefined,
+    });
+    return saved;
   }
 
   async generateEventReminders() {
@@ -45,7 +64,9 @@ export class NotificationService implements OnModuleInit {
       const eventDate = new Date(booking.date);
       eventDate.setHours(0, 0, 0, 0);
 
-      const diffDays = Math.round((eventDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+      const diffDays = Math.round(
+        (eventDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
+      );
       if (diffDays !== 1 && diffDays !== 3) continue;
 
       const existing = await this.notificationModel.findOne({
@@ -72,11 +93,17 @@ export class NotificationService implements OnModuleInit {
   }
 
   async findByUser(userId: string): Promise<Notification[]> {
-    return this.notificationModel.find({ userId }).sort({ createdAt: -1 }).exec();
+    return this.notificationModel
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async findByVendor(vendorId: string): Promise<Notification[]> {
-    return this.notificationModel.find({ vendorId }).sort({ createdAt: -1 }).exec();
+    return this.notificationModel
+      .find({ vendorId })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async findOne(id: string): Promise<Notification> {
@@ -86,13 +113,17 @@ export class NotificationService implements OnModuleInit {
   }
 
   async markAsRead(id: string): Promise<Notification> {
-    const updated = await this.notificationModel.findByIdAndUpdate(id, { read: true }, { new: true }).exec();
+    const updated = await this.notificationModel
+      .findByIdAndUpdate(id, { read: true }, { new: true })
+      .exec();
     if (!updated) throw new NotFoundException('Notification not found');
     return updated;
   }
 
   async update(id: string, updateNotificationDto: any): Promise<Notification> {
-    const updated = await this.notificationModel.findByIdAndUpdate(id, updateNotificationDto, { new: true }).exec();
+    const updated = await this.notificationModel
+      .findByIdAndUpdate(id, updateNotificationDto, { new: true })
+      .exec();
     if (!updated) throw new NotFoundException('Notification not found');
     return updated;
   }

@@ -1,6 +1,12 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { WinstonModule } from 'nest-winston';
+import * as winston from 'winston';
 import { ConfigModule } from '@nestjs/config';
+import * as Joi from 'joi';
 import { AdminModule } from './admin/admin.module';
+import { EventsGateway } from './events/events.gateway';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -16,14 +22,44 @@ import { PayoutModule } from './payout/payout.module';
 import { NotificationModule } from './notification/notification.module';
 import { ReviewModule } from './review/review.module';
 import { AuthModule } from './auth/auth.module';
-
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: Joi.object({
+        DB_URI: Joi.string().uri().default('mongodb://localhost:27017/eventra'),
+        PORT: Joi.number().default(3002),
+        CORS_ORIGIN: Joi.string().default('http://localhost:3000'),
+        RAZORPAY_KEY_ID: Joi.string().required(),
+        RAZORPAY_KEY_SECRET: Joi.string().required(),
+        FIREBASE_SERVICE_ACCOUNT_PATH: Joi.string().optional(),
+      }),
+      validationOptions: { allowUnknown: true, abortEarly: false },
+    }),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60,
+          limit: 30,
+        },
+      ],
+    }),
+    WinstonModule.forRoot({
+      transports: [
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            winston.format.colorize(),
+            winston.format.simple(),
+          ),
+        }),
+      ],
+    }),
     AdminModule,
     MongooseModule.forRoot(
-      process.env.DB_URI || 'mongodb://localhost:27017/eventra',
+      process.env.DB_URI ?? 'mongodb://localhost:27017/eventra',
     ),
     UserModule,
     ServiceModule,
@@ -37,8 +73,16 @@ import { AuthModule } from './auth/auth.module';
     PayoutModule,
     NotificationModule,
     AuthModule,
+    ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    EventsGateway,
+  ],
 })
 export class AppModule {}

@@ -114,7 +114,11 @@ export class CreateVendorDto {
 
   @IsOptional()
   @Transform(({ value }) =>
-    Array.isArray(value) ? value : typeof value === 'string' && value.trim() ? [value.trim()] : [],
+    Array.isArray(value)
+      ? value
+      : typeof value === 'string' && value.trim()
+        ? [value.trim()]
+        : [],
   )
   @IsArray()
   @IsString({ each: true })

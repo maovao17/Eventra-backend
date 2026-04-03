@@ -9,6 +9,12 @@ export class Payment {
   @Prop({ required: true })
   bookingId: string;
 
+  @Prop({ required: false })
+  eventId?: string;
+
+  @Prop({ required: false })
+  vendorId?: string;
+
   @Prop({ required: true })
   customerId: string;
 
@@ -18,9 +24,43 @@ export class Payment {
   @Prop({ required: true })
   amount: number;
 
+  @Prop({ required: false, default: 0 })
+  bookingAmount?: number;
+
+  @Prop({ required: false, default: 0 })
+  platformFee?: number;
+
+  @Prop({ required: false, default: 0 })
+  commissionAmount?: number;
+
+  @Prop({ required: false, default: 0 })
+  vendorPayoutAmount?: number;
+
+  @Prop({ required: false })
+  payoutId?: string;
+
+  @Prop({ required: false, unique: true, sparse: true })
+  razorpayPaymentId?: string;
+
+  @Prop({ required: false })
+  razorpayOrderId?: string;
+
   @Prop({ required: true, enum: ['success', 'failed'] })
   status: string;
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);
+
+// Performance indexes
+PaymentSchema.index({ bookingId: 1 });
+PaymentSchema.index(
+  { bookingId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: 'success' },
+  },
+);
+PaymentSchema.index({ razorpayPaymentId: 1 }, { unique: true, sparse: true });
+PaymentSchema.index({ razorpayOrderId: 1 });
+
 PaymentSchema.set('toJSON', { versionKey: false });

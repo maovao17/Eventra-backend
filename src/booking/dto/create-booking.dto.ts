@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class CreateBookingDto {
   @IsString()
@@ -47,4 +53,8 @@ export class CreateBookingDto {
   @Min(0)
   @IsOptional()
   guests?: number;
+
+  @IsString()
+  @IsOptional()
+  status?: 'pending' | 'accepted' | 'rejected' | 'confirmed' | 'completed' | 'cancelled';
 }

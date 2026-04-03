@@ -10,4 +10,5 @@ export declare class CreateBookingDto {
     location?: string;
     eventType?: string;
     guests?: number;
+    status?: 'pending' | 'accepted' | 'rejected' | 'confirmed' | 'completed' | 'cancelled';
 }

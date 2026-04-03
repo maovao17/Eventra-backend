@@ -37,8 +37,8 @@ export declare class VendorBankDetails {
     bankName?: string;
 }
 export declare class Vendor {
-    _id: Types.ObjectId;
     userId?: string;
+    _id: Types.ObjectId;
     name: string;
     email?: string;
     phone?: string;

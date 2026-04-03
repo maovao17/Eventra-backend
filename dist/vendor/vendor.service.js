@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const vendor_schema_1 = require("./schemas/vendor.schema");
+const service_schema_1 = require("../service/schemas/service.schema");
 const booking_schema_1 = require("../booking/schemas/booking.schema");
 const request_schema_1 = require("../request/schemas/request.schema");
 const review_schema_1 = require("../review/schemas/review.schema");
@@ -24,13 +25,15 @@ const notification_schema_1 = require("../notification/schemas/notification.sche
 const user_service_1 = require("../user/user.service");
 let VendorService = class VendorService {
     vendorModel;
+    serviceModel;
     bookingModel;
     requestModel;
     reviewModel;
     notificationModel;
     userService;
-    constructor(vendorModel, bookingModel, requestModel, reviewModel, notificationModel, userService) {
+    constructor(vendorModel, serviceModel, bookingModel, requestModel, reviewModel, notificationModel, userService) {
         this.vendorModel = vendorModel;
+        this.serviceModel = serviceModel;
         this.bookingModel = bookingModel;
         this.requestModel = requestModel;
         this.reviewModel = reviewModel;
@@ -39,6 +42,35 @@ let VendorService = class VendorService {
     }
     async create(dto) {
         return this.vendorModel.create(dto);
+    }
+    async findPublic() {
+        return this.vendorModel.find().sort({ createdAt: -1 }).exec();
+    }
+    async findOneOrThrow(id) {
+        const vendor = await this.vendorModel.findById(id).exec();
+        if (!vendor) {
+            throw new common_1.NotFoundException('Vendor not found');
+        }
+        return vendor;
+    }
+    async findByServices(servicesQuery) {
+        const serviceTerms = String(servicesQuery || '')
+            .split(',')
+            .map((item) => item.trim().toLowerCase())
+            .filter(Boolean);
+        const vendors = await this.findPublic();
+        if (!serviceTerms.length) {
+            return vendors;
+        }
+        return vendors.filter((vendor) => {
+            const categoryTerms = Array.isArray(vendor.category)
+                ? vendor.category.map((item) => String(item).toLowerCase())
+                : [];
+            const legacyServiceTerms = Array.isArray(vendor.services)
+                ? vendor.services.map((item) => String(item?.name || '').toLowerCase())
+                : [];
+            return serviceTerms.some((term) => [...categoryTerms, ...legacyServiceTerms].some((value) => value.includes(term)));
+        });
     }
     async getOrCreateVendorProfile(userId) {
         let vendor = await this.vendorModel.findOne({ userId });
@@ -50,7 +82,7 @@ let VendorService = class VendorService {
             vendor = await this.vendorModel.create({
                 userId,
                 name: user.name,
-                businessName: user.name,
+                businessName: user.businessName || user.name,
                 description: '',
                 category: [],
                 services: [],
@@ -61,13 +93,62 @@ let VendorService = class VendorService {
         return vendor;
     }
     async getByUserId(userId) {
-        return this.getOrCreateVendorProfile(userId);
+        const vendor = await this.getOrCreateVendorProfile(userId);
+        return this.withDerivedAvailability(vendor);
     }
     async updateByUserId(userId, dto) {
         const vendor = await this.getOrCreateVendorProfile(userId);
         Object.assign(vendor, dto);
         await vendor.save();
         return vendor;
+    }
+    async addPortfolioItems(userId, urls) {
+        const vendor = await this.getOrCreateVendorProfile(userId);
+        const existing = Array.isArray(vendor.portfolio) ? vendor.portfolio : [];
+        const incoming = urls.map((url) => ({
+            url,
+            caption: '',
+            category: '',
+            uploadedAt: new Date(),
+        }));
+        vendor.portfolio = [...existing, ...incoming];
+        vendor.gallery = [
+            ...(Array.isArray(vendor.gallery) ? vendor.gallery : []),
+            ...urls,
+        ];
+        await vendor.save();
+        return vendor;
+    }
+    async assignServices(userId, serviceIds) {
+        const vendor = await this.getOrCreateVendorProfile(userId);
+        vendor.servicesOffered = serviceIds;
+        const services = serviceIds.length
+            ? await this.serviceModel.find({ _id: { $in: serviceIds } }).exec()
+            : [];
+        vendor.services = services.map((service) => ({
+            name: String(service.name),
+            price: Number(service.price ?? 0),
+            description: String(service.description ?? ''),
+        }));
+        await vendor.save();
+        return vendor;
+    }
+    async updateAvailability(userId, payload) {
+        const vendor = await this.getOrCreateVendorProfile(userId);
+        const bookedDates = await this.getBookedDatesForVendor(String(vendor._id));
+        const manuallyBlockedDates = Array.isArray(payload.blockedDates)
+            ? payload.blockedDates.map((value) => new Date(value))
+            : [];
+        const mergedBlockedDates = Array.from(new Set([...manuallyBlockedDates, ...bookedDates].map((value) => new Date(value).toISOString().slice(0, 10)))).map((value) => new Date(value));
+        vendor.availability = {
+            blockedDates: mergedBlockedDates,
+            workingHours: {
+                start: payload.workingHours?.start || '09:00',
+                end: payload.workingHours?.end || '18:00',
+            },
+        };
+        await vendor.save();
+        return this.withDerivedAvailability(vendor);
     }
     async getDashboard(userId) {
         try {
@@ -76,7 +157,9 @@ let VendorService = class VendorService {
                 return this.emptyDashboard();
             }
             const vendorId = String(vendor?._id);
-            const bookings = await this.bookingModel.find({ vendorId: vendorId || "" });
+            const bookings = await this.bookingModel.find({
+                vendorId: vendorId || '',
+            });
             const pendingRequests = await this.requestModel.countDocuments({
                 vendorId,
                 status: 'pending',
@@ -102,8 +185,7 @@ let VendorService = class VendorService {
                 rating: vendor.rating || 0,
             };
         }
-        catch (err) {
-            console.error('Dashboard error:', err);
+        catch {
             return this.emptyDashboard();
         }
     }
@@ -173,7 +255,11 @@ let VendorService = class VendorService {
         return this.vendorModel.find({ status: 'pending' });
     }
     async approveVendor(id) {
-        return this.vendorModel.findByIdAndUpdate(id, { status: 'approved' }, { new: true });
+        return this.vendorModel.findByIdAndUpdate(id, {
+            status: 'approved',
+            isVerified: true,
+            verified: true,
+        }, { new: true });
     }
     async rejectVendor(id) {
         return this.vendorModel.findByIdAndUpdate(id, { status: 'rejected' }, { new: true });
@@ -181,16 +267,48 @@ let VendorService = class VendorService {
     async getAllVendors() {
         return this.vendorModel.find({});
     }
+    async getBookedDatesForVendor(vendorId) {
+        const bookings = await this.bookingModel
+            .find({
+            vendorId,
+            status: { $in: ['confirmed', 'completed'] },
+        })
+            .exec();
+        return bookings
+            .map((booking) => String(booking.date || booking.eventDetails?.date || ''))
+            .filter(Boolean)
+            .map((value) => new Date(value))
+            .filter((date) => !Number.isNaN(date.getTime()));
+    }
+    async withDerivedAvailability(vendor) {
+        const bookedDates = await this.getBookedDatesForVendor(String(vendor._id));
+        const manuallyBlocked = Array.isArray(vendor.availability?.blockedDates)
+            ? vendor.availability.blockedDates
+            : [];
+        const mergedBlocked = Array.from(new Set([...manuallyBlocked, ...bookedDates].map((value) => new Date(value).toISOString().slice(0, 10))));
+        const payload = vendor.toObject();
+        payload.availability = {
+            blockedDates: mergedBlocked,
+            bookedDates: bookedDates.map((value) => new Date(value).toISOString().slice(0, 10)),
+            workingHours: {
+                start: vendor.availability?.workingHours?.start || '09:00',
+                end: vendor.availability?.workingHours?.end || '18:00',
+            },
+        };
+        return payload;
+    }
 };
 exports.VendorService = VendorService;
 exports.VendorService = VendorService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(vendor_schema_1.Vendor.name)),
-    __param(1, (0, mongoose_1.InjectModel)(booking_schema_1.Booking.name)),
-    __param(2, (0, mongoose_1.InjectModel)(request_schema_1.Request.name)),
-    __param(3, (0, mongoose_1.InjectModel)(review_schema_1.Review.name)),
-    __param(4, (0, mongoose_1.InjectModel)(notification_schema_1.Notification.name)),
+    __param(1, (0, mongoose_1.InjectModel)(service_schema_1.Service.name)),
+    __param(2, (0, mongoose_1.InjectModel)(booking_schema_1.Booking.name)),
+    __param(3, (0, mongoose_1.InjectModel)(request_schema_1.Request.name)),
+    __param(4, (0, mongoose_1.InjectModel)(review_schema_1.Review.name)),
+    __param(5, (0, mongoose_1.InjectModel)(notification_schema_1.Notification.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

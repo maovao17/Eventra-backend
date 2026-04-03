@@ -85,15 +85,21 @@ export class VendorBankDetails {
 
 @Schema({ timestamps: true })
 export class Vendor {
-  _id: Types.ObjectId;
-
-  @Prop({ required: false, trim: true })
+  @Prop({ index: true })
   userId?: string;
+
+  _id: Types.ObjectId;
 
   @Prop({ required: true, trim: true })
   name: string;
 
-  @Prop({ required: false, unique: true, sparse: true, lowercase: true, trim: true })
+  @Prop({
+    required: false,
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    trim: true,
+  })
   email?: string;
 
   @Prop({ required: false, unique: true, sparse: true, trim: true })
@@ -108,7 +114,10 @@ export class Vendor {
   @Prop({ type: [String], default: [] })
   category?: string[];
 
-  @Prop({ type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Service' }], default: [] })
+  @Prop({
+    type: [{ type: MongooseSchema.Types.ObjectId, ref: 'Service' }],
+    default: [],
+  })
   servicesOffered?: Types.ObjectId[];
 
   @Prop({ type: VendorLocation, default: {} })
@@ -166,10 +175,14 @@ export class Vendor {
   @Prop({ type: [Object], default: [] })
   reviews?: any[];
 
-@Prop({ default: false })
+  @Prop({ default: false })
   verified?: boolean;
 
-  @Prop({ default: 'pending', enum: ['pending', 'approved', 'rejected'] })
+  @Prop({
+    index: true,
+    default: 'pending',
+    enum: ['pending', 'approved', 'rejected'],
+  })
   status: string;
 
   @Prop({ type: VendorBankDetails, default: {} })

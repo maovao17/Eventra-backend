@@ -1,12 +1,15 @@
 import { Document, Schema as MongooseSchema } from 'mongoose';
 export type PayoutDocument = Payout & Document;
 export declare class Payout {
+    bookingId?: string;
+    paymentId?: string;
     vendorId: MongooseSchema.Types.ObjectId;
     eventId: MongooseSchema.Types.ObjectId;
     totalEarned: number;
     commissionCut: number;
     payoutAmount: number;
     status: string;
+    paidAt?: Date;
 }
 export declare const PayoutSchema: MongooseSchema<Payout, import("mongoose").Model<Payout, any, any, any, Document<unknown, any, Payout, any, {}> & Payout & {
     _id: import("mongoose").Types.ObjectId;

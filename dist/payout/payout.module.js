@@ -12,12 +12,20 @@ const mongoose_1 = require("@nestjs/mongoose");
 const payout_service_1 = require("./payout.service");
 const payout_controller_1 = require("./payout.controller");
 const payout_schema_1 = require("./schemas/payout.schema");
+const booking_schema_1 = require("../booking/schemas/booking.schema");
+const vendor_module_1 = require("../vendor/vendor.module");
 let PayoutModule = class PayoutModule {
 };
 exports.PayoutModule = PayoutModule;
 exports.PayoutModule = PayoutModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([{ name: payout_schema_1.Payout.name, schema: payout_schema_1.PayoutSchema }])],
+        imports: [
+            mongoose_1.MongooseModule.forFeature([
+                { name: payout_schema_1.Payout.name, schema: payout_schema_1.PayoutSchema },
+                { name: booking_schema_1.Booking.name, schema: booking_schema_1.BookingSchema },
+            ]),
+            vendor_module_1.VendorModule,
+        ],
         controllers: [payout_controller_1.PayoutController],
         providers: [payout_service_1.PayoutService],
         exports: [payout_service_1.PayoutService],

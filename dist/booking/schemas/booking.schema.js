@@ -75,11 +75,26 @@ __decorate([
     __metadata("design:type", Number)
 ], Booking.prototype, "guests", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, default: 'pending', enum: ['pending', 'accepted', 'rejected', 'confirmed', 'completed', 'cancelled'] }),
+    (0, mongoose_1.Prop)({
+        required: true,
+        default: 'pending',
+        enum: [
+            'pending',
+            'accepted',
+            'rejected',
+            'confirmed',
+            'completed',
+            'cancelled',
+        ],
+    }),
     __metadata("design:type", String)
 ], Booking.prototype, "status", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false, default: 'pending', enum: ['pending', 'partial', 'paid'] }),
+    (0, mongoose_1.Prop)({
+        required: false,
+        default: 'pending',
+        enum: ['pending', 'partial', 'paid'],
+    }),
     __metadata("design:type", String)
 ], Booking.prototype, "paymentStatus", void 0);
 __decorate([
@@ -100,12 +115,15 @@ __decorate([
     __metadata("design:type", Array)
 ], Booking.prototype, "completionImages", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false, default: "pending", enum: ["pending", "paid"] }),
+    (0, mongoose_1.Prop)({ required: false, default: 'pending', enum: ['pending', 'paid'] }),
     __metadata("design:type", String)
 ], Booking.prototype, "payoutStatus", void 0);
 exports.Booking = Booking = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Booking);
 exports.BookingSchema = mongoose_1.SchemaFactory.createForClass(Booking);
+exports.BookingSchema.index({ requestId: 1 });
+exports.BookingSchema.index({ vendorId: 1, date: 1 });
+exports.BookingSchema.index({ customerId: 1, status: 1 });
 exports.BookingSchema.set('toJSON', { versionKey: false });
 //# sourceMappingURL=booking.schema.js.map

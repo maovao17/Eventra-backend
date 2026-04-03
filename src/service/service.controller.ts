@@ -1,12 +1,27 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, Query, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  Query,
+  UsePipes,
+  ValidationPipe,
+  UseGuards,
+} from '@nestjs/common';
 import { ServiceService } from './service.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
+import { FirebaseAuthGuard } from '../auth/firebase.guard';
+import { AdminGuard } from '../auth/admin.guard';
 
 @Controller('services')
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
+  @UseGuards(FirebaseAuthGuard, AdminGuard)
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   @Post()
   create(@Body() dto: CreateServiceDto) {
@@ -25,12 +40,14 @@ export class ServiceController {
     return this.serviceService.findById(id);
   }
 
+  @UseGuards(FirebaseAuthGuard, AdminGuard)
   @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateServiceDto) {
     return this.serviceService.update(id, dto);
   }
 
+  @UseGuards(FirebaseAuthGuard, AdminGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.serviceService.remove(id);

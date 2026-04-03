@@ -1,10 +1,12 @@
 import { Document } from 'mongoose';
 export type UserDocument = User & Document;
 export declare class User {
-    phoneNumber: string;
+    phoneNumber?: string;
     name: string;
+    email?: string;
     profile_photo?: string;
     userId: string;
+    authProvider: 'phone' | 'google';
     role: string;
     businessName?: string;
 }

@@ -16,19 +16,24 @@ import { BookingService } from '../booking/booking.service';
 import { UserService } from '../user/user.service';
 import { VendorService } from '../vendor/vendor.service';
 import { EventService } from '../event/event.service';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class RequestService {
   constructor(
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
-    @Inject(forwardRef(() => BookingService)) private bookingService: BookingService,
+    @Inject(forwardRef(() => BookingService))
+    private bookingService: BookingService,
     private userService: UserService,
     private vendorService: VendorService,
     private eventService: EventService,
+    private eventsGateway: EventsGateway,
   ) {}
 
   async create(createRequestDto: CreateRequestDto): Promise<RequestDocument> {
-    const customer = await this.userService.findByUserId(createRequestDto.customerId);
+    const customer = await this.userService.findByUserId(
+      createRequestDto.customerId,
+    );
     if (customer.role !== 'customer') {
       throw new ForbiddenException('Only customers can create requests');
     }
@@ -40,7 +45,9 @@ export class RequestService {
 
     const event = await this.eventService.findById(createRequestDto.eventId);
     if (event.customerId !== createRequestDto.customerId) {
-      throw new ForbiddenException('Customers can only request vendors for their own events');
+      throw new ForbiddenException(
+        'Customers can only request vendors for their own events',
+      );
     }
 
     const existingRequest = await this.requestModel
@@ -52,7 +59,9 @@ export class RequestService {
       .exec();
 
     if (existingRequest) {
-      throw new ConflictException('A request already exists for this vendor and event');
+      throw new ConflictException(
+        'A request already exists for this vendor and event',
+      );
     }
 
     const createdRequest = new this.requestModel(createRequestDto);
@@ -64,7 +73,10 @@ export class RequestService {
   }
 
   async findByUser(userId: string): Promise<RequestDocument[]> {
-    return this.requestModel.find({ customerId: userId }).sort({ createdAt: -1 }).exec();
+    return this.requestModel
+      .find({ customerId: userId })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async findByVendor(vendorId: string): Promise<RequestDocument[]> {
@@ -76,8 +88,12 @@ export class RequestService {
     const vendorId = String(vendor._id);
     const requests = await this.findByVendor(vendorId);
 
-    const eventIds = Array.from(new Set(requests.map((request) => String(request.eventId))));
-    const customerIds = Array.from(new Set(requests.map((request) => String(request.customerId))));
+    const eventIds = Array.from(
+      new Set(requests.map((request) => String(request.eventId))),
+    );
+    const customerIds = Array.from(
+      new Set(requests.map((request) => String(request.customerId))),
+    );
 
     const eventEntries = await Promise.all(
       eventIds.map(async (eventId) => {
@@ -101,18 +117,43 @@ export class RequestService {
       }),
     );
 
+    const bookingEntries = await Promise.all(
+      requests.map(
+        async (request) =>
+          [
+            String(request._id),
+            await this.bookingService.findByRequestId(String(request._id)),
+          ] as const,
+      ),
+    );
+
     const eventsById = new Map(eventEntries);
     const customersById = new Map(customerEntries);
+    const bookingsByRequestId = new Map(bookingEntries);
 
     return requests.map((request) => ({
       ...request.toObject(),
       event: eventsById.get(String(request.eventId)),
       customer: customersById.get(String(request.customerId)),
+      booking: bookingsByRequestId.get(String(request._id)) ?? null,
     }));
   }
 
   async findByEvent(eventId: string): Promise<RequestDocument[]> {
     return this.requestModel.find({ eventId }).sort({ createdAt: -1 }).exec();
+  }
+
+  async findByQuery(filters: {
+    customerId?: string;
+    vendorId?: string;
+    eventId?: string;
+  }): Promise<RequestDocument[]> {
+    const query: Record<string, string> = {};
+    if (filters.customerId) query.customerId = filters.customerId;
+    if (filters.vendorId) query.vendorId = filters.vendorId;
+    if (filters.eventId) query.eventId = filters.eventId;
+
+    return this.requestModel.find(query).sort({ createdAt: -1 }).exec();
   }
 
   async findOne(id: string): Promise<RequestDocument> {
@@ -144,7 +185,10 @@ export class RequestService {
     return request;
   }
 
-  private async validateVendorActor(actorUserId: string | undefined, vendorId: string) {
+  private async validateVendorActor(
+    actorUserId: string | undefined,
+    vendorId: string,
+  ) {
     if (!actorUserId) {
       throw new BadRequestException('actorUserId is required');
     }
@@ -156,7 +200,9 @@ export class RequestService {
 
     const vendor = await this.vendorService.findByUserId(actorUserId);
     if (!vendor || String(vendor._id) !== String(vendorId)) {
-      throw new ForbiddenException('Vendors can only update their own requests');
+      throw new ForbiddenException(
+        'Vendors can only update their own requests',
+      );
     }
   }
 
@@ -181,6 +227,13 @@ export class RequestService {
       customerId: request.customerId,
       vendorId: request.vendorId,
       eventId: request.eventId,
+    });
+
+    this.eventsGateway.broadcastBookingUpdate({
+      bookingId: String(booking._id),
+      status: 'accepted',
+      vendorId: booking.vendorId,
+      customerId: booking.customerId,
     });
 
     return { request, booking };

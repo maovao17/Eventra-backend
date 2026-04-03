@@ -16,13 +16,20 @@ exports.ReviewController = void 0;
 const common_1 = require("@nestjs/common");
 const review_service_1 = require("./review.service");
 const create_review_dto_1 = require("./dto/create-review.dto");
+const firebase_guard_1 = require("../auth/firebase.guard");
+const roles_guard_1 = require("../auth/roles.guard");
+const roles_decorator_1 = require("../auth/roles.decorator");
 let ReviewController = class ReviewController {
     reviewService;
     constructor(reviewService) {
         this.reviewService = reviewService;
     }
-    create(createReviewDto) {
-        return this.reviewService.create(createReviewDto);
+    create(req, createReviewDto) {
+        return this.reviewService.create({
+            ...createReviewDto,
+            customerId: req.user.uid,
+            userId: req.user.uid,
+        });
     }
     findAll(vendorId, bookingId) {
         if (bookingId) {
@@ -33,16 +40,19 @@ let ReviewController = class ReviewController {
         }
         return this.reviewService.findAll();
     }
-    reply(payload) {
-        return this.reviewService.reply(payload.reviewId, payload.actorUserId, payload.reply);
+    reply(req, payload) {
+        return this.reviewService.reply(payload.reviewId, req.user.uid, payload.reply);
     }
 };
 exports.ReviewController = ReviewController;
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer'),
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_review_dto_1.CreateReviewDto]),
+    __metadata("design:paramtypes", [Object, create_review_dto_1.CreateReviewDto]),
     __metadata("design:returntype", void 0)
 ], ReviewController.prototype, "create", null);
 __decorate([
@@ -54,10 +64,13 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ReviewController.prototype, "findAll", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor'),
     (0, common_1.Post)('reply'),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], ReviewController.prototype, "reply", null);
 exports.ReviewController = ReviewController = __decorate([

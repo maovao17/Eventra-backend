@@ -13,32 +13,34 @@ async function seedBasicServices() {
     // Check if services already exist
     const existingServices = await serviceService.findAll(1000, 0);
     if (existingServices.length > 0) {
-      console.log(`📋 Found ${existingServices.length} existing services. Skipping seeding.`);
+      console.log(
+        `📋 Found ${existingServices.length} existing services. Skipping seeding.`,
+      );
       return;
     }
 
     // Basic services data
     const services = [
-      { name: "Catering", category: "Food" },
-      { name: "Photography", category: "Media" },
-      { name: "Videography", category: "Media" },
-      { name: "DJ", category: "Entertainment" },
-      { name: "Live Band", category: "Entertainment" },
-      { name: "Decoration", category: "Setup" },
-      { name: "Lighting", category: "Setup" },
-      { name: "Makeup Artist", category: "Personal" },
-      { name: "Hair Styling", category: "Personal" },
-      { name: "Venue Booking", category: "Logistics" },
-      { name: "Invitation Design", category: "Planning" },
-      { name: "Event Planning", category: "Planning" },
-      { name: "Security", category: "Logistics" },
-      { name: "Transportation", category: "Logistics" },
-      { name: "Cake", category: "Food" },
-      { name: "Bartender", category: "Food" },
-      { name: "Photo Booth", category: "Media" },
-      { name: "Sound System", category: "Setup" },
-      { name: "Stage Setup", category: "Setup" },
-      { name: "Entertainment Host", category: "Entertainment" }
+      { name: 'Catering', category: 'Food' },
+      { name: 'Photography', category: 'Media' },
+      { name: 'Videography', category: 'Media' },
+      { name: 'DJ', category: 'Entertainment' },
+      { name: 'Live Band', category: 'Entertainment' },
+      { name: 'Decoration', category: 'Setup' },
+      { name: 'Lighting', category: 'Setup' },
+      { name: 'Makeup Artist', category: 'Personal' },
+      { name: 'Hair Styling', category: 'Personal' },
+      { name: 'Venue Booking', category: 'Logistics' },
+      { name: 'Invitation Design', category: 'Planning' },
+      { name: 'Event Planning', category: 'Planning' },
+      { name: 'Security', category: 'Logistics' },
+      { name: 'Transportation', category: 'Logistics' },
+      { name: 'Cake', category: 'Food' },
+      { name: 'Bartender', category: 'Food' },
+      { name: 'Photo Booth', category: 'Media' },
+      { name: 'Sound System', category: 'Setup' },
+      { name: 'Stage Setup', category: 'Setup' },
+      { name: 'Entertainment Host', category: 'Entertainment' },
     ];
 
     let createdCount = 0;
@@ -53,7 +55,6 @@ async function seedBasicServices() {
     }
 
     console.log(`🎉 Successfully seeded ${createdCount} basic services!`);
-
   } catch (error) {
     console.error('❌ Error seeding services:', error);
   } finally {

@@ -37,12 +37,16 @@ const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const app_module_1 = require("./app.module");
 const path_1 = require("path");
+const bodyParser = __importStar(require("body-parser"));
 const fs_1 = require("fs");
 const express_1 = require("express");
 const admin = __importStar(require("firebase-admin"));
+const nest_winston_1 = require("nest-winston");
+const winston = __importStar(require("winston"));
 async function bootstrap() {
     if (!admin.apps.length) {
-        const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH || (0, path_1.join)(process.cwd(), 'serviceAccountKey.json');
+        const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
+            (0, path_1.join)(process.cwd(), 'serviceAccountKey.json');
         if ((0, fs_1.existsSync)(serviceAccountPath)) {
             admin.initializeApp({
                 credential: admin.credential.cert(require(serviceAccountPath)),
@@ -52,15 +56,38 @@ async function bootstrap() {
             admin.initializeApp();
         }
     }
-    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const app = await core_1.NestFactory.create(app_module_1.AppModule, {
+        logger: nest_winston_1.WinstonModule.createLogger({
+            transports: [
+                new winston.transports.Console({
+                    format: winston.format.combine(winston.format.timestamp(), winston.format.colorize(), winston.format.printf(({ level, message, timestamp }) => {
+                        return `${timestamp} [${level}] ${message}`;
+                    })),
+                }),
+            ],
+        }),
+    });
     const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
         .split(',')
         .map((origin) => origin.trim())
         .filter(Boolean);
     app.enableCors({
-        origin: allowedOrigins,
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+            }
+            else {
+                callback(new Error('CORS policy violation'), false);
+            }
+        },
         credentials: true,
+        methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
     });
+    app.use(bodyParser.json({
+        verify: (req, res, buf) => {
+            req.rawBody = buf.toString();
+        },
+    }));
     const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads');
     if (!(0, fs_1.existsSync)(uploadsDir)) {
         (0, fs_1.mkdirSync)(uploadsDir, { recursive: true });
@@ -68,7 +95,7 @@ async function bootstrap() {
     app.use('/uploads', (0, express_1.static)(uploadsDir));
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
-        forbidNonWhitelisted: true,
+        forbidNonWhitelisted: false,
         transform: true,
     }));
     await app.listen(process.env.PORT ?? 3002);

@@ -17,35 +17,100 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const user_schema_1 = require("./schemas/user.schema");
+const vendor_schema_1 = require("../vendor/schemas/vendor.schema");
+const booking_schema_1 = require("../booking/schemas/booking.schema");
+const request_schema_1 = require("../request/schemas/request.schema");
 let UserService = class UserService {
     userModel;
-    constructor(userModel) {
+    vendorModel;
+    bookingModel;
+    requestModel;
+    constructor(userModel, vendorModel, bookingModel, requestModel) {
         this.userModel = userModel;
+        this.vendorModel = vendorModel;
+        this.bookingModel = bookingModel;
+        this.requestModel = requestModel;
+    }
+    getAdminEmail() {
+        return process.env.ADMIN_EMAIL?.trim().toLowerCase() || '';
+    }
+    isAdminEmail(email) {
+        const normalizedEmail = String(email || '').trim().toLowerCase();
+        const adminEmail = this.getAdminEmail();
+        return Boolean(adminEmail) && normalizedEmail === adminEmail;
+    }
+    resolvePersistedRole(dto) {
+        if (this.isAdminEmail(dto.email)) {
+            return 'admin';
+        }
+        return dto.role === 'vendor' ? 'vendor' : 'customer';
     }
     sanitize(doc) {
         if (!doc)
-            return doc;
-        const obj = doc.toObject ? doc.toObject() : doc;
+            throw new common_1.NotFoundException('User not found');
+        const obj = doc.toObject
+            ? doc.toObject()
+            : doc;
         return obj;
     }
     async create(dto) {
         try {
-            const existingUser = await this.userModel.findOne({ userId: dto.userId }).exec();
+            if (dto.role === 'admin') {
+                throw new common_1.ForbiddenException('Admin role cannot be self-assigned');
+            }
+            if (dto.authProvider === 'google') {
+                if (!dto.email) {
+                    throw new common_1.BadRequestException('email is required for Google users');
+                }
+                dto.email = dto.email.toLowerCase();
+                dto.phoneNumber = undefined;
+            }
+            if (dto.authProvider === 'phone') {
+                if (!dto.phoneNumber) {
+                    throw new common_1.BadRequestException('phoneNumber is required for phone users');
+                }
+                dto.email = dto.email?.toLowerCase();
+            }
+            const persistedRole = this.resolvePersistedRole(dto);
+            const existingUser = await this.userModel
+                .findOne({ userId: dto.userId })
+                .exec();
             if (existingUser) {
                 existingUser.name = dto.name;
                 existingUser.phoneNumber = dto.phoneNumber;
-                existingUser.role = dto.role;
+                existingUser.email = dto.email?.toLowerCase();
+                existingUser.authProvider = dto.authProvider;
+                existingUser.role = persistedRole;
                 existingUser.businessName = dto.businessName;
                 existingUser.profile_photo = dto.profile_photo;
                 await existingUser.save();
                 return this.sanitize(existingUser);
             }
-            const createUser = await this.userModel.create(dto);
+            if (dto.email) {
+                const existingEmailUser = await this.userModel
+                    .findOne({ email: dto.email.toLowerCase() })
+                    .exec();
+                if (existingEmailUser) {
+                    throw new common_1.ConflictException('Email already exists.');
+                }
+            }
+            if (dto.phoneNumber) {
+                const existingPhoneUser = await this.userModel
+                    .findOne({ phoneNumber: dto.phoneNumber })
+                    .exec();
+                if (existingPhoneUser) {
+                    throw new common_1.ConflictException('Phone number already exists.');
+                }
+            }
+            const createUser = await this.userModel.create({
+                ...dto,
+                role: persistedRole,
+            });
             return this.sanitize(createUser);
         }
         catch (err) {
             if (err?.code === 11000) {
-                throw new common_1.ConflictException(`Phone number already exists.`);
+                throw new common_1.ConflictException(`User already exists.`);
             }
             if (err?.name === 'ValidationError') {
                 throw new common_1.BadRequestException(err.message);
@@ -79,6 +144,33 @@ let UserService = class UserService {
             throw new common_1.NotFoundException('User not found');
         return this.sanitize(user);
     }
+    async assertVendorCanAccessUser(vendorUserId, targetUserId) {
+        if (vendorUserId === targetUserId) {
+            return this.findByUserId(targetUserId);
+        }
+        const vendor = await this.vendorModel.findOne({ userId: vendorUserId }).exec();
+        if (!vendor) {
+            throw new common_1.ForbiddenException('Vendor profile not found');
+        }
+        const [bookingRelationship, requestRelationship] = await Promise.all([
+            this.bookingModel
+                .exists({
+                vendorId: String(vendor._id),
+                customerId: targetUserId,
+            })
+                .exec(),
+            this.requestModel
+                .exists({
+                vendorId: String(vendor._id),
+                customerId: targetUserId,
+            })
+                .exec(),
+        ]);
+        if (!bookingRelationship && !requestRelationship) {
+            throw new common_1.ForbiddenException('Vendors can only access users linked to their bookings or requests');
+        }
+        return this.findByUserId(targetUserId);
+    }
     async update(id, dto) {
         if (!(0, mongoose_2.isValidObjectId)(id))
             throw new common_1.NotFoundException('User not found');
@@ -91,11 +183,12 @@ let UserService = class UserService {
             return this.sanitize(updateUser);
         }
         catch (err) {
-            if (err?.code === 11000) {
-                throw new common_1.ConflictException(`Phone number already exists.`);
+            const error = err;
+            if (error.code === 11000) {
+                throw new common_1.ConflictException(`User already exists.`);
             }
-            if (err?.name === 'ValidationError') {
-                throw new common_1.BadRequestException(err.message);
+            if (error.name === 'ValidationError') {
+                throw new common_1.BadRequestException(error.message || 'Invalid user update');
             }
             throw err;
         }
@@ -113,6 +206,12 @@ exports.UserService = UserService;
 exports.UserService = UserService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
+    __param(1, (0, mongoose_1.InjectModel)(vendor_schema_1.Vendor.name)),
+    __param(2, (0, mongoose_1.InjectModel)(booking_schema_1.Booking.name)),
+    __param(3, (0, mongoose_1.InjectModel)(request_schema_1.Request.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model])
 ], UserService);
 //# sourceMappingURL=user.service.js.map

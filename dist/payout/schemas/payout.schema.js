@@ -13,14 +13,25 @@ exports.PayoutSchema = exports.Payout = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 let Payout = class Payout {
+    bookingId;
+    paymentId;
     vendorId;
     eventId;
     totalEarned;
     commissionCut;
     payoutAmount;
     status;
+    paidAt;
 };
 exports.Payout = Payout;
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], Payout.prototype, "bookingId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], Payout.prototype, "paymentId", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ type: mongoose_2.Schema.Types.ObjectId, ref: 'Vendor', required: true }),
     __metadata("design:type", mongoose_2.Schema.Types.ObjectId)
@@ -45,6 +56,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: true, enum: ['pending', 'paid'] }),
     __metadata("design:type", String)
 ], Payout.prototype, "status", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", Date)
+], Payout.prototype, "paidAt", void 0);
 exports.Payout = Payout = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Payout);

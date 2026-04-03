@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -11,79 +12,223 @@ import {
   Req,
   UploadedFile,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
-import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { FirebaseAuthGuard } from '../auth/firebase.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+
+type AuthUser = {
+  uid: string;
+  role: 'customer' | 'vendor' | 'admin';
+};
 
 @Controller('bookings')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
 
-  @Post()
-  create(@Body() dto: CreateBookingDto) {
-    return this.bookingService.create(dto);
-  }
-
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('customer', 'vendor', 'admin')
   @Get()
-  findAll(@Query('userId') userId?: string, @Query('customerId') customerId?: string, @Query('vendorId') vendorId?: string) {
-    const effectiveCustomerId = customerId ?? userId;
-    if (effectiveCustomerId) return this.bookingService.findByUser(effectiveCustomerId);
-    if (vendorId) return this.bookingService.findByVendor(vendorId);
-    return this.bookingService.findAll();
+  async findAll(
+    @Req() req: { user: AuthUser },
+    @Query('userId') userId?: string,
+    @Query('customerId') customerId?: string,
+    @Query('vendorId') vendorId?: string,
+    @Query('requestId') requestId?: string,
+  ) {
+    if (requestId) {
+      const booking = await this.bookingService.findByRequestId(requestId);
+      if (!booking) return [];
+
+      if (req.user.role === 'admin') {
+        return [booking];
+      }
+
+      if (req.user.role === 'customer') {
+        if (String(booking.customerId) !== String(req.user.uid)) {
+          throw new ForbiddenException(
+            'You do not have access to this booking',
+          );
+        }
+        return [booking];
+      }
+
+      // vendor
+      await this.bookingService.assertVendorOwnership(
+        String(booking._id),
+        req.user.uid,
+      );
+      return [booking];
+    }
+
+    if (req.user.role === 'admin') {
+      const effectiveCustomerId = customerId ?? userId;
+      if (effectiveCustomerId)
+        return this.bookingService.findByUser(effectiveCustomerId);
+      if (vendorId) return this.bookingService.findByVendor(vendorId);
+      return this.bookingService.findAll();
+    }
+
+    if (req.user.role === 'customer') {
+      return this.bookingService.findByUser(req.user.uid);
+    }
+
+    return this.bookingService.findByVendorUser(req.user.uid);
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('customer', 'vendor', 'admin')
+  @Get('by-request/:requestId')
+  async findByRequestId(
+    @Req() req: { user: AuthUser },
+    @Param('requestId') requestId: string,
+  ) {
+    const booking = await this.bookingService.findByRequestId(requestId);
+    if (!booking) return null;
+
+    if (req.user.role === 'admin') {
+      return booking;
+    }
+
+    if (req.user.role === 'customer') {
+      if (String(booking.customerId) !== String(req.user.uid)) {
+        throw new ForbiddenException('You do not have access to this booking');
+      }
+      return booking;
+    }
+
+    // vendor
+    await this.bookingService.assertVendorOwnership(
+      String(booking._id),
+      req.user.uid,
+    );
+    return booking;
+  }
+
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('customer', 'vendor', 'admin')
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bookingService.findById(id);
+  async findOne(@Req() req: { user: AuthUser }, @Param('id') id: string) {
+    const booking = await this.bookingService.findById(id);
+
+    if (req.user.role === 'admin') {
+      return booking;
+    }
+
+    if (
+      req.user.role === 'customer' &&
+      String(booking.customerId) === String(req.user.uid)
+    ) {
+      return booking;
+    }
+
+    if (req.user.role === 'vendor') {
+      await this.bookingService.assertVendorOwnership(id, req.user.uid);
+      return booking;
+    }
+
+    throw new ForbiddenException('You do not have access to this booking');
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('vendor')
   @Patch(':id/accept')
-  accept(@Param('id') id: string, @Body('actorUserId') actorUserId?: string) {
-    return this.bookingService.accept(id, actorUserId);
+  accept(@Req() req: { user: AuthUser }, @Param('id') id: string) {
+    return this.bookingService.accept(id, req.user.uid);
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('vendor')
   @Patch(':id/reject')
-  reject(@Param('id') id: string, @Body('actorUserId') actorUserId?: string) {
-    return this.bookingService.reject(id, actorUserId);
+  reject(@Req() req: { user: AuthUser }, @Param('id') id: string) {
+    return this.bookingService.reject(id, req.user.uid);
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('vendor')
   @Patch(':id/complete')
-  complete(@Param('id') id: string, @Body('actorUserId') actorUserId?: string) {
-    return this.bookingService.complete(id, actorUserId);
+  complete(@Req() req, @Param('id') id: string) {
+    return this.bookingService.complete(id, req.user.uid);
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('vendor')
   @Post(':id/upload-proof')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        fileSize: 5 * 1024 * 1024,
+      },
+      fileFilter: (req, file, callback) => {
+        const allowedTypes = [
+          'image/jpeg',
+          'image/jpg',
+          'image/png',
+          'image/webp',
+        ];
+        if (allowedTypes.includes(file.mimetype)) {
+          callback(null, true);
+        } else {
+          callback(
+            new Error('Invalid file type. Only JPG/PNG/WEBP allowed.'),
+            false,
+          );
+        }
+      },
+    }),
+  )
   async uploadProof(
     @Param('id') id: string,
     @UploadedFile() file: any,
-    @Body('actorUserId') actorUserId?: string,
     @Req() req?: any,
   ) {
     if (!file) throw new BadRequestException('file is required');
     const imageUrl = await this.saveUpload(file, req);
-    return this.bookingService.uploadCompletionProof(id, imageUrl, actorUserId);
+    return this.bookingService.uploadCompletionProof(
+      id,
+      imageUrl,
+      req?.user?.uid,
+    );
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('vendor')
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateBookingDto) {
+  async update(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() dto: UpdateBookingDto,
+  ) {
+    await this.bookingService.assertVendorOwnership(id, req.user.uid);
     return this.bookingService.update(id, dto);
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('vendor', 'admin')
   @Patch(':id/payout')
-  async markPayoutPaid(@Param('id') id: string) {
+  async markPayoutPaid(@Req() req, @Param('id') id: string) {
+    if (req.user.role === 'vendor') {
+      await this.bookingService.assertVendorOwnership(id, req.user.uid);
+    } else {
+      await this.bookingService.findById(id);
+    }
+
     return this.bookingService.markPayoutPaid(id);
   }
 
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('vendor')
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  async remove(@Req() req, @Param('id') id: string) {
+    await this.bookingService.assertVendorOwnership(id, req.user.uid);
     return this.bookingService.remove(id);
   }
-
 
   private async saveUpload(file: any, req: any) {
     const uploadsDir = join(process.cwd(), 'uploads');

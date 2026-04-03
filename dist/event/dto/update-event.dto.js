@@ -30,7 +30,14 @@ __decorate([
 ], UpdateEventDto.prototype, "name", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(['draft', 'planning', 'confirmed', 'ongoing', 'completed', 'cancelled']),
+    (0, class_validator_1.IsEnum)([
+        'draft',
+        'planning',
+        'confirmed',
+        'ongoing',
+        'completed',
+        'cancelled',
+    ]),
     __metadata("design:type", String)
 ], UpdateEventDto.prototype, "status", void 0);
 __decorate([

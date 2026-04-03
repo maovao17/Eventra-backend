@@ -31,12 +31,20 @@ __decorate([
     __metadata("design:type", String)
 ], Request.prototype, "eventId", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, default: 'pending', enum: ['pending', 'accepted', 'rejected'] }),
+    (0, mongoose_1.Prop)({
+        required: true,
+        default: 'pending',
+        enum: ['pending', 'accepted', 'rejected'],
+    }),
     __metadata("design:type", String)
 ], Request.prototype, "status", void 0);
 exports.Request = Request = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Request);
 exports.RequestSchema = mongoose_1.SchemaFactory.createForClass(Request);
+exports.RequestSchema.index({ customerId: 1 });
+exports.RequestSchema.index({ vendorId: 1 });
+exports.RequestSchema.index({ eventId: 1 });
+exports.RequestSchema.index({ customerId: 1, vendorId: 1, eventId: 1 });
 exports.RequestSchema.set('toJSON', { versionKey: false });
 //# sourceMappingURL=request.schema.js.map

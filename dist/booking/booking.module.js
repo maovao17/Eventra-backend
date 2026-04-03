@@ -16,6 +16,7 @@ const vendor_schema_1 = require("../vendor/schemas/vendor.schema");
 const event_schema_1 = require("../event/schemas/event.schema");
 const user_module_1 = require("../user/user.module");
 const notification_module_1 = require("../notification/notification.module");
+const auth_module_1 = require("../auth/auth.module");
 let BookingModule = class BookingModule {
 };
 exports.BookingModule = BookingModule;
@@ -29,6 +30,7 @@ exports.BookingModule = BookingModule = __decorate([
             ]),
             user_module_1.UserModule,
             notification_module_1.NotificationModule,
+            auth_module_1.AuthModule,
         ],
         controllers: [booking_controller_1.BookingController],
         providers: [booking_service_1.BookingService],

@@ -82,7 +82,14 @@ __decorate([
     __metadata("design:type", Object)
 ], Service.prototype, "location", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false, trim: true, validate: { validator: (v) => !v || validator.isURL(v, { require_protocol: true }), message: 'Invalid image URL' } }),
+    (0, mongoose_1.Prop)({
+        required: false,
+        trim: true,
+        validate: {
+            validator: (v) => !v || validator.isURL(v, { require_protocol: true }),
+            message: 'Invalid image URL',
+        },
+    }),
     __metadata("design:type", String)
 ], Service.prototype, "image", void 0);
 __decorate([

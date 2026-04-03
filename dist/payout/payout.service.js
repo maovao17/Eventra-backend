@@ -17,17 +17,28 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const payout_schema_1 = require("./schemas/payout.schema");
+const booking_schema_1 = require("../booking/schemas/booking.schema");
 let PayoutService = class PayoutService {
     payoutModel;
-    constructor(payoutModel) {
+    bookingModel;
+    constructor(payoutModel, bookingModel) {
         this.payoutModel = payoutModel;
+        this.bookingModel = bookingModel;
     }
     async create(createPayoutDto) {
         const createdPayout = new this.payoutModel({
             ...createPayoutDto,
             status: 'pending',
         });
-        return createdPayout.save();
+        const saved = await createdPayout.save();
+        if (createPayoutDto.bookingId) {
+            await this.bookingModel
+                .findByIdAndUpdate(createPayoutDto.bookingId, {
+                payoutStatus: 'pending',
+            })
+                .exec();
+        }
+        return saved;
     }
     async findAll() {
         return this.payoutModel.find().exec();
@@ -38,6 +49,9 @@ let PayoutService = class PayoutService {
     async findByEvent(eventId) {
         return this.payoutModel.find({ eventId }).exec();
     }
+    async findByBooking(bookingId) {
+        return this.payoutModel.findOne({ bookingId }).exec();
+    }
     async findOne(id) {
         const payout = await this.payoutModel.findById(id).exec();
         if (!payout)
@@ -45,7 +59,9 @@ let PayoutService = class PayoutService {
         return payout;
     }
     async update(id, updatePayoutDto) {
-        const updated = await this.payoutModel.findByIdAndUpdate(id, updatePayoutDto, { new: true }).exec();
+        const updated = await this.payoutModel
+            .findByIdAndUpdate(id, updatePayoutDto, { new: true })
+            .exec();
         if (!updated)
             throw new common_1.NotFoundException('Payout not found');
         return updated;
@@ -57,13 +73,24 @@ let PayoutService = class PayoutService {
         return deleted;
     }
     async markAsPaid(id) {
-        return this.update(id, { status: 'paid' });
+        const payout = await this.update(id, {
+            status: 'paid',
+            paidAt: new Date(),
+        });
+        if (payout.bookingId) {
+            await this.bookingModel
+                .findByIdAndUpdate(payout.bookingId, { payoutStatus: 'paid' })
+                .exec();
+        }
+        return payout;
     }
 };
 exports.PayoutService = PayoutService;
 exports.PayoutService = PayoutService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(payout_schema_1.Payout.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
+    __param(1, (0, mongoose_1.InjectModel)(booking_schema_1.Booking.name)),
+    __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model])
 ], PayoutService);
 //# sourceMappingURL=payout.service.js.map

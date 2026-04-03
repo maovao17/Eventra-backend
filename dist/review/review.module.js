@@ -15,6 +15,7 @@ const review_schema_1 = require("./schemas/review.schema");
 const booking_module_1 = require("../booking/booking.module");
 const user_module_1 = require("../user/user.module");
 const vendor_module_1 = require("../vendor/vendor.module");
+const auth_module_1 = require("../auth/auth.module");
 let ReviewModule = class ReviewModule {
 };
 exports.ReviewModule = ReviewModule;
@@ -25,6 +26,7 @@ exports.ReviewModule = ReviewModule = __decorate([
             booking_module_1.BookingModule,
             user_module_1.UserModule,
             vendor_module_1.VendorModule,
+            auth_module_1.AuthModule,
         ],
         controllers: [review_controller_1.ReviewController],
         providers: [review_service_1.ReviewService],

@@ -12,13 +12,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateOrderDto = void 0;
 const class_validator_1 = require("class-validator");
 class CreateOrderDto {
-    amount;
+    bookingId;
 }
 exports.CreateOrderDto = CreateOrderDto;
 __decorate([
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(100),
-    __metadata("design:type", Number)
-], CreateOrderDto.prototype, "amount", void 0);
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateOrderDto.prototype, "bookingId", void 0);
 //# sourceMappingURL=create-order.dto.js.map

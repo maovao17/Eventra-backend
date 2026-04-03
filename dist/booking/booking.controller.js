@@ -15,52 +15,109 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BookingController = void 0;
 const common_1 = require("@nestjs/common");
 const booking_service_1 = require("./booking.service");
-const create_booking_dto_1 = require("./dto/create-booking.dto");
 const update_booking_dto_1 = require("./dto/update-booking.dto");
 const platform_express_1 = require("@nestjs/platform-express");
 const promises_1 = require("fs/promises");
 const path_1 = require("path");
+const firebase_guard_1 = require("../auth/firebase.guard");
+const roles_guard_1 = require("../auth/roles.guard");
+const roles_decorator_1 = require("../auth/roles.decorator");
 let BookingController = class BookingController {
     bookingService;
     constructor(bookingService) {
         this.bookingService = bookingService;
     }
-    create(dto) {
-        return this.bookingService.create(dto);
+    async findAll(req, userId, customerId, vendorId, requestId) {
+        if (requestId) {
+            const booking = await this.bookingService.findByRequestId(requestId);
+            if (!booking)
+                return [];
+            if (req.user.role === 'admin') {
+                return [booking];
+            }
+            if (req.user.role === 'customer') {
+                if (String(booking.customerId) !== String(req.user.uid)) {
+                    throw new common_1.ForbiddenException('You do not have access to this booking');
+                }
+                return [booking];
+            }
+            await this.bookingService.assertVendorOwnership(String(booking._id), req.user.uid);
+            return [booking];
+        }
+        if (req.user.role === 'admin') {
+            const effectiveCustomerId = customerId ?? userId;
+            if (effectiveCustomerId)
+                return this.bookingService.findByUser(effectiveCustomerId);
+            if (vendorId)
+                return this.bookingService.findByVendor(vendorId);
+            return this.bookingService.findAll();
+        }
+        if (req.user.role === 'customer') {
+            return this.bookingService.findByUser(req.user.uid);
+        }
+        return this.bookingService.findByVendorUser(req.user.uid);
     }
-    findAll(userId, customerId, vendorId) {
-        const effectiveCustomerId = customerId ?? userId;
-        if (effectiveCustomerId)
-            return this.bookingService.findByUser(effectiveCustomerId);
-        if (vendorId)
-            return this.bookingService.findByVendor(vendorId);
-        return this.bookingService.findAll();
+    async findByRequestId(req, requestId) {
+        const booking = await this.bookingService.findByRequestId(requestId);
+        if (!booking)
+            return null;
+        if (req.user.role === 'admin') {
+            return booking;
+        }
+        if (req.user.role === 'customer') {
+            if (String(booking.customerId) !== String(req.user.uid)) {
+                throw new common_1.ForbiddenException('You do not have access to this booking');
+            }
+            return booking;
+        }
+        await this.bookingService.assertVendorOwnership(String(booking._id), req.user.uid);
+        return booking;
     }
-    findOne(id) {
-        return this.bookingService.findById(id);
+    async findOne(req, id) {
+        const booking = await this.bookingService.findById(id);
+        if (req.user.role === 'admin') {
+            return booking;
+        }
+        if (req.user.role === 'customer' &&
+            String(booking.customerId) === String(req.user.uid)) {
+            return booking;
+        }
+        if (req.user.role === 'vendor') {
+            await this.bookingService.assertVendorOwnership(id, req.user.uid);
+            return booking;
+        }
+        throw new common_1.ForbiddenException('You do not have access to this booking');
     }
-    accept(id, actorUserId) {
-        return this.bookingService.accept(id, actorUserId);
+    accept(req, id) {
+        return this.bookingService.accept(id, req.user.uid);
     }
-    reject(id, actorUserId) {
-        return this.bookingService.reject(id, actorUserId);
+    reject(req, id) {
+        return this.bookingService.reject(id, req.user.uid);
     }
-    complete(id, actorUserId) {
-        return this.bookingService.complete(id, actorUserId);
+    complete(req, id) {
+        return this.bookingService.complete(id, req.user.uid);
     }
-    async uploadProof(id, file, actorUserId, req) {
+    async uploadProof(id, file, req) {
         if (!file)
             throw new common_1.BadRequestException('file is required');
         const imageUrl = await this.saveUpload(file, req);
-        return this.bookingService.uploadCompletionProof(id, imageUrl, actorUserId);
+        return this.bookingService.uploadCompletionProof(id, imageUrl, req?.user?.uid);
     }
-    update(id, dto) {
+    async update(req, id, dto) {
+        await this.bookingService.assertVendorOwnership(id, req.user.uid);
         return this.bookingService.update(id, dto);
     }
-    async markPayoutPaid(id) {
+    async markPayoutPaid(req, id) {
+        if (req.user.role === 'vendor') {
+            await this.bookingService.assertVendorOwnership(id, req.user.uid);
+        }
+        else {
+            await this.bookingService.findById(id);
+        }
         return this.bookingService.markPayoutPaid(id);
     }
-    remove(id) {
+    async remove(req, id) {
+        await this.bookingService.assertVendorOwnership(id, req.user.uid);
         return this.bookingService.remove(id);
     }
     async saveUpload(file, req) {
@@ -78,84 +135,128 @@ let BookingController = class BookingController {
 };
 exports.BookingController = BookingController;
 __decorate([
-    (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_booking_dto_1.CreateBookingDto]),
-    __metadata("design:returntype", void 0)
-], BookingController.prototype, "create", null);
-__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'vendor', 'admin'),
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Query)('userId')),
-    __param(1, (0, common_1.Query)('customerId')),
-    __param(2, (0, common_1.Query)('vendorId')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('userId')),
+    __param(2, (0, common_1.Query)('customerId')),
+    __param(3, (0, common_1.Query)('vendorId')),
+    __param(4, (0, common_1.Query)('requestId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, String, String, String, String]),
+    __metadata("design:returntype", Promise)
 ], BookingController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'vendor', 'admin'),
+    (0, common_1.Get)('by-request/:requestId'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('requestId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], BookingController.prototype, "findByRequestId", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'vendor', 'admin'),
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
 ], BookingController.prototype, "findOne", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor'),
     (0, common_1.Patch)(':id/accept'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)('actorUserId')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], BookingController.prototype, "accept", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor'),
     (0, common_1.Patch)(':id/reject'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)('actorUserId')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], BookingController.prototype, "reject", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor'),
     (0, common_1.Patch)(':id/complete'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)('actorUserId')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], BookingController.prototype, "complete", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor'),
     (0, common_1.Post)(':id/upload-proof'),
-    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        limits: {
+            fileSize: 5 * 1024 * 1024,
+        },
+        fileFilter: (req, file, callback) => {
+            const allowedTypes = [
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/webp',
+            ];
+            if (allowedTypes.includes(file.mimetype)) {
+                callback(null, true);
+            }
+            else {
+                callback(new Error('Invalid file type. Only JPG/PNG/WEBP allowed.'), false);
+            }
+        },
+    })),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.UploadedFile)()),
-    __param(2, (0, common_1.Body)('actorUserId')),
-    __param(3, (0, common_1.Req)()),
+    __param(2, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, String, Object]),
+    __metadata("design:paramtypes", [String, Object, Object]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "uploadProof", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor'),
     (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_booking_dto_1.UpdateBookingDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, String, update_booking_dto_1.UpdateBookingDto]),
+    __metadata("design:returntype", Promise)
 ], BookingController.prototype, "update", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Patch)(':id/payout'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "markPayoutPaid", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor'),
     (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
 ], BookingController.prototype, "remove", null);
 exports.BookingController = BookingController = __decorate([
     (0, common_1.Controller)('bookings'),

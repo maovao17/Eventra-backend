@@ -17,99 +17,160 @@ const common_1 = require("@nestjs/common");
 const cart_service_1 = require("./cart.service");
 const create_cart_dto_1 = require("./dto/create-cart.dto");
 const update_cart_dto_1 = require("./dto/update-cart.dto");
+const firebase_guard_1 = require("../auth/firebase.guard");
+const roles_guard_1 = require("../auth/roles.guard");
+const roles_decorator_1 = require("../auth/roles.decorator");
 let CartController = class CartController {
     cartService;
     constructor(cartService) {
         this.cartService = cartService;
     }
-    create(createCartDto) {
-        return this.cartService.create(createCartDto);
+    create(req, createCartDto) {
+        return this.cartService.create({
+            ...createCartDto,
+            userId: req.user.role === 'admin' ? createCartDto.userId : req.user.uid,
+        });
     }
-    findAll(userId) {
+    findAll(req, userId) {
+        if (req.user.role === 'admin') {
+            if (userId)
+                return this.cartService.findByUser(userId);
+            return this.cartService.findAll();
+        }
+        if (userId && userId !== req.user.uid) {
+            throw new common_1.ForbiddenException('You do not have access to this cart');
+        }
         if (userId)
             return this.cartService.findByUser(userId);
-        return this.cartService.findAll();
+        return this.cartService.findByUser(req.user.uid);
     }
-    findOne(id) {
-        return this.cartService.findOne(id);
-    }
-    findByUserAndEvent(userId, eventId) {
+    async findByUserAndEvent(req, userId, eventId) {
+        if (req.user.role !== 'admin' && userId !== req.user.uid) {
+            throw new common_1.ForbiddenException('You do not have access to this cart');
+        }
         return this.cartService.findByUserAndEvent(userId, eventId);
     }
-    update(id, updateCartDto) {
+    async findOne(req, id) {
+        const cart = await this.cartService.findOne(id);
+        if (req.user.role !== 'admin' &&
+            String(cart.userId) !== String(req.user.uid)) {
+            throw new common_1.ForbiddenException('You do not have access to this cart');
+        }
+        return cart;
+    }
+    async assertCartAccess(req, id) {
+        const cart = await this.cartService.findOne(id);
+        if (req.user.role !== 'admin' &&
+            String(cart.userId) !== String(req.user.uid)) {
+            throw new common_1.ForbiddenException('You do not have access to this cart');
+        }
+        return cart;
+    }
+    async update(req, id, updateCartDto) {
+        await this.assertCartAccess(req, id);
         return this.cartService.update(id, updateCartDto);
     }
-    addItem(userId, eventId, body) {
-        return this.cartService.addItem(userId, eventId, body.vendorId, body.serviceId, body.serviceName, body.price);
+    addItem(req, userId, eventId, body) {
+        const effectiveUserId = req.user.role === 'admin' ? userId : req.user.uid;
+        if (req.user.role !== 'admin' && userId !== req.user.uid) {
+            throw new common_1.ForbiddenException('You do not have access to this cart');
+        }
+        return this.cartService.addItem(effectiveUserId, eventId, body.vendorId, body.serviceId, body.serviceName, body.price);
     }
-    removeItem(id, itemIndex) {
+    async removeItem(req, id, itemIndex) {
+        await this.assertCartAccess(req, id);
         return this.cartService.removeItem(id, itemIndex);
     }
-    remove(id) {
+    async remove(req, id) {
+        await this.assertCartAccess(req, id);
         return this.cartService.remove(id);
     }
 };
 exports.CartController = CartController;
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'admin'),
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_cart_dto_1.CreateCartDto]),
+    __metadata("design:paramtypes", [Object, create_cart_dto_1.CreateCartDto]),
     __metadata("design:returntype", void 0)
 ], CartController.prototype, "create", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'admin'),
     (0, common_1.Get)(),
-    __param(0, (0, common_1.Query)('userId')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Query)('userId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], CartController.prototype, "findAll", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], CartController.prototype, "findOne", null);
-__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'admin'),
     (0, common_1.Get)('user/:userId/event/:eventId'),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Param)('eventId')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('userId')),
+    __param(2, (0, common_1.Param)('eventId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:returntype", Promise)
 ], CartController.prototype, "findByUserAndEvent", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'admin'),
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, update_cart_dto_1.UpdateCartDto]),
-    __metadata("design:returntype", void 0)
-], CartController.prototype, "update", null);
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], CartController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Post)(':userId/:eventId/add'),
-    __param(0, (0, common_1.Param)('userId')),
-    __param(1, (0, common_1.Param)('eventId')),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'admin'),
+    (0, common_1.Patch)(':id'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:paramtypes", [Object, String, update_cart_dto_1.UpdateCartDto]),
+    __metadata("design:returntype", Promise)
+], CartController.prototype, "update", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'admin'),
+    (0, common_1.Post)(':userId/:eventId/add'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('userId')),
+    __param(2, (0, common_1.Param)('eventId')),
+    __param(3, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String, String, Object]),
     __metadata("design:returntype", void 0)
 ], CartController.prototype, "addItem", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'admin'),
     (0, common_1.Delete)(':id/item/:itemIndex'),
-    __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Param)('itemIndex')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
+    __param(2, (0, common_1.Param)('itemIndex')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, String, Number]),
+    __metadata("design:returntype", Promise)
 ], CartController.prototype, "removeItem", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('customer', 'admin'),
     (0, common_1.Delete)(':id'),
-    __param(0, (0, common_1.Param)('id')),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
 ], CartController.prototype, "remove", null);
 exports.CartController = CartController = __decorate([
     (0, common_1.Controller)('carts'),

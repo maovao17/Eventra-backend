@@ -8,28 +8,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthModule = void 0;
 const common_1 = require("@nestjs/common");
-const jwt_1 = require("@nestjs/jwt");
-const passport_1 = require("@nestjs/passport");
-const jwt_strategy_1 = require("./jwt.strategy");
-const auth_service_1 = require("./auth.service");
-const auth_controller_1 = require("./auth.controller");
 const user_module_1 = require("../user/user.module");
+const firebase_guard_1 = require("./firebase.guard");
+const roles_guard_1 = require("./roles.guard");
+const admin_guard_1 = require("./admin.guard");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            user_module_1.UserModule,
-            passport_1.PassportModule,
-            jwt_1.JwtModule.register({
-                secret: process.env.JWT_SECRET || 'dev-only-jwt-secret',
-                signOptions: { expiresIn: '24h' },
-            }),
-        ],
-        controllers: [auth_controller_1.AuthController],
-        providers: [jwt_strategy_1.JwtStrategy, auth_service_1.AuthService],
-        exports: [jwt_strategy_1.JwtStrategy, auth_service_1.AuthService, jwt_1.JwtModule],
+        imports: [user_module_1.UserModule],
+        providers: [firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard, admin_guard_1.AdminGuard],
+        exports: [firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard, admin_guard_1.AdminGuard, user_module_1.UserModule],
     })
 ], AuthModule);
 //# sourceMappingURL=auth.module.js.map

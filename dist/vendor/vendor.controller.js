@@ -22,6 +22,8 @@ const platform_express_1 = require("@nestjs/platform-express");
 const promises_1 = require("fs/promises");
 const path_1 = require("path");
 const firebase_guard_1 = require("../auth/firebase.guard");
+const roles_guard_1 = require("../auth/roles.guard");
+const roles_decorator_1 = require("../auth/roles.decorator");
 let VendorController = class VendorController {
     static { VendorController_1 = this; }
     vendorService;
@@ -33,23 +35,32 @@ let VendorController = class VendorController {
         'image/jpg',
         'image/png',
     ];
-    create(dto) {
-        return this.vendorService.create(dto);
+    create(req, dto) {
+        return this.vendorService.create({
+            ...dto,
+            userId: req.user.role === 'admin' ? dto.userId : req.user.userId,
+        });
+    }
+    findAll() {
+        return this.vendorService.findPublic();
+    }
+    findByServices(services) {
+        return this.vendorService.findByServices(services);
     }
     getMe(req) {
-        return this.vendorService.getByUserId(req.user.uid);
+        return this.vendorService.getByUserId(req.user.userId);
     }
     updateMe(req, dto) {
-        return this.vendorService.updateByUserId(req.user.uid, dto);
+        return this.vendorService.updateByUserId(req.user.userId, dto);
     }
     updateProfilePatch(req, payload) {
-        return this.vendorService.updateByUserId(req.user.uid, payload ?? {});
+        return this.vendorService.updateByUserId(req.user.userId, payload ?? {});
     }
     updateProfile(req, payload) {
-        return this.vendorService.updateByUserId(req.user.uid, payload);
+        return this.vendorService.updateByUserId(req.user.userId, payload);
     }
     async getDashboard(req) {
-        const data = await this.vendorService.getDashboard(req.user.uid);
+        const data = await this.vendorService.getDashboard(req.user.userId);
         return (data || {
             totalBookings: 0,
             pendingRequests: 0,
@@ -70,6 +81,37 @@ let VendorController = class VendorController {
             fullUrl,
         };
     }
+    async uploadMultiple(files, req) {
+        if (!files?.length)
+            throw new common_1.BadRequestException('Files are required');
+        const uploaded = [];
+        for (const file of files) {
+            this.validateImageFile(file);
+            const fullUrl = await this.saveUpload(file, req);
+            uploaded.push({
+                url: new URL(fullUrl).pathname,
+                fullUrl,
+            });
+        }
+        return uploaded;
+    }
+    async uploadPortfolio(files, req) {
+        if (!files?.length)
+            throw new common_1.BadRequestException('Files are required');
+        const urls = [];
+        for (const file of files) {
+            this.validateImageFile(file);
+            const fullUrl = await this.saveUpload(file, req);
+            urls.push(new URL(fullUrl).pathname);
+        }
+        return this.vendorService.addPortfolioItems(req.user.uid, urls);
+    }
+    assignServices(req, body) {
+        return this.vendorService.assignServices(req.user.uid, Array.isArray(body?.serviceIds) ? body.serviceIds : []);
+    }
+    updateAvailability(req, body) {
+        return this.vendorService.updateAvailability(req.user.uid, body ?? {});
+    }
     findVendorBookings(req) {
         return this.vendorService.getVendorBookings(req.user.uid);
     }
@@ -84,6 +126,9 @@ let VendorController = class VendorController {
     }
     markNotificationRead(req, id) {
         return this.vendorService.markVendorNotificationRead(req.user.uid, id);
+    }
+    findOne(id) {
+        return this.vendorService.findOneOrThrow(id);
     }
     async saveUpload(file, req) {
         const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads');
@@ -101,14 +146,31 @@ let VendorController = class VendorController {
 };
 exports.VendorController = VendorController;
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_vendor_dto_1.CreateVendorDto]),
+    __metadata("design:paramtypes", [Object, create_vendor_dto_1.CreateVendorDto]),
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "create", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.Get)(),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('by-services'),
+    __param(0, (0, common_1.Query)('services')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "findByServices", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Get)('me'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -116,7 +178,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "getMe", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Patch)('me'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -125,7 +188,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "updateMe", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Patch)('profile'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -134,7 +198,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "updateProfilePatch", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Put)('profile'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -143,7 +208,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "updateProfile", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Get)('dashboard'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -151,7 +217,8 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], VendorController.prototype, "getDashboard", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Post)('upload'),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
     __param(0, (0, common_1.UploadedFile)()),
@@ -161,7 +228,50 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], VendorController.prototype, "uploadFile", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
+    (0, common_1.Post)('upload-multiple'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files', 7)),
+    __param(0, (0, common_1.UploadedFiles)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Array, Object]),
+    __metadata("design:returntype", Promise)
+], VendorController.prototype, "uploadMultiple", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
+    (0, common_1.Post)('portfolio'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FilesInterceptor)('files', 7)),
+    __param(0, (0, common_1.UploadedFiles)()),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Array, Object]),
+    __metadata("design:returntype", Promise)
+], VendorController.prototype, "uploadPortfolio", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
+    (0, common_1.Post)('services'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "assignServices", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
+    (0, common_1.Patch)('availability'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "updateAvailability", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Get)('bookings'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -169,7 +279,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "findVendorBookings", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Patch)('bookings/:id/status'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('id')),
@@ -179,7 +290,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "updateBookingStatus", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Get)('reviews'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -187,7 +299,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "getReviews", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Get)('notifications'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -195,7 +308,8 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "getNotifications", null);
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
     (0, common_1.Patch)('notifications/:id/read'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('id')),
@@ -203,6 +317,13 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "markNotificationRead", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "findOne", null);
 exports.VendorController = VendorController = VendorController_1 = __decorate([
     (0, common_1.Controller)('vendors'),
     __metadata("design:paramtypes", [vendor_service_1.VendorService])

@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsObject, IsUrl, IsMongoId } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsObject,
+  IsUrl,
+  IsMongoId,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateServiceDto {

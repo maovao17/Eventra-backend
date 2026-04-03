@@ -48,19 +48,22 @@ const validator = __importStar(require("validator"));
 let User = class User {
     phoneNumber;
     name;
+    email;
     profile_photo;
     userId;
+    authProvider;
     role;
     businessName;
 };
 exports.User = User;
 __decorate([
     (0, mongoose_1.Prop)({
-        required: true,
+        required: false,
         unique: true,
+        sparse: true,
         trim: true,
         validate: {
-            validator: (value) => /^(\+91)?[6-9]\d{9}$/.test(value),
+            validator: (value) => !value || /^(\+91)?[6-9]\d{9}$/.test(value),
             message: 'Invalid phone number',
         },
     }),
@@ -69,10 +72,20 @@ __decorate([
 __decorate([
     (0, mongoose_1.Prop)({
         required: true,
-        trim: true
+        trim: true,
     }),
     __metadata("design:type", String)
 ], User.prototype, "name", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({
+        required: false,
+        unique: true,
+        sparse: true,
+        lowercase: true,
+        trim: true,
+    }),
+    __metadata("design:type", String)
+], User.prototype, "email", void 0);
 __decorate([
     (0, mongoose_1.Prop)({
         required: false,
@@ -85,11 +98,15 @@ __decorate([
     __metadata("design:type", String)
 ], User.prototype, "profile_photo", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true }),
+    (0, mongoose_1.Prop)({ required: true, unique: true, trim: true }),
     __metadata("design:type", String)
 ], User.prototype, "userId", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, enum: ['customer', 'vendor'] }),
+    (0, mongoose_1.Prop)({ required: true, enum: ['phone', 'google'], default: 'phone' }),
+    __metadata("design:type", String)
+], User.prototype, "authProvider", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, enum: ['customer', 'vendor', 'admin'] }),
     __metadata("design:type", String)
 ], User.prototype, "role", void 0);
 __decorate([

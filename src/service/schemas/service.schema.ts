@@ -24,7 +24,15 @@ export class Service {
   @Prop({ type: Object, required: false })
   location?: Record<string, any>;
 
-  @Prop({ required: false, trim: true, validate: { validator: (v: string) => !v || validator.isURL(v, { require_protocol: true }), message: 'Invalid image URL' } })
+  @Prop({
+    required: false,
+    trim: true,
+    validate: {
+      validator: (v: string) =>
+        !v || validator.isURL(v, { require_protocol: true }),
+      message: 'Invalid image URL',
+    },
+  })
   image?: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Vendor', required: false })

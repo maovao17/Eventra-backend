@@ -1,9 +1,7 @@
-import { IsNumber, Min, IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateOrderDto {
   @IsNotEmpty()
-  @IsNumber()
-  @Min(100)
-  amount: number;
+  @IsString()
+  bookingId: string;
 }
-

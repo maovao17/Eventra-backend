@@ -1,8 +1,11 @@
 import {
+  Body,
   Controller,
+  Delete,
   Get,
-  Patch,
   Param,
+  Patch,
+  Post,
   UseGuards,
 } from '@nestjs/common';
 
@@ -12,6 +15,10 @@ import { VendorService } from '../vendor/vendor.service';
 import { UserService } from '../user/user.service';
 import { BookingService } from '../booking/booking.service';
 import { PaymentService } from '../payment/payment.service';
+import { EventService } from '../event/event.service';
+import { UpdateUserDto } from '../user/dto/update-user.dto';
+import { CreateEventDto } from '../event/dto/create-event.dto';
+import { UpdateEventDto } from '../event/dto/update-event.dto';
 
 @Controller('admin')
 @UseGuards(FirebaseAuthGuard, AdminGuard)
@@ -21,6 +28,7 @@ export class AdminController {
     private readonly userService: UserService,
     private readonly bookingService: BookingService,
     private readonly paymentService: PaymentService,
+    private readonly eventService: EventService,
   ) {}
 
   @Get('users')
@@ -51,5 +59,35 @@ export class AdminController {
   @Get('payments')
   async getPayments() {
     return this.paymentService.findAll();
+  }
+
+  @Patch('users/:id')
+  async updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.userService.update(id, dto);
+  }
+
+  @Delete('users/:id')
+  async removeUser(@Param('id') id: string) {
+    return this.userService.remove(id);
+  }
+
+  @Get('events')
+  async getEvents() {
+    return this.eventService.findAll();
+  }
+
+  @Post('events')
+  async createEvent(@Body() dto: CreateEventDto) {
+    return this.eventService.create(dto);
+  }
+
+  @Patch('events/:id')
+  async updateEvent(@Param('id') id: string, @Body() dto: UpdateEventDto) {
+    return this.eventService.update(id, dto);
+  }
+
+  @Delete('events/:id')
+  async removeEvent(@Param('id') id: string) {
+    return this.eventService.remove(id);
   }
 }

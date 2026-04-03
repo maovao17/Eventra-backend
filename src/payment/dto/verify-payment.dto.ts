@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 
 export class VerifyPaymentDto {
   @IsNotEmpty()
@@ -11,7 +17,7 @@ export class VerifyPaymentDto {
 
   @IsNotEmpty()
   @IsString()
-razorpay_signature: string;
+  razorpay_signature: string;
 
   @IsNotEmpty()
   @IsString()
@@ -22,4 +28,3 @@ razorpay_signature: string;
   @Min(0)
   amount?: number;
 }
-

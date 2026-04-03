@@ -11,7 +11,10 @@ import { Request, RequestSchema } from '../request/schemas/request.schema';
 import { AdminVendorController } from './admin-vendor.controller';
 import { Service, ServiceSchema } from '../service/schemas/service.schema';
 import { Review, ReviewSchema } from '../review/schemas/review.schema';
-import { Notification, NotificationSchema } from '../notification/schemas/notification.schema';
+import {
+  Notification,
+  NotificationSchema,
+} from '../notification/schemas/notification.schema';
 import { UserModule } from '../user/user.module';
 import { AuthModule } from '../auth/auth.module';
 import { FirebaseAuthGuard } from '../auth/firebase.guard';
@@ -24,7 +27,8 @@ import { FirebaseAuthGuard } from '../auth/firebase.guard';
       storage: diskStorage({
         destination: './uploads',
         filename: (req, file, callback) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
           const ext = extname(file.originalname);
           callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
         },

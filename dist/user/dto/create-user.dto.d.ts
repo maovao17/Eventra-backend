@@ -1,8 +1,10 @@
 export declare class CreateUserDto {
-    phoneNumber: string;
+    phoneNumber?: string;
     name: string;
+    email?: string;
     profile_photo?: string;
     userId: string;
+    authProvider: 'phone' | 'google';
     role: string;
     businessName?: string;
 }

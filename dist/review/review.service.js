@@ -41,13 +41,16 @@ let ReviewService = class ReviewService {
             throw new common_1.ForbiddenException('Only customers can create reviews');
         }
         const booking = await this.bookingService.findById(dto.bookingId);
-        if (booking.customerId !== customerId || booking.vendorId !== dto.vendorId) {
+        if (booking.customerId !== customerId ||
+            booking.vendorId !== dto.vendorId) {
             throw new common_1.ForbiddenException('Review does not match booking ownership');
         }
         if (booking.status !== 'confirmed' && booking.status !== 'completed') {
             throw new common_1.BadRequestException('Reviews are allowed only after confirmed/completed booking');
         }
-        const existingReview = await this.reviewModel.findOne({ bookingId: dto.bookingId }).exec();
+        const existingReview = await this.reviewModel
+            .findOne({ bookingId: dto.bookingId })
+            .exec();
         if (existingReview) {
             throw new common_1.ConflictException('A review already exists for this booking');
         }
@@ -95,11 +98,18 @@ let ReviewService = class ReviewService {
     async refreshVendorRating(vendorId) {
         const reviews = await this.reviewModel.find({ vendorId }).exec();
         if (!reviews.length) {
-            await this.vendorService.update(vendorId, { rating: 0 });
+            await this.vendorService.update(vendorId, {
+                rating: 0,
+                totalReviews: 0,
+            });
             return;
         }
-        const avg = reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length;
-        await this.vendorService.update(vendorId, { rating: Number(avg.toFixed(2)) });
+        const avg = reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) /
+            reviews.length;
+        await this.vendorService.update(vendorId, {
+            rating: Number(avg.toFixed(2)),
+            totalReviews: reviews.length,
+        });
     }
 };
 exports.ReviewService = ReviewService;

@@ -14,22 +14,28 @@ const class_validator_1 = require("class-validator");
 class CreateUserDto {
     phoneNumber;
     name;
+    email;
     profile_photo;
     userId;
+    authProvider;
     role;
     businessName;
 }
 exports.CreateUserDto = CreateUserDto;
 __decorate([
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "phoneNumber", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "name", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "email", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsUrl)(),
@@ -37,13 +43,16 @@ __decorate([
 ], CreateUserDto.prototype, "profile_photo", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "userId", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsEnum)(['customer', 'vendor']),
+    (0, class_validator_1.IsEnum)(['phone', 'google']),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "authProvider", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsEnum)(['customer', 'vendor', 'admin']),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "role", void 0);
 __decorate([

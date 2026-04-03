@@ -17,6 +17,8 @@ class CreatePaymentDto {
     amount;
     requestId;
     status;
+    razorpayPaymentId;
+    razorpayOrderId;
 }
 exports.CreatePaymentDto = CreatePaymentDto;
 __decorate([
@@ -45,4 +47,12 @@ __decorate([
     (0, class_validator_1.IsEnum)(['success', 'failed']),
     __metadata("design:type", String)
 ], CreatePaymentDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreatePaymentDto.prototype, "razorpayPaymentId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreatePaymentDto.prototype, "razorpayOrderId", void 0);
 //# sourceMappingURL=create-payment.dto.js.map

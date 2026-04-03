@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, isValidObjectId } from 'mongoose';
 import { Service, ServiceDocument } from './schemas/service.schema';
@@ -7,7 +12,9 @@ import { UpdateServiceDto } from './dto/update-service.dto';
 
 @Injectable()
 export class ServiceService {
-  constructor(@InjectModel(Service.name) private serviceModel: Model<ServiceDocument>) {}
+  constructor(
+    @InjectModel(Service.name) private serviceModel: Model<ServiceDocument>,
+  ) {}
 
   private sanitize(doc: any) {
     if (!doc) return doc;

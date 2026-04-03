@@ -17,6 +17,8 @@ const common_1 = require("@nestjs/common");
 const service_service_1 = require("./service.service");
 const create_service_dto_1 = require("./dto/create-service.dto");
 const update_service_dto_1 = require("./dto/update-service.dto");
+const firebase_guard_1 = require("../auth/firebase.guard");
+const admin_guard_1 = require("../auth/admin.guard");
 let ServiceController = class ServiceController {
     serviceService;
     constructor(serviceService) {
@@ -42,6 +44,7 @@ let ServiceController = class ServiceController {
 };
 exports.ServiceController = ServiceController;
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, admin_guard_1.AdminGuard),
     (0, common_1.UsePipes)(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })),
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
@@ -65,6 +68,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ServiceController.prototype, "get", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, admin_guard_1.AdminGuard),
     (0, common_1.UsePipes)(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })),
     (0, common_1.Patch)(':id'),
     __param(0, (0, common_1.Param)('id')),
@@ -74,6 +78,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ServiceController.prototype, "update", null);
 __decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, admin_guard_1.AdminGuard),
     (0, common_1.Delete)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),

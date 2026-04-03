@@ -1,82 +1,128 @@
-# 0. Fork the Repository 
-Click on the fork option above, which will create a clone of this repository in your github account
+# Eventra Backend
 
-Then clone that repository on you loacl machine
+Eventra Backend is a scalable API built with NestJS that powers the Eventra platform, handling authentication, event management, vendor interactions, bookings, payments, and system security.
 
-# 0.1. Install the nest js
-Below will install nestjs locally in you machine
+---
+
+# Tech Stack
+
+- NestJS
+- MongoDB (Mongoose)
+- Firebase Admin SDK (Authentication)
+- Razorpay (Payments)
+- WebSockets (Real-time updates)
+
+---
+
+# Features
+
+- Firebase-based authentication (OTP + Google)
+- Role-based access control (Customer / Vendor / Admin)
+- Event creation and management
+- Vendor request and booking lifecycle
+- Razorpay payment integration (secure and verified)
+- Idempotent payment handling (safe retries)
+- Chat initialization support (Firestore integration)
+- WebSocket event updates
+- Secure API with guards and validation
+
+---
+
+# Architecture
+
+- REST API using NestJS
+- MongoDB as primary database
+- Firebase Admin for auth verification
+- Razorpay for payment processing
+- Firestore used externally for chat storage
+
+---
+
+# Setup
+
+## 1. Clone Repository
+
 ```bash
-npm install -g @nestjs/cli
+git clone https://github.com/your-username/eventra-backend.git
+cd eventra-backend
 ```
 
-# 1. Clone the Repository
-```bash
-git clone <your-repo-url>
-cd Eventra-backend
-```
-
-
-# 2. Install Dependencies
-```bash
-pnpm install
-```
-
-If pnpm is not installed:
-```bash
-npm install -g pnpm
-```
-
-# 3. Create .env File
-
-Create a .env file in the root folder:
-```bash
-DB_HOST=localhost
-DB_PORT=27017
-DB_USERNAME=your_user
-DB_PASSWORD=your_password
-DB_NAME=eventra_db
-DB_URI=mongodb://eventra_user:your_password@localhost:27017/eventra_db?authSource=admin
-```
-
-# 4. Start MongoDB Using Docker
-Make the following changes in docker-compose.yml
+## 2. Install Dependencies
 
 ```bash
-MONGO_INITDB_ROOT_USERNAME: root
-MONGO_INITDB_ROOT_PASSWORD: DB_PASSWORD
+npm install
 ```
 
-Start MongoDB
+## 3. Environment Variables
+
+Create a `.env` file:
+
+```env
+PORT=3002
+DB_URI=your_mongodb_connection_string
+
+CORS_ORIGIN=http://localhost:3000
+
+FIREBASE_SERVICE_ACCOUNT_PATH=path_to_service_account.json
+
+RAZORPAY_KEY_ID=your_key
+RAZORPAY_KEY_SECRET=your_secret
+RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
+```
+
+## 4. Run Server
+
 ```bash
-docker compose up -d
+npm run start:dev
 ```
 
-Stop MongoDB
+---
+
+# Authentication
+
+- Firebase tokens are verified using Firebase Admin SDK
+- All protected routes use `FirebaseAuthGuard`
+- Role-based access is enforced using `RolesGuard`
+
+---
+
+# Payment Flow
+
+1. Create Razorpay order on the backend
+2. Frontend opens Razorpay checkout
+3. Backend verifies payment signature
+4. Webhook confirms payment status
+5. Booking is updated accordingly
+
+---
+
+# Idempotency
+
+- Multiple failed payments are allowed
+- Only one successful payment is allowed per booking
+- Duplicate webhook calls are ignored safely
+
+---
+
+# WebSockets
+
+- Authenticated using Firebase token
+- User-specific event broadcasting
+- No global data leakage
+
+---
+
+# Testing
+
 ```bash
-docker compose down
+npm run build
+npm test
 ```
 
-Check containers
-```bash
-docker ps
-```
+---
 
-You should see a container named eventra.
+# Notes
 
-# 5. Start the Backend
-Development mode
-For now run this command to check
-```bash
-pnpm run start:dev
-```
-
-Normal mode
-```bash
-pnpm run start
-```
-
-Production mode
-```bash
-pnpm run start:prod
-```
-
+- MongoDB is used for core data
+- Firebase Firestore is used for chat as a separate system
+- All sensitive logic is handled on the backend

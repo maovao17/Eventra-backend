@@ -5,6 +5,12 @@ export type PayoutDocument = Payout & Document;
 
 @Schema({ timestamps: true })
 export class Payout {
+  @Prop({ required: false })
+  bookingId?: string;
+
+  @Prop({ required: false })
+  paymentId?: string;
+
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Vendor', required: true })
   vendorId: MongooseSchema.Types.ObjectId;
 
@@ -22,6 +28,9 @@ export class Payout {
 
   @Prop({ required: true, enum: ['pending', 'paid'] })
   status: string;
+
+  @Prop({ required: false })
+  paidAt?: Date;
 }
 
 export const PayoutSchema = SchemaFactory.createForClass(Payout);

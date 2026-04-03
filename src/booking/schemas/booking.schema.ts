@@ -38,10 +38,25 @@ export class Booking {
   @Prop({ required: false, default: 0 })
   guests?: number;
 
-  @Prop({ required: true, default: 'pending', enum: ['pending', 'accepted', 'rejected', 'confirmed', 'completed', 'cancelled'] })
+  @Prop({
+    required: true,
+    default: 'pending',
+    enum: [
+      'pending',
+      'accepted',
+      'rejected',
+      'confirmed',
+      'completed',
+      'cancelled',
+    ],
+  })
   status: string;
 
-  @Prop({ required: false, default: 'pending', enum: ['pending', 'partial', 'paid'] })
+  @Prop({
+    required: false,
+    default: 'pending',
+    enum: ['pending', 'partial', 'paid'],
+  })
   paymentStatus?: string;
 
   @Prop({
@@ -65,9 +80,15 @@ export class Booking {
   @Prop({ type: [String], default: [] })
   completionImages?: string[];
 
-  @Prop({ required: false, default: "pending", enum: ["pending", "paid"] })
+  @Prop({ required: false, default: 'pending', enum: ['pending', 'paid'] })
   payoutStatus?: string;
 }
 
 export const BookingSchema = SchemaFactory.createForClass(Booking);
+
+// Performance indexes
+BookingSchema.index({ requestId: 1 }); // Already unique, but explicit index for queries
+BookingSchema.index({ vendorId: 1, date: 1 });
+BookingSchema.index({ customerId: 1, status: 1 });
+
 BookingSchema.set('toJSON', { versionKey: false });

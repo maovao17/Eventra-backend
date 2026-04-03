@@ -15,6 +15,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminVendorController = void 0;
 const common_1 = require("@nestjs/common");
 const vendor_service_1 = require("./vendor.service");
+const firebase_guard_1 = require("../auth/firebase.guard");
+const admin_guard_1 = require("../auth/admin.guard");
 let AdminVendorController = class AdminVendorController {
     vendorService;
     constructor(vendorService) {
@@ -24,9 +26,6 @@ let AdminVendorController = class AdminVendorController {
         return this.vendorService.getPendingVendors();
     }
     approveVendor(id) {
-        return this.vendorService.approveVendor(id);
-    }
-    verifyVendor(id) {
         return this.vendorService.approveVendor(id);
     }
 };
@@ -44,15 +43,9 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AdminVendorController.prototype, "approveVendor", null);
-__decorate([
-    (0, common_1.Patch)(':id/verify'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], AdminVendorController.prototype, "verifyVendor", null);
 exports.AdminVendorController = AdminVendorController = __decorate([
     (0, common_1.Controller)('admin/vendors'),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, admin_guard_1.AdminGuard),
     __metadata("design:paramtypes", [vendor_service_1.VendorService])
 ], AdminVendorController);
 //# sourceMappingURL=admin-vendor.controller.js.map

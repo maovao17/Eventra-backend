@@ -11,7 +11,9 @@ async function seedVendors() {
 
     const existingVendors = await vendorService.findAll();
     if (existingVendors.length > 0) {
-      console.log(`📋 Found ${existingVendors.length} existing vendors. Skipping seeding.`);
+      console.log(
+        `📋 Found ${existingVendors.length} existing vendors. Skipping seeding.`,
+      );
       return;
     }
 

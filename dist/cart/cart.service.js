@@ -42,7 +42,9 @@ let CartService = class CartService {
         return cart;
     }
     async update(id, updateCartDto) {
-        const updated = await this.cartModel.findByIdAndUpdate(id, updateCartDto, { new: true }).exec();
+        const updated = await this.cartModel
+            .findByIdAndUpdate(id, updateCartDto, { new: true })
+            .exec();
         if (!updated)
             throw new common_1.NotFoundException('Cart not found');
         return updated;
@@ -58,7 +60,12 @@ let CartService = class CartService {
         if (!cart) {
             cart = await this.create({ userId, eventId, items: [], totalAmount: 0 });
         }
-        cart.items.push({ vendorId: new mongoose_2.Types.ObjectId(vendorId), serviceId: new mongoose_2.Types.ObjectId(serviceId), serviceName, price });
+        cart.items.push({
+            vendorId: new mongoose_2.Types.ObjectId(vendorId),
+            serviceId: new mongoose_2.Types.ObjectId(serviceId),
+            serviceName,
+            price,
+        });
         cart.totalAmount += price;
         return cart.save();
     }

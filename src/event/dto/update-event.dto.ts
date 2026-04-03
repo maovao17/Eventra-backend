@@ -1,4 +1,11 @@
-import { IsArray, IsEnum, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNumber,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class UpdateEventDto {
   @IsOptional()
@@ -6,7 +13,14 @@ export class UpdateEventDto {
   name?: string;
 
   @IsOptional()
-  @IsEnum(['draft', 'planning', 'confirmed', 'ongoing', 'completed', 'cancelled'])
+  @IsEnum([
+    'draft',
+    'planning',
+    'confirmed',
+    'ongoing',
+    'completed',
+    'cancelled',
+  ])
   status?: string;
 
   @IsOptional()

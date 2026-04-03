@@ -1,6 +1,7 @@
 import { Model } from 'mongoose';
 import { Vendor, VendorDocument } from './schemas/vendor.schema';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
+import { ServiceDocument } from '../service/schemas/service.schema';
 import { Booking, BookingDocument } from '../booking/schemas/booking.schema';
 import { RequestDocument } from '../request/schemas/request.schema';
 import { Review, ReviewDocument } from '../review/schemas/review.schema';
@@ -8,20 +9,45 @@ import { Notification, NotificationDocument } from '../notification/schemas/noti
 import { UserService } from '../user/user.service';
 export declare class VendorService {
     private readonly vendorModel;
+    private readonly serviceModel;
     private readonly bookingModel;
     private readonly requestModel;
     private readonly reviewModel;
     private readonly notificationModel;
     private readonly userService;
-    constructor(vendorModel: Model<VendorDocument>, bookingModel: Model<BookingDocument>, requestModel: Model<RequestDocument>, reviewModel: Model<ReviewDocument>, notificationModel: Model<NotificationDocument>, userService: UserService);
+    constructor(vendorModel: Model<VendorDocument>, serviceModel: Model<ServiceDocument>, bookingModel: Model<BookingDocument>, requestModel: Model<RequestDocument>, reviewModel: Model<ReviewDocument>, notificationModel: Model<NotificationDocument>, userService: UserService);
     create(dto: any): Promise<import("mongoose").Document<unknown, {}, VendorDocument, {}, {}> & Vendor & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
     }>;
+    findPublic(): Promise<(import("mongoose").Document<unknown, {}, VendorDocument, {}, {}> & Vendor & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+        _id: import("mongoose").Types.ObjectId;
+    }> & {
+        __v: number;
+    })[]>;
+    findOneOrThrow(id: string): Promise<import("mongoose").Document<unknown, {}, VendorDocument, {}, {}> & Vendor & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+        _id: import("mongoose").Types.ObjectId;
+    }> & {
+        __v: number;
+    }>;
+    findByServices(servicesQuery?: string): Promise<(import("mongoose").Document<unknown, {}, VendorDocument, {}, {}> & Vendor & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+        _id: import("mongoose").Types.ObjectId;
+    }> & {
+        __v: number;
+    })[]>;
     getOrCreateVendorProfile(userId: string): Promise<VendorDocument>;
-    getByUserId(userId: string): Promise<VendorDocument>;
+    getByUserId(userId: string): Promise<any>;
     updateByUserId(userId: string, dto: UpdateVendorDto): Promise<VendorDocument>;
+    addPortfolioItems(userId: string, urls: string[]): Promise<VendorDocument>;
+    assignServices(userId: string, serviceIds: string[]): Promise<VendorDocument>;
+    updateAvailability(userId: string, payload: {
+        blockedDates?: string[];
+        workingHours?: {
+            start?: string;
+            end?: string;
+        };
+    }): Promise<any>;
     getDashboard(userId: string): Promise<{
         totalBookings: number;
         pendingRequests: number;
@@ -102,4 +128,6 @@ export declare class VendorService {
     }> & {
         __v: number;
     })[]>;
+    private getBookedDatesForVendor;
+    private withDerivedAvailability;
 }

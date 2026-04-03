@@ -21,18 +21,21 @@ const booking_service_1 = require("../booking/booking.service");
 const user_service_1 = require("../user/user.service");
 const vendor_service_1 = require("../vendor/vendor.service");
 const event_service_1 = require("../event/event.service");
+const events_gateway_1 = require("../events/events.gateway");
 let RequestService = class RequestService {
     requestModel;
     bookingService;
     userService;
     vendorService;
     eventService;
-    constructor(requestModel, bookingService, userService, vendorService, eventService) {
+    eventsGateway;
+    constructor(requestModel, bookingService, userService, vendorService, eventService, eventsGateway) {
         this.requestModel = requestModel;
         this.bookingService = bookingService;
         this.userService = userService;
         this.vendorService = vendorService;
         this.eventService = eventService;
+        this.eventsGateway = eventsGateway;
     }
     async create(createRequestDto) {
         const customer = await this.userService.findByUserId(createRequestDto.customerId);
@@ -64,7 +67,10 @@ let RequestService = class RequestService {
         return this.requestModel.find().exec();
     }
     async findByUser(userId) {
-        return this.requestModel.find({ customerId: userId }).sort({ createdAt: -1 }).exec();
+        return this.requestModel
+            .find({ customerId: userId })
+            .sort({ createdAt: -1 })
+            .exec();
     }
     async findByVendor(vendorId) {
         return this.requestModel.find({ vendorId }).sort({ createdAt: -1 }).exec();
@@ -93,16 +99,32 @@ let RequestService = class RequestService {
                 return [customerId, null];
             }
         }));
+        const bookingEntries = await Promise.all(requests.map(async (request) => [
+            String(request._id),
+            await this.bookingService.findByRequestId(String(request._id)),
+        ]));
         const eventsById = new Map(eventEntries);
         const customersById = new Map(customerEntries);
+        const bookingsByRequestId = new Map(bookingEntries);
         return requests.map((request) => ({
             ...request.toObject(),
             event: eventsById.get(String(request.eventId)),
             customer: customersById.get(String(request.customerId)),
+            booking: bookingsByRequestId.get(String(request._id)) ?? null,
         }));
     }
     async findByEvent(eventId) {
         return this.requestModel.find({ eventId }).sort({ createdAt: -1 }).exec();
+    }
+    async findByQuery(filters) {
+        const query = {};
+        if (filters.customerId)
+            query.customerId = filters.customerId;
+        if (filters.vendorId)
+            query.vendorId = filters.vendorId;
+        if (filters.eventId)
+            query.eventId = filters.eventId;
+        return this.requestModel.find(query).sort({ createdAt: -1 }).exec();
     }
     async findOne(id) {
         const request = await this.requestModel.findById(id).exec();
@@ -161,6 +183,12 @@ let RequestService = class RequestService {
             vendorId: request.vendorId,
             eventId: request.eventId,
         });
+        this.eventsGateway.broadcastBookingUpdate({
+            bookingId: String(booking._id),
+            status: 'accepted',
+            vendorId: booking.vendorId,
+            customerId: booking.customerId,
+        });
         return { request, booking };
     }
     async reject(id, actorUserId) {
@@ -183,6 +211,7 @@ exports.RequestService = RequestService = __decorate([
         booking_service_1.BookingService,
         user_service_1.UserService,
         vendor_service_1.VendorService,
-        event_service_1.EventService])
+        event_service_1.EventService,
+        events_gateway_1.EventsGateway])
 ], RequestService);
 //# sourceMappingURL=request.service.js.map

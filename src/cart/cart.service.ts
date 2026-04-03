@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Cart, CartDocument } from './schemas/cart.schema';
@@ -18,7 +22,10 @@ export class CartService {
     return this.cartModel.find().exec();
   }
 
-  async findByUserAndEvent(userId: string, eventId: string): Promise<CartDocument | null> {
+  async findByUserAndEvent(
+    userId: string,
+    eventId: string,
+  ): Promise<CartDocument | null> {
     return this.cartModel.findOne({ userId, eventId }).exec();
   }
 
@@ -32,8 +39,13 @@ export class CartService {
     return cart;
   }
 
-  async update(id: string, updateCartDto: UpdateCartDto): Promise<CartDocument> {
-    const updated = await this.cartModel.findByIdAndUpdate(id, updateCartDto, { new: true }).exec();
+  async update(
+    id: string,
+    updateCartDto: UpdateCartDto,
+  ): Promise<CartDocument> {
+    const updated = await this.cartModel
+      .findByIdAndUpdate(id, updateCartDto, { new: true })
+      .exec();
     if (!updated) throw new NotFoundException('Cart not found');
     return updated;
   }
@@ -44,12 +56,24 @@ export class CartService {
     return deleted;
   }
 
-  async addItem(userId: string, eventId: string, vendorId: string, serviceId: string, serviceName: string, price: number): Promise<CartDocument> {
+  async addItem(
+    userId: string,
+    eventId: string,
+    vendorId: string,
+    serviceId: string,
+    serviceName: string,
+    price: number,
+  ): Promise<CartDocument> {
     let cart = await this.findByUserAndEvent(userId, eventId);
     if (!cart) {
       cart = await this.create({ userId, eventId, items: [], totalAmount: 0 });
     }
-    cart.items.push({ vendorId: new Types.ObjectId(vendorId), serviceId: new Types.ObjectId(serviceId), serviceName, price });
+    cart.items.push({
+      vendorId: new Types.ObjectId(vendorId),
+      serviceId: new Types.ObjectId(serviceId),
+      serviceName,
+      price,
+    });
     cart.totalAmount += price;
     return cart.save();
   }

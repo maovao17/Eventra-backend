@@ -21,4 +21,10 @@ export class CreatePaymentDto {
   @IsNotEmpty()
   @IsEnum(['success', 'failed'])
   status: string;
+
+  @IsString()
+  razorpayPaymentId?: string;
+
+  @IsString()
+  razorpayOrderId?: string;
 }

@@ -23,7 +23,18 @@ export class Event {
   @Prop({ type: Object, required: false, default: {} })
   location?: Record<string, any>;
 
-  @Prop({ required: false, default: 'draft', enum: ['draft', 'planning', 'confirmed', 'ongoing', 'completed', 'cancelled'] })
+  @Prop({
+    required: false,
+    default: 'draft',
+    enum: [
+      'draft',
+      'planning',
+      'confirmed',
+      'ongoing',
+      'completed',
+      'cancelled',
+    ],
+  })
   status?: string;
 
   @Prop({ required: true })
@@ -40,11 +51,11 @@ export class Event {
 }
 
 export const EventSchema = SchemaFactory.createForClass(Event);
-EventSchema.set('toJSON', { 
+EventSchema.set('toJSON', {
   versionKey: false,
   virtuals: true,
   transform: function (doc, ret: any) {
     ret.id = ret._id.toString();
     return ret;
-  }
+  },
 });

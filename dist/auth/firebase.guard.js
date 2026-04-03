@@ -38,11 +38,19 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __metadata = (this && this.__metadata) || function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FirebaseAuthGuard = void 0;
 const common_1 = require("@nestjs/common");
 const admin = __importStar(require("firebase-admin"));
+const user_service_1 = require("../user/user.service");
 let FirebaseAuthGuard = class FirebaseAuthGuard {
+    userService;
+    constructor(userService) {
+        this.userService = userService;
+    }
     async canActivate(context) {
         const request = context.switchToHttp().getRequest();
         const authHeader = request.headers.authorization;
@@ -52,22 +60,31 @@ let FirebaseAuthGuard = class FirebaseAuthGuard {
         const token = authHeader.split(' ')[1];
         try {
             const decodedToken = await admin.auth().verifyIdToken(token);
-            request.user = {
+            const dbUser = await this.userService.findByUserId(decodedToken.uid);
+            if (!dbUser) {
+                throw new common_1.UnauthorizedException('User not found in database');
+            }
+            const authenticatedUser = {
                 uid: decodedToken.uid,
                 id: decodedToken.uid,
-                email: decodedToken.email || '',
-                phoneNumber: decodedToken.phone_number || '',
+                email: decodedToken.email || dbUser.email || '',
+                phoneNumber: decodedToken.phone_number || dbUser.phoneNumber || '',
+                role: dbUser.role,
+                userId: dbUser.userId,
+                name: dbUser.name,
+                businessName: dbUser.businessName,
             };
+            request.user = authenticatedUser;
             return true;
         }
-        catch (err) {
-            console.error('Firebase token verification failed:', err);
+        catch {
             throw new common_1.UnauthorizedException('Invalid Firebase token');
         }
     }
 };
 exports.FirebaseAuthGuard = FirebaseAuthGuard;
 exports.FirebaseAuthGuard = FirebaseAuthGuard = __decorate([
-    (0, common_1.Injectable)()
+    (0, common_1.Injectable)(),
+    __metadata("design:paramtypes", [user_service_1.UserService])
 ], FirebaseAuthGuard);
 //# sourceMappingURL=firebase.guard.js.map

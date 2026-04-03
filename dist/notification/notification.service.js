@@ -18,12 +18,15 @@ const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const notification_schema_1 = require("./schemas/notification.schema");
 const booking_schema_1 = require("../booking/schemas/booking.schema");
+const events_gateway_1 = require("../events/events.gateway");
 let NotificationService = class NotificationService {
     notificationModel;
     bookingModel;
-    constructor(notificationModel, bookingModel) {
+    eventsGateway;
+    constructor(notificationModel, bookingModel, eventsGateway) {
         this.notificationModel = notificationModel;
         this.bookingModel = bookingModel;
+        this.eventsGateway = eventsGateway;
     }
     onModuleInit() {
         void this.generateEventReminders();
@@ -38,7 +41,15 @@ let NotificationService = class NotificationService {
             read: false,
             createdAt: new Date(),
         });
-        return createdNotification.save();
+        const saved = await createdNotification.save();
+        this.eventsGateway.broadcastNotification({
+            message: saved.message,
+            type: saved.type,
+            bookingId: saved.bookingId ? String(saved.bookingId) : undefined,
+            vendorId: saved.vendorId ? String(saved.vendorId) : undefined,
+            userId: saved.userId ? String(saved.userId) : undefined,
+        });
+        return saved;
     }
     async generateEventReminders() {
         const bookings = await this.bookingModel
@@ -77,10 +88,16 @@ let NotificationService = class NotificationService {
         return this.notificationModel.find().sort({ createdAt: -1 }).exec();
     }
     async findByUser(userId) {
-        return this.notificationModel.find({ userId }).sort({ createdAt: -1 }).exec();
+        return this.notificationModel
+            .find({ userId })
+            .sort({ createdAt: -1 })
+            .exec();
     }
     async findByVendor(vendorId) {
-        return this.notificationModel.find({ vendorId }).sort({ createdAt: -1 }).exec();
+        return this.notificationModel
+            .find({ vendorId })
+            .sort({ createdAt: -1 })
+            .exec();
     }
     async findOne(id) {
         const notification = await this.notificationModel.findById(id).exec();
@@ -89,13 +106,17 @@ let NotificationService = class NotificationService {
         return notification;
     }
     async markAsRead(id) {
-        const updated = await this.notificationModel.findByIdAndUpdate(id, { read: true }, { new: true }).exec();
+        const updated = await this.notificationModel
+            .findByIdAndUpdate(id, { read: true }, { new: true })
+            .exec();
         if (!updated)
             throw new common_1.NotFoundException('Notification not found');
         return updated;
     }
     async update(id, updateNotificationDto) {
-        const updated = await this.notificationModel.findByIdAndUpdate(id, updateNotificationDto, { new: true }).exec();
+        const updated = await this.notificationModel
+            .findByIdAndUpdate(id, updateNotificationDto, { new: true })
+            .exec();
         if (!updated)
             throw new common_1.NotFoundException('Notification not found');
         return updated;
@@ -113,6 +134,7 @@ exports.NotificationService = NotificationService = __decorate([
     __param(0, (0, mongoose_1.InjectModel)(notification_schema_1.Notification.name)),
     __param(1, (0, mongoose_1.InjectModel)(booking_schema_1.Booking.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
-        mongoose_2.Model])
+        mongoose_2.Model,
+        events_gateway_1.EventsGateway])
 ], NotificationService);
 //# sourceMappingURL=notification.service.js.map

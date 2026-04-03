@@ -34,15 +34,22 @@ export class ReviewService {
     }
 
     const booking = await this.bookingService.findById(dto.bookingId);
-    if (booking.customerId !== customerId || booking.vendorId !== dto.vendorId) {
+    if (
+      booking.customerId !== customerId ||
+      booking.vendorId !== dto.vendorId
+    ) {
       throw new ForbiddenException('Review does not match booking ownership');
     }
 
     if (booking.status !== 'confirmed' && booking.status !== 'completed') {
-      throw new BadRequestException('Reviews are allowed only after confirmed/completed booking');
+      throw new BadRequestException(
+        'Reviews are allowed only after confirmed/completed booking',
+      );
     }
 
-    const existingReview = await this.reviewModel.findOne({ bookingId: dto.bookingId }).exec();
+    const existingReview = await this.reviewModel
+      .findOne({ bookingId: dto.bookingId })
+      .exec();
     if (existingReview) {
       throw new ConflictException('A review already exists for this booking');
     }
@@ -58,7 +65,9 @@ export class ReviewService {
 
   async reply(reviewId?: string, actorUserId?: string, reply?: string) {
     if (!reviewId || !actorUserId || !reply) {
-      throw new BadRequestException('reviewId, actorUserId and reply are required');
+      throw new BadRequestException(
+        'reviewId, actorUserId and reply are required',
+      );
     }
 
     const actor = await this.userService.findByUserId(actorUserId);
@@ -77,7 +86,9 @@ export class ReviewService {
     }
 
     if (String(reviewDoc.vendorId) !== String(vendor._id)) {
-      throw new ForbiddenException('Vendors can only reply to their own reviews');
+      throw new ForbiddenException(
+        'Vendors can only reply to their own reviews',
+      );
     }
 
     reviewDoc.reply = reply;
@@ -102,11 +113,19 @@ export class ReviewService {
   private async refreshVendorRating(vendorId: string) {
     const reviews = await this.reviewModel.find({ vendorId }).exec();
     if (!reviews.length) {
-      await this.vendorService.update(vendorId, { rating: 0 } as any);
+      await this.vendorService.update(vendorId, {
+        rating: 0,
+        totalReviews: 0,
+      } as any);
       return;
     }
 
-    const avg = reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / reviews.length;
-    await this.vendorService.update(vendorId, { rating: Number(avg.toFixed(2)) } as any);
+    const avg =
+      reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) /
+      reviews.length;
+    await this.vendorService.update(vendorId, {
+      rating: Number(avg.toFixed(2)),
+      totalReviews: reviews.length,
+    } as any);
   }
 }

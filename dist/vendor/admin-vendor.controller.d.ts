@@ -12,9 +12,4 @@ export declare class AdminVendorController {
     }> & {
         __v: number;
     }) | null>;
-    verifyVendor(id: string): Promise<(import("mongoose").Document<unknown, {}, import("./schemas/vendor.schema").VendorDocument, {}, {}> & import("./schemas/vendor.schema").Vendor & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
-        _id: import("mongoose").Types.ObjectId;
-    }> & {
-        __v: number;
-    }) | null>;
 }

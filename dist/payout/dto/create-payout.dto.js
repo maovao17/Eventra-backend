@@ -14,6 +14,7 @@ const class_validator_1 = require("class-validator");
 class CreatePayoutDto {
     vendorId;
     eventId;
+    bookingId;
     totalEarned;
     commissionCut;
     payoutAmount;
@@ -29,6 +30,11 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreatePayoutDto.prototype, "eventId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreatePayoutDto.prototype, "bookingId", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)

@@ -50,7 +50,18 @@ __decorate([
     __metadata("design:type", Object)
 ], Event.prototype, "location", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false, default: 'draft', enum: ['draft', 'planning', 'confirmed', 'ongoing', 'completed', 'cancelled'] }),
+    (0, mongoose_1.Prop)({
+        required: false,
+        default: 'draft',
+        enum: [
+            'draft',
+            'planning',
+            'confirmed',
+            'ongoing',
+            'completed',
+            'cancelled',
+        ],
+    }),
     __metadata("design:type", String)
 ], Event.prototype, "status", void 0);
 __decorate([
@@ -79,6 +90,6 @@ exports.EventSchema.set('toJSON', {
     transform: function (doc, ret) {
         ret.id = ret._id.toString();
         return ret;
-    }
+    },
 });
 //# sourceMappingURL=event.schema.js.map

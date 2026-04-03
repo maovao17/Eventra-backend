@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsOptional } from 'class-validator';
 
 export class CreatePayoutDto {
   @IsNotEmpty()
@@ -8,6 +8,10 @@ export class CreatePayoutDto {
   @IsNotEmpty()
   @IsString()
   eventId: string;
+
+  @IsOptional()
+  @IsString()
+  bookingId?: string;
 
   @IsNumber()
   totalEarned: number;

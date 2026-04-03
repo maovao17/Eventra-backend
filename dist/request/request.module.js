@@ -16,6 +16,7 @@ const booking_module_1 = require("../booking/booking.module");
 const user_module_1 = require("../user/user.module");
 const vendor_module_1 = require("../vendor/vendor.module");
 const event_module_1 = require("../event/event.module");
+const auth_module_1 = require("../auth/auth.module");
 let RequestModule = class RequestModule {
 };
 exports.RequestModule = RequestModule;
@@ -27,6 +28,7 @@ exports.RequestModule = RequestModule = __decorate([
             user_module_1.UserModule,
             vendor_module_1.VendorModule,
             event_module_1.EventModule,
+            auth_module_1.AuthModule,
         ],
         controllers: [request_controller_1.RequestController],
         providers: [request_service_1.RequestService],

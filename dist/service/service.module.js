@@ -17,7 +17,9 @@ let ServiceModule = class ServiceModule {
 exports.ServiceModule = ServiceModule;
 exports.ServiceModule = ServiceModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([{ name: service_schema_1.Service.name, schema: service_schema_1.ServiceSchema }])],
+        imports: [
+            mongoose_1.MongooseModule.forFeature([{ name: service_schema_1.Service.name, schema: service_schema_1.ServiceSchema }]),
+        ],
         controllers: [service_controller_1.ServiceController],
         providers: [service_service_1.ServiceService],
         exports: [service_service_1.ServiceService],

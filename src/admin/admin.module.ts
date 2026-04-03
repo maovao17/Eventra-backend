@@ -5,8 +5,7 @@ import { UserModule } from '../user/user.module';
 import { BookingModule } from '../booking/booking.module';
 import { PaymentModule } from '../payment/payment.module';
 import { AuthModule } from '../auth/auth.module';
-import { AdminGuard } from '../auth/admin.guard';
-import { FirebaseAuthGuard } from '../auth/firebase.guard';
+import { EventModule } from '../event/event.module';
 
 @Module({
   imports: [
@@ -15,8 +14,8 @@ import { FirebaseAuthGuard } from '../auth/firebase.guard';
     UserModule,
     BookingModule,
     PaymentModule,
+    EventModule,
   ],
   controllers: [AdminController],
-  providers: [AdminGuard, FirebaseAuthGuard],
 })
 export class AdminModule {}

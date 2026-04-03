@@ -144,8 +144,8 @@ __decorate([
     __metadata("design:type", String)
 ], VendorBankDetails.prototype, "bankName", void 0);
 let Vendor = class Vendor {
-    _id;
     userId;
+    _id;
     name;
     email;
     phone;
@@ -177,7 +177,7 @@ let Vendor = class Vendor {
 };
 exports.Vendor = Vendor;
 __decorate([
-    (0, mongoose_1.Prop)({ required: false, trim: true }),
+    (0, mongoose_1.Prop)({ index: true }),
     __metadata("design:type", String)
 ], Vendor.prototype, "userId", void 0);
 __decorate([
@@ -185,7 +185,13 @@ __decorate([
     __metadata("design:type", String)
 ], Vendor.prototype, "name", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false, unique: true, sparse: true, lowercase: true, trim: true }),
+    (0, mongoose_1.Prop)({
+        required: false,
+        unique: true,
+        sparse: true,
+        lowercase: true,
+        trim: true,
+    }),
     __metadata("design:type", String)
 ], Vendor.prototype, "email", void 0);
 __decorate([
@@ -205,7 +211,10 @@ __decorate([
     __metadata("design:type", Array)
 ], Vendor.prototype, "category", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ type: [{ type: mongoose_2.Schema.Types.ObjectId, ref: 'Service' }], default: [] }),
+    (0, mongoose_1.Prop)({
+        type: [{ type: mongoose_2.Schema.Types.ObjectId, ref: 'Service' }],
+        default: [],
+    }),
     __metadata("design:type", Array)
 ], Vendor.prototype, "servicesOffered", void 0);
 __decorate([
@@ -285,7 +294,11 @@ __decorate([
     __metadata("design:type", Boolean)
 ], Vendor.prototype, "verified", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ default: 'pending', enum: ['pending', 'approved', 'rejected'] }),
+    (0, mongoose_1.Prop)({
+        index: true,
+        default: 'pending',
+        enum: ['pending', 'approved', 'rejected'],
+    }),
     __metadata("design:type", String)
 ], Vendor.prototype, "status", void 0);
 __decorate([

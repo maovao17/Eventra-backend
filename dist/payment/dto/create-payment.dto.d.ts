@@ -4,4 +4,6 @@ export declare class CreatePaymentDto {
     amount: number;
     requestId: string;
     status: string;
+    razorpayPaymentId?: string;
+    razorpayOrderId?: string;
 }

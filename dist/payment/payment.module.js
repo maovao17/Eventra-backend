@@ -15,6 +15,9 @@ const payment_schema_1 = require("./schemas/payment.schema");
 const booking_module_1 = require("../booking/booking.module");
 const request_module_1 = require("../request/request.module");
 const user_module_1 = require("../user/user.module");
+const auth_module_1 = require("../auth/auth.module");
+const payout_module_1 = require("../payout/payout.module");
+const notification_module_1 = require("../notification/notification.module");
 let PaymentModule = class PaymentModule {
 };
 exports.PaymentModule = PaymentModule;
@@ -25,6 +28,9 @@ exports.PaymentModule = PaymentModule = __decorate([
             booking_module_1.BookingModule,
             request_module_1.RequestModule,
             user_module_1.UserModule,
+            auth_module_1.AuthModule,
+            payout_module_1.PayoutModule,
+            notification_module_1.NotificationModule,
         ],
         controllers: [payment_controller_1.PaymentController],
         providers: [payment_service_1.PaymentService],

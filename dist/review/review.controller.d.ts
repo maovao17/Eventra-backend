@@ -3,7 +3,7 @@ import { CreateReviewDto } from './dto/create-review.dto';
 export declare class ReviewController {
     private readonly reviewService;
     constructor(reviewService: ReviewService);
-    create(createReviewDto: CreateReviewDto): Promise<import("mongoose").Document<unknown, {}, import("./schemas/review.schema").ReviewDocument, {}, {}> & import("./schemas/review.schema").Review & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+    create(req: any, createReviewDto: CreateReviewDto): Promise<import("mongoose").Document<unknown, {}, import("./schemas/review.schema").ReviewDocument, {}, {}> & import("./schemas/review.schema").Review & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
@@ -17,7 +17,7 @@ export declare class ReviewController {
     }> & {
         __v: number;
     }) | null>;
-    reply(payload: {
+    reply(req: any, payload: {
         reviewId?: string;
         actorUserId?: string;
         reply?: string;

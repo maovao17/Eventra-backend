@@ -179,7 +179,11 @@ __decorate([
 ], CreateVendorDto.prototype, "description", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
-    (0, class_transformer_1.Transform)(({ value }) => Array.isArray(value) ? value : typeof value === 'string' && value.trim() ? [value.trim()] : []),
+    (0, class_transformer_1.Transform)(({ value }) => Array.isArray(value)
+        ? value
+        : typeof value === 'string' && value.trim()
+            ? [value.trim()]
+            : []),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)

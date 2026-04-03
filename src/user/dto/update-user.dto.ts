@@ -17,7 +17,8 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   @IsUrl(
-    { require_protocol: true }, 
-    { message: 'profile_photo must be a valid URL (include http/https).' })
+    { require_protocol: true },
+    { message: 'profile_photo must be a valid URL (include http/https).' },
+  )
   profile_photo?: string;
 }

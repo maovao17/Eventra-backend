@@ -6,19 +6,26 @@ import { BookingService } from '../booking/booking.service';
 import { UserService } from '../user/user.service';
 import { VendorService } from '../vendor/vendor.service';
 import { EventService } from '../event/event.service';
+import { EventsGateway } from '../events/events.gateway';
 export declare class RequestService {
     private requestModel;
     private bookingService;
     private userService;
     private vendorService;
     private eventService;
-    constructor(requestModel: Model<RequestDocument>, bookingService: BookingService, userService: UserService, vendorService: VendorService, eventService: EventService);
+    private eventsGateway;
+    constructor(requestModel: Model<RequestDocument>, bookingService: BookingService, userService: UserService, vendorService: VendorService, eventService: EventService, eventsGateway: EventsGateway);
     create(createRequestDto: CreateRequestDto): Promise<RequestDocument>;
     findAll(): Promise<RequestDocument[]>;
     findByUser(userId: string): Promise<RequestDocument[]>;
     findByVendor(vendorId: string): Promise<RequestDocument[]>;
     findByVendorUser(userId: string): Promise<any[]>;
     findByEvent(eventId: string): Promise<RequestDocument[]>;
+    findByQuery(filters: {
+        customerId?: string;
+        vendorId?: string;
+        eventId?: string;
+    }): Promise<RequestDocument[]>;
     findOne(id: string): Promise<RequestDocument>;
     update(id: string, updateRequestDto: UpdateRequestDto): Promise<RequestDocument | (import("mongoose").Document<unknown, {}, RequestDocument, {}, {}> & Request & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
