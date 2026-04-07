@@ -10,7 +10,7 @@ export declare const RequestSchema: import("mongoose").Schema<Request, import("m
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
-}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Request, Document<unknown, {}, import("mongoose").FlatRecord<Request>, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").FlatRecord<Request> & {
+}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Request, Document<unknown, {}, import("mongoose").FlatRecord<Request>, {}, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & import("mongoose").FlatRecord<Request> & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;

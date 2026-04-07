@@ -15,7 +15,7 @@ export declare const PayoutSchema: MongooseSchema<Payout, import("mongoose").Mod
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
-}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Payout, Document<unknown, {}, import("mongoose").FlatRecord<Payout>, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").FlatRecord<Payout> & {
+}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Payout, Document<unknown, {}, import("mongoose").FlatRecord<Payout>, {}, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & import("mongoose").FlatRecord<Payout> & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;

@@ -39,6 +39,8 @@ async function bootstrap() {
     }),
   });
 
+  app.setGlobalPrefix('api');
+
   const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000', 'https://eventra-frontend-eight.vercel.app')
     .split(',')
     .map((origin) => origin.trim())

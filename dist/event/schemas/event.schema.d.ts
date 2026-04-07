@@ -17,7 +17,7 @@ export declare const EventSchema: import("mongoose").Schema<Event, import("mongo
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
-}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Event, Document<unknown, {}, import("mongoose").FlatRecord<Event>, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").FlatRecord<Event> & {
+}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Event, Document<unknown, {}, import("mongoose").FlatRecord<Event>, {}, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & import("mongoose").FlatRecord<Event> & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;

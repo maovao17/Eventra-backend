@@ -72,7 +72,7 @@ export declare const VendorSchema: MongooseSchema<Vendor, import("mongoose").Mod
     _id: Types.ObjectId;
 }> & {
     __v: number;
-}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Vendor, Document<unknown, {}, import("mongoose").FlatRecord<Vendor>, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").FlatRecord<Vendor> & Required<{
+}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Vendor, Document<unknown, {}, import("mongoose").FlatRecord<Vendor>, {}, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & import("mongoose").FlatRecord<Vendor> & Required<{
     _id: Types.ObjectId;
 }> & {
     __v: number;

@@ -14,7 +14,7 @@ export declare const ServiceSchema: MongooseSchema<Service, import("mongoose").M
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
-}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Service, Document<unknown, {}, import("mongoose").FlatRecord<Service>, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").FlatRecord<Service> & {
+}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Service, Document<unknown, {}, import("mongoose").FlatRecord<Service>, {}, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & import("mongoose").FlatRecord<Service> & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;

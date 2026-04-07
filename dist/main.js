@@ -37,7 +37,6 @@ const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const app_module_1 = require("./app.module");
 const path_1 = require("path");
-const bodyParser = __importStar(require("body-parser"));
 const fs_1 = require("fs");
 const express_1 = require("express");
 const admin = __importStar(require("firebase-admin"));
@@ -67,7 +66,8 @@ async function bootstrap() {
             ],
         }),
     });
-    const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+    app.setGlobalPrefix('api');
+    const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000', 'https://eventra-frontend-eight.vercel.app')
         .split(',')
         .map((origin) => origin.trim())
         .filter(Boolean);
@@ -83,11 +83,6 @@ async function bootstrap() {
         credentials: true,
         methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
     });
-    app.use(bodyParser.json({
-        verify: (req, res, buf) => {
-            req.rawBody = buf.toString();
-        },
-    }));
     const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads');
     if (!(0, fs_1.existsSync)(uploadsDir)) {
         (0, fs_1.mkdirSync)(uploadsDir, { recursive: true });
@@ -98,7 +93,7 @@ async function bootstrap() {
         forbidNonWhitelisted: false,
         transform: true,
     }));
-    await app.listen(process.env.PORT ?? 3002);
+    await app.listen(Number(process.env.PORT) || 3000, '0.0.0.0');
 }
 bootstrap();
 //# sourceMappingURL=main.js.map
