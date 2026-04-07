@@ -7,7 +7,6 @@ import { static as expressStatic, Request } from 'express';
 import * as admin from 'firebase-admin';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
-import { hostname } from 'os';
 
 async function bootstrap() {
   if (!admin.apps.length) {
@@ -40,7 +39,7 @@ async function bootstrap() {
     }),
   });
 
-  const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+  const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000', 'https://eventra-frontend-eight.vercel.app')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
