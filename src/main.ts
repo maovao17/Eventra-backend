@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { join } from 'path';
-import * as bodyParser from 'body-parser';
 import { existsSync, mkdirSync } from 'fs';
 import { static as expressStatic, Request } from 'express';
 import * as admin from 'firebase-admin';
@@ -57,14 +56,6 @@ async function bootstrap() {
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
   });
-
-  app.use(
-    bodyParser.json({
-      verify: (req: Request & { rawBody?: string }, res, buf) => {
-        req.rawBody = buf.toString();
-      },
-    }),
-  );
 
   const uploadsDir = join(process.cwd(), 'uploads');
   if (!existsSync(uploadsDir)) {
