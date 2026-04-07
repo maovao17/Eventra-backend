@@ -8,6 +8,7 @@ import { static as expressStatic, Request } from 'express';
 import * as admin from 'firebase-admin';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
+import { hostname } from 'os';
 
 async function bootstrap() {
   if (!admin.apps.length) {
@@ -77,6 +78,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  await app.listen(process.env.PORT ?? 3002);
-}
+await app.listen(Number(process.env.PORT) || 3000, '0.0.0.0');}
+
 bootstrap();
