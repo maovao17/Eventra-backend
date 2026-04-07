@@ -28,6 +28,8 @@ type AuthUser = {
   role: 'customer' | 'vendor' | 'admin';
 };
 
+const VENDOR_ALLOWED_STATUSES = new Set(['accepted', 'rejected', 'completed']);
+
 @Controller('bookings')
 export class BookingController {
   constructor(private readonly bookingService: BookingService) {}
@@ -198,28 +200,58 @@ export class BookingController {
   }
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
-  @Roles('vendor')
+  @Roles('vendor', 'admin')
+  @Patch(':id/status')
+  async updateStatus(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() dto: Pick<UpdateBookingDto, 'status'>,
+  ) {
+    if (!dto?.status) {
+      throw new BadRequestException('status is required');
+    }
+
+    if (req.user.role === 'vendor') {
+      if (!VENDOR_ALLOWED_STATUSES.has(dto.status)) {
+        throw new BadRequestException(
+          'Vendors can only set status to accepted, rejected, or completed',
+        );
+      }
+
+      await this.bookingService.assertVendorOwnership(id, req.user.uid);
+
+      if (dto.status === 'accepted') {
+        return this.bookingService.accept(id, req.user.uid);
+      }
+
+      if (dto.status === 'rejected') {
+        return this.bookingService.reject(id, req.user.uid);
+      }
+
+      return this.bookingService.complete(id, req.user.uid);
+    }
+
+    await this.bookingService.findById(id);
+    return this.bookingService.update(id, { status: dto.status });
+  }
+
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('admin')
   @Patch(':id')
   async update(
-    @Req() req,
     @Param('id') id: string,
     @Body() dto: UpdateBookingDto,
   ) {
-    await this.bookingService.assertVendorOwnership(id, req.user.uid);
+    await this.bookingService.findById(id);
     return this.bookingService.update(id, dto);
   }
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
-  @Roles('vendor', 'admin')
+  @Roles('admin')
   @Patch(':id/payout')
   async markPayoutPaid(@Req() req, @Param('id') id: string) {
-    if (req.user.role === 'vendor') {
-      await this.bookingService.assertVendorOwnership(id, req.user.uid);
-    } else {
-      await this.bookingService.findById(id);
-    }
-
-    return this.bookingService.markPayoutPaid(id);
+    await this.bookingService.findById(id);
+    return this.bookingService.markPayoutPaid(id, req.user.role);
   }
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)

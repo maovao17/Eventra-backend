@@ -73,7 +73,7 @@ __decorate([
     __metadata("design:type", String)
 ], Payment.prototype, "payoutId", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: false, unique: true, sparse: true }),
+    (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], Payment.prototype, "razorpayPaymentId", void 0);
 __decorate([
@@ -89,7 +89,6 @@ exports.Payment = Payment = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Payment);
 exports.PaymentSchema = mongoose_1.SchemaFactory.createForClass(Payment);
-exports.PaymentSchema.index({ bookingId: 1 });
 exports.PaymentSchema.index({ bookingId: 1 }, {
     unique: true,
     partialFilterExpression: { status: 'success' },

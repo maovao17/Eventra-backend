@@ -62,6 +62,7 @@ PORT=3002
 DB_URI=your_mongodb_connection_string
 
 CORS_ORIGIN=http://localhost:3000
+ADMIN_EMAIL=daanielamendo12@gmail.com
 
 FIREBASE_SERVICE_ACCOUNT_PATH=path_to_service_account.json
 
@@ -83,6 +84,7 @@ npm run start:dev
 - Firebase tokens are verified using Firebase Admin SDK
 - All protected routes use `FirebaseAuthGuard`
 - Role-based access is enforced using `RolesGuard`
+- Admin access is assigned only by backend email match using `ADMIN_EMAIL`
 
 ---
 

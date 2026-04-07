@@ -41,10 +41,35 @@ let VendorService = class VendorService {
         this.userService = userService;
     }
     async create(dto) {
-        return this.vendorModel.create(dto);
+        if (!dto.userId) {
+            throw new common_1.BadRequestException('userId is required');
+        }
+        const user = await this.getApprovedVendorUserOrThrow(dto.userId);
+        const existingVendor = await this.vendorModel.findOne({ userId: dto.userId }).exec();
+        if (existingVendor) {
+            Object.assign(existingVendor, {
+                ...dto,
+                email: user.email || dto.email,
+                status: user.status,
+                isVerified: user.status === 'approved',
+                verified: user.status === 'approved',
+            });
+            await existingVendor.save();
+            return existingVendor;
+        }
+        return this.vendorModel.create({
+            ...dto,
+            email: user.email || dto.email,
+            status: user.status,
+            isVerified: user.status === 'approved',
+            verified: user.status === 'approved',
+        });
     }
     async findPublic() {
-        return this.vendorModel.find().sort({ createdAt: -1 }).exec();
+        return this.vendorModel
+            .find({ status: 'approved' })
+            .sort({ createdAt: -1 })
+            .exec();
     }
     async findOneOrThrow(id) {
         const vendor = await this.vendorModel.findById(id).exec();
@@ -78,6 +103,9 @@ let VendorService = class VendorService {
             const user = await this.userService.findByUserId(userId);
             if (user.role !== 'vendor') {
                 throw new common_1.ForbiddenException('Only vendors allowed');
+            }
+            if (user.status !== 'approved') {
+                throw new common_1.ForbiddenException('Vendor account not approved');
             }
             vendor = await this.vendorModel.create({
                 userId,
@@ -201,34 +229,46 @@ let VendorService = class VendorService {
         };
     }
     async getVendorBookings(userId) {
+        await this.getApprovedVendorUserOrThrow(userId);
         const vendor = await this.vendorModel.findOne({ userId });
         if (!vendor)
             throw new common_1.NotFoundException();
         return this.bookingModel.find({ vendorId: vendor._id });
     }
     async updateVendorBookingStatus(userId, bookingId, status) {
+        await this.getApprovedVendorUserOrThrow(userId);
         const vendor = await this.vendorModel.findOne({ userId });
         if (!vendor)
             throw new common_1.NotFoundException();
         const booking = await this.bookingModel.findById(bookingId);
         if (!booking)
             throw new common_1.NotFoundException();
+        if (String(booking.vendorId) !== String(vendor._id)) {
+            throw new common_1.ForbiddenException('Vendors can only manage their own bookings');
+        }
         booking.status = status;
         await booking.save();
         return booking;
     }
     async getVendorReviews(userId) {
+        await this.getApprovedVendorUserOrThrow(userId);
         const vendor = await this.vendorModel.findOne({ userId });
         return this.reviewModel.find({ vendorId: vendor?._id });
     }
     async getVendorNotifications(userId) {
+        await this.getApprovedVendorUserOrThrow(userId);
         const vendor = await this.vendorModel.findOne({ userId });
         return this.notificationModel.find({ vendorId: vendor?._id });
     }
     async markVendorNotificationRead(userId, id) {
+        await this.getApprovedVendorUserOrThrow(userId);
+        const vendor = await this.vendorModel.findOne({ userId }).exec();
         const notif = await this.notificationModel.findById(id);
         if (!notif)
             throw new common_1.NotFoundException();
+        if (!vendor || String(notif.vendorId) !== String(vendor._id)) {
+            throw new common_1.ForbiddenException('Vendors can only manage their own notifications');
+        }
         notif.read = true;
         await notif.save();
         return notif;
@@ -237,6 +277,7 @@ let VendorService = class VendorService {
         return this.vendorModel.findById(id);
     }
     async findByUserIdOrThrow(userId) {
+        await this.getApprovedVendorUserOrThrow(userId);
         const vendor = await this.vendorModel.findOne({ userId });
         if (!vendor)
             throw new common_1.NotFoundException('Vendor not found');
@@ -255,14 +296,20 @@ let VendorService = class VendorService {
         return this.vendorModel.find({ status: 'pending' });
     }
     async approveVendor(id) {
-        return this.vendorModel.findByIdAndUpdate(id, {
-            status: 'approved',
-            isVerified: true,
-            verified: true,
-        }, { new: true });
+        const vendor = await this.vendorModel.findById(id).exec();
+        if (!vendor) {
+            throw new common_1.NotFoundException('Vendor not found');
+        }
+        await this.userService.approveVendor(String(vendor.userId || ''));
+        return this.vendorModel.findById(id).exec();
     }
     async rejectVendor(id) {
-        return this.vendorModel.findByIdAndUpdate(id, { status: 'rejected' }, { new: true });
+        const vendor = await this.vendorModel.findById(id).exec();
+        if (!vendor) {
+            throw new common_1.NotFoundException('Vendor not found');
+        }
+        await this.userService.rejectVendor(String(vendor.userId || ''));
+        return this.vendorModel.findById(id).exec();
     }
     async getAllVendors() {
         return this.vendorModel.find({});
@@ -296,6 +343,16 @@ let VendorService = class VendorService {
             },
         };
         return payload;
+    }
+    async getApprovedVendorUserOrThrow(userId) {
+        const user = await this.userService.findByUserId(userId);
+        if (user.role !== 'vendor') {
+            throw new common_1.ForbiddenException('Only vendors allowed');
+        }
+        if (user.status !== 'approved') {
+            throw new common_1.ForbiddenException('Vendor account not approved');
+        }
+        return user;
     }
 };
 exports.VendorService = VendorService;

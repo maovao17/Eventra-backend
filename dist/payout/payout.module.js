@@ -14,6 +14,7 @@ const payout_controller_1 = require("./payout.controller");
 const payout_schema_1 = require("./schemas/payout.schema");
 const booking_schema_1 = require("../booking/schemas/booking.schema");
 const vendor_module_1 = require("../vendor/vendor.module");
+const auth_module_1 = require("../auth/auth.module");
 let PayoutModule = class PayoutModule {
 };
 exports.PayoutModule = PayoutModule;
@@ -25,6 +26,7 @@ exports.PayoutModule = PayoutModule = __decorate([
                 { name: booking_schema_1.Booking.name, schema: booking_schema_1.BookingSchema },
             ]),
             vendor_module_1.VendorModule,
+            auth_module_1.AuthModule,
         ],
         controllers: [payout_controller_1.PayoutController],
         providers: [payout_service_1.PayoutService],

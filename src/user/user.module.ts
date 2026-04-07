@@ -4,6 +4,7 @@ import { UserController } from './user.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/user.schema';
 import { FirebaseAuthGuard } from '../auth/firebase.guard';
+import { FirebaseBootstrapGuard } from '../auth/firebase-bootstrap.guard';
 import { Vendor, VendorSchema } from '../vendor/schemas/vendor.schema';
 import { Booking, BookingSchema } from '../booking/schemas/booking.schema';
 import { Request, RequestSchema } from '../request/schemas/request.schema';
@@ -18,7 +19,7 @@ import { Request, RequestSchema } from '../request/schemas/request.schema';
     ]),
   ],
   controllers: [UserController],
-  providers: [UserService, FirebaseAuthGuard],
+  providers: [UserService, FirebaseAuthGuard, FirebaseBootstrapGuard],
   exports: [UserService],
 })
 export class UserModule {}

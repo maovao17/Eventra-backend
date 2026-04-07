@@ -27,8 +27,8 @@ export class CreateUserDto {
   authProvider: 'phone' | 'google';
 
   @IsString()
-  @IsEnum(['customer', 'vendor', 'admin'])
-  role: string;
+  @IsEnum(['customer', 'vendor'])
+  role: 'customer' | 'vendor';
 
   @IsOptional()
   @IsString()

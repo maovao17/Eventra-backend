@@ -67,7 +67,10 @@ export declare class BookingService {
     }> & {
         __v: number;
     }>;
-    update(id: string, dto: UpdateBookingDto): Promise<import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+    update(id: string, dto: UpdateBookingDto & {
+        paymentStatus?: 'pending' | 'partial' | 'paid';
+        payoutStatus?: 'pending' | 'paid';
+    }): Promise<import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
@@ -92,7 +95,7 @@ export declare class BookingService {
     }> & {
         __v: number;
     }>;
-    markPayoutPaid(id: string): Promise<(import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+    markPayoutPaid(id: string, actorRole?: 'customer' | 'vendor' | 'admin' | string): Promise<(import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;

@@ -33,12 +33,12 @@ export class UserService {
     return Boolean(adminEmail) && normalizedEmail === adminEmail;
   }
 
-  private resolvePersistedRole(dto: CreateUserDto) {
-    if (this.isAdminEmail(dto.email)) {
+  private resolvePersistedRole(role: string, email?: string) {
+    if (this.isAdminEmail(email)) {
       return 'admin' as const;
     }
 
-    return dto.role === 'vendor' ? 'vendor' : 'customer';
+    return role === 'vendor' ? 'vendor' : 'customer';
   }
 
   private sanitize(doc: unknown): UserDocument {
@@ -51,15 +51,12 @@ export class UserService {
 
   async create(dto: CreateUserDto) {
     try {
-      if (dto.role === 'admin') {
-        throw new ForbiddenException('Admin role cannot be self-assigned');
-      }
+      dto.email = dto.email?.trim().toLowerCase();
 
       if (dto.authProvider === 'google') {
         if (!dto.email) {
           throw new BadRequestException('email is required for Google users');
         }
-        dto.email = dto.email.toLowerCase();
         dto.phoneNumber = undefined;
       }
 
@@ -69,10 +66,13 @@ export class UserService {
             'phoneNumber is required for phone users',
           );
         }
-        dto.email = dto.email?.toLowerCase();
       }
 
-      const persistedRole = this.resolvePersistedRole(dto);
+      if (dto.role !== 'customer' && dto.role !== 'vendor') {
+        throw new BadRequestException('role must be customer or vendor');
+      }
+
+      const persistedRole = this.resolvePersistedRole(dto.role, dto.email);
 
       const existingUser = await this.userModel
         .findOne({ userId: dto.userId })
@@ -85,6 +85,7 @@ export class UserService {
         existingUser.role = persistedRole;
         existingUser.businessName = dto.businessName;
         existingUser.profile_photo = dto.profile_photo;
+        existingUser.status = persistedRole === 'vendor' ? 'pending' : 'approved';
         await existingUser.save();
         return this.sanitize(existingUser);
       }
@@ -112,6 +113,7 @@ export class UserService {
       const createUser = await this.userModel.create({
         ...dto,
         role: persistedRole,
+        status: persistedRole === 'vendor' ? 'pending' : 'approved',
       });
       return this.sanitize(createUser);
     } catch (err: any) {
@@ -214,5 +216,41 @@ export class UserService {
     const deleteUser = await this.userModel.findByIdAndDelete(id).exec();
     if (!deleteUser) throw new NotFoundException('User not found');
     return this.sanitize(deleteUser);
+  }
+
+  async approveVendor(userId: string) {
+    return this.setVendorStatus(userId, 'approved');
+  }
+
+  async rejectVendor(userId: string) {
+    return this.setVendorStatus(userId, 'rejected');
+  }
+
+  private async setVendorStatus(
+    userId: string,
+    status: 'approved' | 'rejected',
+  ) {
+    const user = await this.userModel.findOne({ userId }).exec();
+    if (!user) throw new NotFoundException('User not found');
+    if (user.role !== 'vendor') throw new BadRequestException('User is not a vendor');
+    if (status === 'approved' && user.status !== 'pending') {
+      throw new BadRequestException('Vendor is not pending approval');
+    }
+    user.status = status;
+    await user.save();
+
+    await this.vendorModel
+      .findOneAndUpdate(
+        { userId },
+        {
+          status,
+          isVerified: status === 'approved',
+          verified: status === 'approved',
+        },
+        { new: true },
+      )
+      .exec();
+
+    return this.sanitize(user);
   }
 }

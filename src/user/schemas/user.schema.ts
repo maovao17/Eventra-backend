@@ -56,6 +56,9 @@ export class User {
 
   @Prop({ required: false, trim: true })
   businessName?: string;
+
+  @Prop({ required: true, enum: ['pending', 'approved', 'rejected'], default: 'approved' })
+  status: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { AuthenticatedUser } from '../types/auth.types';
 import { FirebaseAuthGuard } from '../auth/firebase.guard';
+import { FirebaseBootstrapGuard } from '../auth/firebase-bootstrap.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserService } from './user.service';
@@ -24,20 +25,24 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export class UserController {
   constructor(private readonly userservice: UserService) {}
 
-  @UseGuards(FirebaseAuthGuard)
+  @UseGuards(FirebaseBootstrapGuard)
   @Post()
-  create(@Req() req, @Body() createUserDto: CreateUserDto) {
-    if (
-      createUserDto.role !== 'customer' &&
-      createUserDto.role !== 'vendor'
-    ) {
-      throw new BadRequestException('role must be customer or vendor');
-    }
+  create(
+    @Req() req: {
+      user: {
+        uid: string;
+        email?: string;
+        phoneNumber?: string;
+      };
+    },
+    @Body() createUserDto: CreateUserDto,
+  ) {
+    const { email: _ignoredEmail, ...safeCreateUserDto } = createUserDto;
 
     return this.userservice.create({
-      ...createUserDto,
+      ...safeCreateUserDto,
       userId: req.user.uid,
-      role: createUserDto.role,
+      email: req.user.email || undefined,
     });
   }
 
@@ -89,14 +94,22 @@ export class UserController {
   async get(@Req() req: { user: AuthenticatedUser }, @Param('id') id: string) {
     const user = await this.userservice.findById(id);
 
-    if (
-      req.user.role !== 'admin' &&
-      String(user.userId) !== String(req.user.userId)
-    ) {
-      throw new ForbiddenException('You do not have access to this user');
+    if (req.user.role === 'admin') {
+      return user;
     }
 
-    return user;
+    if (String(user.userId) === String(req.user.userId)) {
+      return user;
+    }
+
+    if (req.user.role === 'vendor') {
+      return this.userservice.assertVendorCanAccessUser(
+        req.user.userId,
+        String(user.userId),
+      );
+    }
+
+    throw new ForbiddenException('You do not have access to this user');
   }
 
   @UseGuards(FirebaseAuthGuard)
@@ -127,5 +140,12 @@ export class UserController {
       throw new ForbiddenException('Users can only delete their own profile');
     }
     return this.userservice.remove(id);
+  }
+
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Post('approve-vendor/:userId')
+  async approveVendor(@Param('userId') userId: string) {
+    return this.userservice.approveVendor(userId);
   }
 }

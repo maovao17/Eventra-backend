@@ -12,12 +12,16 @@ import { FirebaseAuthGuard } from '../auth/firebase.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { BookingService } from '../booking/booking.service';
+import { VendorService } from '../vendor/vendor.service';
 import * as admin from 'firebase-admin';
 import { AuthenticatedUser } from '../types/auth.types';
 
 @Controller('chats')
 export class ChatController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly vendorService: VendorService,
+  ) {}
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles('customer', 'vendor')
@@ -33,10 +37,12 @@ export class ChatController {
 
     const booking = await this.bookingService.findById(bookingId);
     const actorUserId = req.user.uid;
+    const bookingVendor = await this.vendorService.findOneOrThrow(booking.vendorId);
+    const vendorUserId = String(bookingVendor.userId || '');
 
     if (
       String(booking.customerId) !== actorUserId &&
-      String(booking.vendorId) !== actorUserId
+      vendorUserId !== actorUserId
     ) {
       throw new ForbiddenException('You do not have access to this booking chat');
     }
@@ -48,7 +54,7 @@ export class ChatController {
     if (!existing.exists) {
       await chatRef.set({
         bookingId,
-        participantIds: [String(booking.customerId), String(booking.vendorId)],
+        participantIds: [String(booking.customerId), vendorUserId],
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
     }
@@ -71,8 +77,10 @@ export class ChatController {
 
       const bookingId = bookingIdMatch[1];
       const booking = await this.bookingService.findById(bookingId);
+      const bookingVendor = await this.vendorService.findOneOrThrow(booking.vendorId);
+      const vendorUserId = String(bookingVendor.userId || '');
       const isAllowed = booking.customerId === req.user.uid ||
-                       booking.vendorId === req.user.uid;
+                       vendorUserId === req.user.uid;
 
       return { allowed: isAllowed };
     } catch {

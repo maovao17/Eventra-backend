@@ -22,6 +22,7 @@ const path_1 = require("path");
 const firebase_guard_1 = require("../auth/firebase.guard");
 const roles_guard_1 = require("../auth/roles.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
+const VENDOR_ALLOWED_STATUSES = new Set(['accepted', 'rejected', 'completed']);
 let BookingController = class BookingController {
     bookingService;
     constructor(bookingService) {
@@ -103,18 +104,33 @@ let BookingController = class BookingController {
         const imageUrl = await this.saveUpload(file, req);
         return this.bookingService.uploadCompletionProof(id, imageUrl, req?.user?.uid);
     }
-    async update(req, id, dto) {
-        await this.bookingService.assertVendorOwnership(id, req.user.uid);
+    async updateStatus(req, id, dto) {
+        if (!dto?.status) {
+            throw new common_1.BadRequestException('status is required');
+        }
+        if (req.user.role === 'vendor') {
+            if (!VENDOR_ALLOWED_STATUSES.has(dto.status)) {
+                throw new common_1.BadRequestException('Vendors can only set status to accepted, rejected, or completed');
+            }
+            await this.bookingService.assertVendorOwnership(id, req.user.uid);
+            if (dto.status === 'accepted') {
+                return this.bookingService.accept(id, req.user.uid);
+            }
+            if (dto.status === 'rejected') {
+                return this.bookingService.reject(id, req.user.uid);
+            }
+            return this.bookingService.complete(id, req.user.uid);
+        }
+        await this.bookingService.findById(id);
+        return this.bookingService.update(id, { status: dto.status });
+    }
+    async update(id, dto) {
+        await this.bookingService.findById(id);
         return this.bookingService.update(id, dto);
     }
     async markPayoutPaid(req, id) {
-        if (req.user.role === 'vendor') {
-            await this.bookingService.assertVendorOwnership(id, req.user.uid);
-        }
-        else {
-            await this.bookingService.findById(id);
-        }
-        return this.bookingService.markPayoutPaid(id);
+        await this.bookingService.findById(id);
+        return this.bookingService.markPayoutPaid(id, req.user.role);
     }
     async remove(req, id) {
         await this.bookingService.assertVendorOwnership(id, req.user.uid);
@@ -229,18 +245,28 @@ __decorate([
 ], BookingController.prototype, "uploadProof", null);
 __decorate([
     (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('vendor'),
-    (0, common_1.Patch)(':id'),
+    (0, roles_decorator_1.Roles)('vendor', 'admin'),
+    (0, common_1.Patch)(':id/status'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('id')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, update_booking_dto_1.UpdateBookingDto]),
+    __metadata("design:paramtypes", [Object, String, Object]),
+    __metadata("design:returntype", Promise)
+], BookingController.prototype, "updateStatus", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.Patch)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_booking_dto_1.UpdateBookingDto]),
     __metadata("design:returntype", Promise)
 ], BookingController.prototype, "update", null);
 __decorate([
     (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('vendor', 'admin'),
+    (0, roles_decorator_1.Roles)('admin'),
     (0, common_1.Patch)(':id/payout'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('id')),

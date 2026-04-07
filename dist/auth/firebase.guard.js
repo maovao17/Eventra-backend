@@ -60,19 +60,24 @@ let FirebaseAuthGuard = class FirebaseAuthGuard {
         const token = authHeader.split(' ')[1];
         try {
             const decodedToken = await admin.auth().verifyIdToken(token);
-            const dbUser = await this.userService.findByUserId(decodedToken.uid);
-            if (!dbUser) {
-                throw new common_1.UnauthorizedException('User not found in database');
+            let dbUser = null;
+            try {
+                dbUser = await this.userService.findByUserId(decodedToken.uid);
+            }
+            catch (error) {
+                if (!(error instanceof common_1.NotFoundException)) {
+                    throw error;
+                }
             }
             const authenticatedUser = {
                 uid: decodedToken.uid,
                 id: decodedToken.uid,
-                email: decodedToken.email || dbUser.email || '',
-                phoneNumber: decodedToken.phone_number || dbUser.phoneNumber || '',
-                role: dbUser.role,
-                userId: dbUser.userId,
-                name: dbUser.name,
-                businessName: dbUser.businessName,
+                email: decodedToken.email || dbUser?.email || '',
+                phoneNumber: decodedToken.phone_number || dbUser?.phoneNumber || '',
+                role: dbUser?.role,
+                userId: decodedToken.uid,
+                name: dbUser?.name || '',
+                businessName: dbUser?.businessName,
             };
             request.user = authenticatedUser;
             return true;

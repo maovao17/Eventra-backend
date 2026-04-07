@@ -1,4 +1,4 @@
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class UpdateBookingDto {
   @IsOptional()
@@ -13,22 +13,8 @@ export class UpdateBookingDto {
   status?: string;
 
   @IsOptional()
-  @IsEnum(['pending', 'partial', 'paid'])
-  paymentStatus?: string;
-
-  @IsOptional()
   @IsString()
   note?: string;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  amount?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  price?: number;
 
   @IsOptional()
   @IsString()

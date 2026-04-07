@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const common_1 = require("@nestjs/common");
 const firebase_guard_1 = require("../auth/firebase.guard");
+const firebase_bootstrap_guard_1 = require("../auth/firebase-bootstrap.guard");
 const roles_guard_1 = require("../auth/roles.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
 const user_service_1 = require("./user.service");
@@ -26,14 +27,11 @@ let UserController = class UserController {
         this.userservice = userservice;
     }
     create(req, createUserDto) {
-        if (createUserDto.role !== 'customer' &&
-            createUserDto.role !== 'vendor') {
-            throw new common_1.BadRequestException('role must be customer or vendor');
-        }
+        const { email: _ignoredEmail, ...safeCreateUserDto } = createUserDto;
         return this.userservice.create({
-            ...createUserDto,
+            ...safeCreateUserDto,
             userId: req.user.uid,
-            role: createUserDto.role,
+            email: req.user.email || undefined,
         });
     }
     getMe(req) {
@@ -61,11 +59,16 @@ let UserController = class UserController {
     }
     async get(req, id) {
         const user = await this.userservice.findById(id);
-        if (req.user.role !== 'admin' &&
-            String(user.userId) !== String(req.user.userId)) {
-            throw new common_1.ForbiddenException('You do not have access to this user');
+        if (req.user.role === 'admin') {
+            return user;
         }
-        return user;
+        if (String(user.userId) === String(req.user.userId)) {
+            return user;
+        }
+        if (req.user.role === 'vendor') {
+            return this.userservice.assertVendorCanAccessUser(req.user.userId, String(user.userId));
+        }
+        throw new common_1.ForbiddenException('You do not have access to this user');
     }
     async update(req, id, updateUserDto) {
         const targetUser = await this.userservice.findById(id);
@@ -83,10 +86,13 @@ let UserController = class UserController {
         }
         return this.userservice.remove(id);
     }
+    async approveVendor(userId) {
+        return this.userservice.approveVendor(userId);
+    }
 };
 exports.UserController = UserController;
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseGuards)(firebase_bootstrap_guard_1.FirebaseBootstrapGuard),
     (0, common_1.Post)(),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -142,6 +148,15 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", Promise)
 ], UserController.prototype, "remove", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.Post)('approve-vendor/:userId'),
+    __param(0, (0, common_1.Param)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "approveVendor", null);
 exports.UserController = UserController = __decorate([
     (0, common_1.Controller)('users'),
     __metadata("design:paramtypes", [user_service_1.UserService])

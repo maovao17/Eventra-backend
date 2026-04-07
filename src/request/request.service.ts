@@ -17,11 +17,17 @@ import { UserService } from '../user/user.service';
 import { VendorService } from '../vendor/vendor.service';
 import { EventService } from '../event/event.service';
 import { EventsGateway } from '../events/events.gateway';
+import { Event, EventDocument } from '../event/schemas/event.schema';
+import { User, UserDocument } from '../user/schemas/user.schema';
+import { Booking, BookingDocument } from '../booking/schemas/booking.schema';
 
 @Injectable()
 export class RequestService {
   constructor(
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
+    @InjectModel(Event.name) private eventModel: Model<EventDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     @Inject(forwardRef(() => BookingService))
     private bookingService: BookingService,
     private userService: UserService,
@@ -41,6 +47,9 @@ export class RequestService {
     const vendor = await this.vendorService.findOne(createRequestDto.vendorId);
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
+    }
+    if (vendor.status !== 'approved') {
+      throw new ForbiddenException('Vendor is not approved');
     }
 
     const event = await this.eventService.findById(createRequestDto.eventId);
@@ -87,6 +96,9 @@ export class RequestService {
     const vendor = await this.vendorService.findByUserIdOrThrow(userId);
     const vendorId = String(vendor._id);
     const requests = await this.findByVendor(vendorId);
+    if (!requests.length) {
+      return [];
+    }
 
     const eventIds = Array.from(
       new Set(requests.map((request) => String(request.eventId))),
@@ -95,41 +107,24 @@ export class RequestService {
       new Set(requests.map((request) => String(request.customerId))),
     );
 
-    const eventEntries = await Promise.all(
-      eventIds.map(async (eventId) => {
-        try {
-          const event = await this.eventService.findById(eventId);
-          return [eventId, event] as const;
-        } catch {
-          return [eventId, null] as const;
-        }
-      }),
-    );
+    const [events, customers, bookings] = await Promise.all([
+      this.eventModel.find({ _id: { $in: eventIds } }).lean().exec(),
+      this.userModel.find({ userId: { $in: customerIds } }).lean().exec(),
+      this.bookingModel
+        .find({ requestId: { $in: requests.map((request) => String(request._id)) } })
+        .lean()
+        .exec(),
+    ]);
 
-    const customerEntries = await Promise.all(
-      customerIds.map(async (customerId) => {
-        try {
-          const customer = await this.userService.findByUserId(customerId);
-          return [customerId, customer] as const;
-        } catch {
-          return [customerId, null] as const;
-        }
-      }),
+    const eventsById = new Map(
+      events.map((event) => [String((event as { _id: unknown })._id), event]),
     );
-
-    const bookingEntries = await Promise.all(
-      requests.map(
-        async (request) =>
-          [
-            String(request._id),
-            await this.bookingService.findByRequestId(String(request._id)),
-          ] as const,
-      ),
+    const customersById = new Map(
+      customers.map((customer) => [String(customer.userId), customer]),
     );
-
-    const eventsById = new Map(eventEntries);
-    const customersById = new Map(customerEntries);
-    const bookingsByRequestId = new Map(bookingEntries);
+    const bookingsByRequestId = new Map(
+      bookings.map((booking) => [String(booking.requestId), booking]),
+    );
 
     return requests.map((request) => ({
       ...request.toObject(),
@@ -197,6 +192,9 @@ export class RequestService {
     if (actor.role !== 'vendor') {
       throw new ForbiddenException('Only vendors can update request status');
     }
+    if (actor.status !== 'approved') {
+      throw new ForbiddenException('Vendor account not approved');
+    }
 
     const vendor = await this.vendorService.findByUserId(actorUserId);
     if (!vendor || String(vendor._id) !== String(vendorId)) {
@@ -228,11 +226,13 @@ export class RequestService {
       vendorId: request.vendorId,
       eventId: request.eventId,
     });
+    const vendor = await this.vendorService.findOne(String(request.vendorId));
 
     this.eventsGateway.broadcastBookingUpdate({
       bookingId: String(booking._id),
       status: 'accepted',
       vendorId: booking.vendorId,
+      vendorUserId: String(vendor?.userId || ''),
       customerId: booking.customerId,
     });
 

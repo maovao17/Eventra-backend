@@ -5,7 +5,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 export declare class UserController {
     private readonly userservice;
     constructor(userservice: UserService);
-    create(req: any, createUserDto: CreateUserDto): Promise<import("./schemas/user.schema").UserDocument>;
+    create(req: {
+        user: {
+            uid: string;
+            email?: string;
+            phoneNumber?: string;
+        };
+    }, createUserDto: CreateUserDto): Promise<import("./schemas/user.schema").UserDocument>;
     getMe(req: {
         user: AuthenticatedUser;
     }): Promise<import("./schemas/user.schema").UserDocument>;
@@ -21,4 +27,5 @@ export declare class UserController {
     remove(req: {
         user: AuthenticatedUser;
     }, id: string): Promise<import("./schemas/user.schema").UserDocument>;
+    approveVendor(userId: string): Promise<import("./schemas/user.schema").UserDocument>;
 }

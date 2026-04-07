@@ -22,15 +22,24 @@ const user_service_1 = require("../user/user.service");
 const vendor_service_1 = require("../vendor/vendor.service");
 const event_service_1 = require("../event/event.service");
 const events_gateway_1 = require("../events/events.gateway");
+const event_schema_1 = require("../event/schemas/event.schema");
+const user_schema_1 = require("../user/schemas/user.schema");
+const booking_schema_1 = require("../booking/schemas/booking.schema");
 let RequestService = class RequestService {
     requestModel;
+    eventModel;
+    userModel;
+    bookingModel;
     bookingService;
     userService;
     vendorService;
     eventService;
     eventsGateway;
-    constructor(requestModel, bookingService, userService, vendorService, eventService, eventsGateway) {
+    constructor(requestModel, eventModel, userModel, bookingModel, bookingService, userService, vendorService, eventService, eventsGateway) {
         this.requestModel = requestModel;
+        this.eventModel = eventModel;
+        this.userModel = userModel;
+        this.bookingModel = bookingModel;
         this.bookingService = bookingService;
         this.userService = userService;
         this.vendorService = vendorService;
@@ -45,6 +54,9 @@ let RequestService = class RequestService {
         const vendor = await this.vendorService.findOne(createRequestDto.vendorId);
         if (!vendor) {
             throw new common_1.NotFoundException('Vendor not found');
+        }
+        if (vendor.status !== 'approved') {
+            throw new common_1.ForbiddenException('Vendor is not approved');
         }
         const event = await this.eventService.findById(createRequestDto.eventId);
         if (event.customerId !== createRequestDto.customerId) {
@@ -79,33 +91,22 @@ let RequestService = class RequestService {
         const vendor = await this.vendorService.findByUserIdOrThrow(userId);
         const vendorId = String(vendor._id);
         const requests = await this.findByVendor(vendorId);
+        if (!requests.length) {
+            return [];
+        }
         const eventIds = Array.from(new Set(requests.map((request) => String(request.eventId))));
         const customerIds = Array.from(new Set(requests.map((request) => String(request.customerId))));
-        const eventEntries = await Promise.all(eventIds.map(async (eventId) => {
-            try {
-                const event = await this.eventService.findById(eventId);
-                return [eventId, event];
-            }
-            catch {
-                return [eventId, null];
-            }
-        }));
-        const customerEntries = await Promise.all(customerIds.map(async (customerId) => {
-            try {
-                const customer = await this.userService.findByUserId(customerId);
-                return [customerId, customer];
-            }
-            catch {
-                return [customerId, null];
-            }
-        }));
-        const bookingEntries = await Promise.all(requests.map(async (request) => [
-            String(request._id),
-            await this.bookingService.findByRequestId(String(request._id)),
-        ]));
-        const eventsById = new Map(eventEntries);
-        const customersById = new Map(customerEntries);
-        const bookingsByRequestId = new Map(bookingEntries);
+        const [events, customers, bookings] = await Promise.all([
+            this.eventModel.find({ _id: { $in: eventIds } }).lean().exec(),
+            this.userModel.find({ userId: { $in: customerIds } }).lean().exec(),
+            this.bookingModel
+                .find({ requestId: { $in: requests.map((request) => String(request._id)) } })
+                .lean()
+                .exec(),
+        ]);
+        const eventsById = new Map(events.map((event) => [String(event._id), event]));
+        const customersById = new Map(customers.map((customer) => [String(customer.userId), customer]));
+        const bookingsByRequestId = new Map(bookings.map((booking) => [String(booking.requestId), booking]));
         return requests.map((request) => ({
             ...request.toObject(),
             event: eventsById.get(String(request.eventId)),
@@ -160,6 +161,9 @@ let RequestService = class RequestService {
         if (actor.role !== 'vendor') {
             throw new common_1.ForbiddenException('Only vendors can update request status');
         }
+        if (actor.status !== 'approved') {
+            throw new common_1.ForbiddenException('Vendor account not approved');
+        }
         const vendor = await this.vendorService.findByUserId(actorUserId);
         if (!vendor || String(vendor._id) !== String(vendorId)) {
             throw new common_1.ForbiddenException('Vendors can only update their own requests');
@@ -183,10 +187,12 @@ let RequestService = class RequestService {
             vendorId: request.vendorId,
             eventId: request.eventId,
         });
+        const vendor = await this.vendorService.findOne(String(request.vendorId));
         this.eventsGateway.broadcastBookingUpdate({
             bookingId: String(booking._id),
             status: 'accepted',
             vendorId: booking.vendorId,
+            vendorUserId: String(vendor?.userId || ''),
             customerId: booking.customerId,
         });
         return { request, booking };
@@ -206,8 +212,14 @@ exports.RequestService = RequestService;
 exports.RequestService = RequestService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(request_schema_1.Request.name)),
-    __param(1, (0, common_1.Inject)((0, common_1.forwardRef)(() => booking_service_1.BookingService))),
+    __param(1, (0, mongoose_1.InjectModel)(event_schema_1.Event.name)),
+    __param(2, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
+    __param(3, (0, mongoose_1.InjectModel)(booking_schema_1.Booking.name)),
+    __param(4, (0, common_1.Inject)((0, common_1.forwardRef)(() => booking_service_1.BookingService))),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model,
+        mongoose_2.Model,
         booking_service_1.BookingService,
         user_service_1.UserService,
         vendor_service_1.VendorService,

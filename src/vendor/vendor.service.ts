@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -50,11 +51,39 @@ export class VendorService {
   // =========================
 
   async create(dto: any) {
-    return this.vendorModel.create(dto);
+    if (!dto.userId) {
+      throw new BadRequestException('userId is required');
+    }
+
+    const user = await this.getApprovedVendorUserOrThrow(dto.userId);
+
+    const existingVendor = await this.vendorModel.findOne({ userId: dto.userId }).exec();
+    if (existingVendor) {
+      Object.assign(existingVendor, {
+        ...dto,
+        email: user.email || dto.email,
+        status: user.status,
+        isVerified: user.status === 'approved',
+        verified: user.status === 'approved',
+      });
+      await existingVendor.save();
+      return existingVendor;
+    }
+
+    return this.vendorModel.create({
+      ...dto,
+      email: user.email || dto.email,
+      status: user.status,
+      isVerified: user.status === 'approved',
+      verified: user.status === 'approved',
+    });
   }
 
   async findPublic() {
-    return this.vendorModel.find().sort({ createdAt: -1 }).exec();
+    return this.vendorModel
+      .find({ status: 'approved' })
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async findOneOrThrow(id: string) {
@@ -104,6 +133,10 @@ export class VendorService {
 
       if (user.role !== 'vendor') {
         throw new ForbiddenException('Only vendors allowed');
+      }
+
+      if (user.status !== 'approved') {
+        throw new ForbiddenException('Vendor account not approved');
       }
 
       vendor = await this.vendorModel.create({
@@ -287,6 +320,7 @@ export class VendorService {
   // =========================
 
   async getVendorBookings(userId: string) {
+    await this.getApprovedVendorUserOrThrow(userId);
     const vendor = await this.vendorModel.findOne({ userId });
 
     if (!vendor) throw new NotFoundException();
@@ -299,6 +333,7 @@ export class VendorService {
     bookingId: string,
     status: string,
   ) {
+    await this.getApprovedVendorUserOrThrow(userId);
     const vendor = await this.vendorModel.findOne({ userId });
 
     if (!vendor) throw new NotFoundException();
@@ -306,6 +341,11 @@ export class VendorService {
     const booking = await this.bookingModel.findById(bookingId);
 
     if (!booking) throw new NotFoundException();
+    if (String(booking.vendorId) !== String(vendor._id)) {
+      throw new ForbiddenException(
+        'Vendors can only manage their own bookings',
+      );
+    }
 
     booking.status = status;
     await booking.save();
@@ -314,21 +354,30 @@ export class VendorService {
   }
 
   async getVendorReviews(userId: string) {
+    await this.getApprovedVendorUserOrThrow(userId);
     const vendor = await this.vendorModel.findOne({ userId });
 
     return this.reviewModel.find({ vendorId: vendor?._id });
   }
 
   async getVendorNotifications(userId: string) {
+    await this.getApprovedVendorUserOrThrow(userId);
     const vendor = await this.vendorModel.findOne({ userId });
 
     return this.notificationModel.find({ vendorId: vendor?._id });
   }
 
   async markVendorNotificationRead(userId: string, id: string) {
+    await this.getApprovedVendorUserOrThrow(userId);
+    const vendor = await this.vendorModel.findOne({ userId }).exec();
     const notif = await this.notificationModel.findById(id);
 
     if (!notif) throw new NotFoundException();
+    if (!vendor || String(notif.vendorId) !== String(vendor._id)) {
+      throw new ForbiddenException(
+        'Vendors can only manage their own notifications',
+      );
+    }
 
     notif.read = true;
     await notif.save();
@@ -347,6 +396,7 @@ export class VendorService {
 
   // used in multiple places
   async findByUserIdOrThrow(userId: string) {
+    await this.getApprovedVendorUserOrThrow(userId);
     const vendor = await this.vendorModel.findOne({ userId });
     if (!vendor) throw new NotFoundException('Vendor not found');
     return vendor;
@@ -374,24 +424,26 @@ export class VendorService {
 
   // admin approval
   async approveVendor(id: string) {
-    return this.vendorModel.findByIdAndUpdate(
-      id,
-      {
-        status: 'approved',
-        isVerified: true,
-        verified: true,
-      },
-      { new: true },
-    );
+    const vendor = await this.vendorModel.findById(id).exec();
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
+
+    await this.userService.approveVendor(String(vendor.userId || ''));
+
+    return this.vendorModel.findById(id).exec();
   }
 
   // admin rejection
   async rejectVendor(id: string) {
-    return this.vendorModel.findByIdAndUpdate(
-      id,
-      { status: 'rejected' },
-      { new: true },
-    );
+    const vendor = await this.vendorModel.findById(id).exec();
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
+
+    await this.userService.rejectVendor(String(vendor.userId || ''));
+
+    return this.vendorModel.findById(id).exec();
   }
 
   async getAllVendors() {
@@ -441,5 +493,16 @@ export class VendorService {
     };
 
     return payload;
+  }
+
+  async getApprovedVendorUserOrThrow(userId: string) {
+    const user = await this.userService.findByUserId(userId);
+    if (user.role !== 'vendor') {
+      throw new ForbiddenException('Only vendors allowed');
+    }
+    if (user.status !== 'approved') {
+      throw new ForbiddenException('Vendor account not approved');
+    }
+    return user;
   }
 }

@@ -16,6 +16,7 @@ const booking_schema_1 = require("../booking/schemas/booking.schema");
 const auth_module_1 = require("../auth/auth.module");
 const vendor_module_1 = require("../vendor/vendor.module");
 const user_module_1 = require("../user/user.module");
+const events_module_1 = require("../events/events.module");
 let NotificationModule = class NotificationModule {
 };
 exports.NotificationModule = NotificationModule;
@@ -29,6 +30,7 @@ exports.NotificationModule = NotificationModule = __decorate([
             auth_module_1.AuthModule,
             vendor_module_1.VendorModule,
             user_module_1.UserModule,
+            events_module_1.EventsModule,
         ],
         controllers: [notification_controller_1.NotificationController],
         providers: [notification_service_1.NotificationService],

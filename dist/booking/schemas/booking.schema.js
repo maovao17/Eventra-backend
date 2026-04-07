@@ -122,7 +122,6 @@ exports.Booking = Booking = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Booking);
 exports.BookingSchema = mongoose_1.SchemaFactory.createForClass(Booking);
-exports.BookingSchema.index({ requestId: 1 });
 exports.BookingSchema.index({ vendorId: 1, date: 1 });
 exports.BookingSchema.index({ customerId: 1, status: 1 });
 exports.BookingSchema.set('toJSON', { versionKey: false });

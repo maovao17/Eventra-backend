@@ -7,14 +7,20 @@ import { UserService } from '../user/user.service';
 import { VendorService } from '../vendor/vendor.service';
 import { EventService } from '../event/event.service';
 import { EventsGateway } from '../events/events.gateway';
+import { EventDocument } from '../event/schemas/event.schema';
+import { UserDocument } from '../user/schemas/user.schema';
+import { Booking, BookingDocument } from '../booking/schemas/booking.schema';
 export declare class RequestService {
     private requestModel;
+    private eventModel;
+    private userModel;
+    private bookingModel;
     private bookingService;
     private userService;
     private vendorService;
     private eventService;
     private eventsGateway;
-    constructor(requestModel: Model<RequestDocument>, bookingService: BookingService, userService: UserService, vendorService: VendorService, eventService: EventService, eventsGateway: EventsGateway);
+    constructor(requestModel: Model<RequestDocument>, eventModel: Model<EventDocument>, userModel: Model<UserDocument>, bookingModel: Model<BookingDocument>, bookingService: BookingService, userService: UserService, vendorService: VendorService, eventService: EventService, eventsGateway: EventsGateway);
     create(createRequestDto: CreateRequestDto): Promise<RequestDocument>;
     findAll(): Promise<RequestDocument[]>;
     findByUser(userId: string): Promise<RequestDocument[]>;
@@ -33,7 +39,7 @@ export declare class RequestService {
         __v: number;
     }) | {
         request: RequestDocument;
-        booking: (import("mongoose").Document<unknown, {}, import("../booking/schemas/booking.schema").BookingDocument, {}, {}> & import("../booking/schemas/booking.schema").Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+        booking: (import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
             _id: import("mongoose").Types.ObjectId;
         }> & {
             __v: number;
@@ -47,7 +53,7 @@ export declare class RequestService {
     private validateVendorActor;
     accept(id: string, actorUserId?: string): Promise<{
         request: RequestDocument;
-        booking: (import("mongoose").Document<unknown, {}, import("../booking/schemas/booking.schema").BookingDocument, {}, {}> & import("../booking/schemas/booking.schema").Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+        booking: (import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
             _id: import("mongoose").Types.ObjectId;
         }> & {
             __v: number;

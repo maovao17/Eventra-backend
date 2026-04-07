@@ -5,6 +5,6 @@ export declare class CreateUserDto {
     profile_photo?: string;
     userId: string;
     authProvider: 'phone' | 'google';
-    role: string;
+    role: 'customer' | 'vendor';
     businessName?: string;
 }

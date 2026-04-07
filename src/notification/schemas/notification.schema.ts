@@ -5,8 +5,8 @@ export type NotificationDocument = Notification & Document;
 
 @Schema({ timestamps: true })
 export class Notification {
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  userId?: MongooseSchema.Types.ObjectId;
+  @Prop({ required: false, trim: true })
+  userId?: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Vendor' })
   vendorId?: MongooseSchema.Types.ObjectId;

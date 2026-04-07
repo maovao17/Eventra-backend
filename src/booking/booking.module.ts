@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BookingController } from './booking.controller';
 import { BookingService } from './booking.service';
@@ -8,6 +8,8 @@ import { Event, EventSchema } from '../event/schemas/event.schema';
 import { UserModule } from '../user/user.module';
 import { NotificationModule } from '../notification/notification.module';
 import { AuthModule } from '../auth/auth.module';
+import { RequestModule } from '../request/request.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
@@ -16,9 +18,11 @@ import { AuthModule } from '../auth/auth.module';
       { name: Vendor.name, schema: VendorSchema },
       { name: Event.name, schema: EventSchema },
     ]),
+    forwardRef(() => RequestModule),
     UserModule,
     NotificationModule,
     AuthModule,
+    EventsModule,
   ],
   controllers: [BookingController],
   providers: [BookingService],

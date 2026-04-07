@@ -35,7 +35,13 @@ let VendorController = class VendorController {
         'image/jpg',
         'image/png',
     ];
-    create(req, dto) {
+    async create(req, dto) {
+        if (req.user.role === 'vendor') {
+            const user = await this.vendorService.getApprovedVendorUserOrThrow(req.user.userId);
+            if (user.status !== 'approved') {
+                throw new common_1.BadRequestException('Vendor account not approved');
+            }
+        }
         return this.vendorService.create({
             ...dto,
             userId: req.user.role === 'admin' ? dto.userId : req.user.userId,
@@ -153,7 +159,7 @@ __decorate([
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object, create_vendor_dto_1.CreateVendorDto]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], VendorController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),

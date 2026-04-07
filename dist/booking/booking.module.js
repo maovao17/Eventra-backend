@@ -17,6 +17,8 @@ const event_schema_1 = require("../event/schemas/event.schema");
 const user_module_1 = require("../user/user.module");
 const notification_module_1 = require("../notification/notification.module");
 const auth_module_1 = require("../auth/auth.module");
+const request_module_1 = require("../request/request.module");
+const events_module_1 = require("../events/events.module");
 let BookingModule = class BookingModule {
 };
 exports.BookingModule = BookingModule;
@@ -28,9 +30,11 @@ exports.BookingModule = BookingModule = __decorate([
                 { name: vendor_schema_1.Vendor.name, schema: vendor_schema_1.VendorSchema },
                 { name: event_schema_1.Event.name, schema: event_schema_1.EventSchema },
             ]),
+            (0, common_1.forwardRef)(() => request_module_1.RequestModule),
             user_module_1.UserModule,
             notification_module_1.NotificationModule,
             auth_module_1.AuthModule,
+            events_module_1.EventsModule,
         ],
         controllers: [booking_controller_1.BookingController],
         providers: [booking_service_1.BookingService],

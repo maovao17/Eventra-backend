@@ -130,4 +130,5 @@ export declare class VendorService {
     })[]>;
     private getBookedDatesForVendor;
     private withDerivedAvailability;
+    getApprovedVendorUserOrThrow(userId: string): Promise<import("../user/schemas/user.schema").UserDocument>;
 }

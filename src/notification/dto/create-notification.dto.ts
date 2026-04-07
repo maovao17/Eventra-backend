@@ -9,6 +9,10 @@ export class CreateNotificationDto {
   @IsString()
   vendorId?: string;
 
+  @IsOptional()
+  @IsString()
+  vendorUserId?: string;
+
   @IsNotEmpty()
   @IsString()
   type: string;

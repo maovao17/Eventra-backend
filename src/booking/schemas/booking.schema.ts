@@ -87,7 +87,6 @@ export class Booking {
 export const BookingSchema = SchemaFactory.createForClass(Booking);
 
 // Performance indexes
-BookingSchema.index({ requestId: 1 }); // Already unique, but explicit index for queries
 BookingSchema.index({ vendorId: 1, date: 1 });
 BookingSchema.index({ customerId: 1, status: 1 });
 

@@ -48,7 +48,7 @@ const winston = __importStar(require("winston"));
 const config_1 = require("@nestjs/config");
 const Joi = __importStar(require("joi"));
 const admin_module_1 = require("./admin/admin.module");
-const events_gateway_1 = require("./events/events.gateway");
+const events_module_1 = require("./events/events.module");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const mongoose_1 = require("@nestjs/mongoose");
@@ -99,6 +99,7 @@ exports.AppModule = AppModule = __decorate([
                 ],
             }),
             admin_module_1.AdminModule,
+            events_module_1.EventsModule,
             mongoose_1.MongooseModule.forRoot(process.env.DB_URI ?? 'mongodb://localhost:27017/eventra'),
             user_module_1.UserModule,
             service_module_1.ServiceModule,
@@ -121,7 +122,6 @@ exports.AppModule = AppModule = __decorate([
                 provide: core_1.APP_GUARD,
                 useClass: throttler_1.ThrottlerGuard,
             },
-            events_gateway_1.EventsGateway,
         ],
     })
 ], AppModule);

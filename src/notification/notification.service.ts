@@ -43,6 +43,10 @@ export class NotificationService implements OnModuleInit {
       type: saved.type,
       bookingId: saved.bookingId ? String(saved.bookingId) : undefined,
       vendorId: saved.vendorId ? String(saved.vendorId) : undefined,
+      vendorUserId:
+        'vendorUserId' in saved && (saved as NotificationDocument & { vendorUserId?: string }).vendorUserId
+          ? String((saved as NotificationDocument & { vendorUserId?: string }).vendorUserId)
+          : undefined,
       userId: saved.userId ? String(saved.userId) : undefined,
     });
     return saved;

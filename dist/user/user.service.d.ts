@@ -27,4 +27,7 @@ export declare class UserService {
     assertVendorCanAccessUser(vendorUserId: string, targetUserId: string): Promise<UserDocument>;
     update(id: string, dto: UpdateUserDto): Promise<UserDocument>;
     remove(id: string): Promise<UserDocument>;
+    approveVendor(userId: string): Promise<UserDocument>;
+    rejectVendor(userId: string): Promise<UserDocument>;
+    private setVendorStatus;
 }

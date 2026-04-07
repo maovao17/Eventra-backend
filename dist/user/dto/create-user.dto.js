@@ -52,7 +52,7 @@ __decorate([
 ], CreateUserDto.prototype, "authProvider", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsEnum)(['customer', 'vendor', 'admin']),
+    (0, class_validator_1.IsEnum)(['customer', 'vendor']),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "role", void 0);
 __decorate([

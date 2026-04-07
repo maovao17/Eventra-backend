@@ -250,6 +250,7 @@ let BookingService = class BookingService {
             bookingId: String(booking._id),
             status: 'accepted',
             vendorId: booking.vendorId,
+            vendorUserId: actorUserId,
             customerId: booking.customerId,
         });
         return booking;
@@ -300,6 +301,7 @@ let BookingService = class BookingService {
             bookingId: String(booking._id),
             status: 'completed',
             vendorId: booking.vendorId,
+            vendorUserId: actorUserId,
             customerId: booking.customerId,
         });
         return booking;
@@ -319,7 +321,10 @@ let BookingService = class BookingService {
         });
         return booking;
     }
-    async markPayoutPaid(id) {
+    async markPayoutPaid(id, actorRole = 'admin') {
+        if (actorRole !== 'admin') {
+            throw new common_1.ForbiddenException('Only admin can mark payout as paid');
+        }
         return this.bookingModel.findByIdAndUpdate(id, { payoutStatus: 'paid' }, { new: true });
     }
     async remove(id) {
@@ -336,6 +341,9 @@ let BookingService = class BookingService {
         if (actor.role !== 'vendor') {
             throw new common_1.ForbiddenException('Only vendors can update booking status');
         }
+        if (actor.status !== 'approved') {
+            throw new common_1.ForbiddenException('Vendor account not approved');
+        }
         const vendor = await this.vendorModel
             .findOne({ userId: actorUserId })
             .exec();
@@ -350,6 +358,7 @@ exports.BookingService = BookingService = __decorate([
     __param(0, (0, mongoose_1.InjectModel)(booking_schema_1.Booking.name)),
     __param(1, (0, mongoose_1.InjectModel)(vendor_schema_1.Vendor.name)),
     __param(2, (0, mongoose_1.InjectModel)(event_schema_1.Event.name)),
+    __param(4, (0, common_1.Inject)((0, common_1.forwardRef)(() => request_service_1.RequestService))),
     __metadata("design:paramtypes", [mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

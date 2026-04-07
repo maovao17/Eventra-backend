@@ -39,7 +39,7 @@ export class Payment {
   @Prop({ required: false })
   payoutId?: string;
 
-  @Prop({ required: false, unique: true, sparse: true })
+  @Prop({ required: false })
   razorpayPaymentId?: string;
 
   @Prop({ required: false })
@@ -52,7 +52,6 @@ export class Payment {
 export const PaymentSchema = SchemaFactory.createForClass(Payment);
 
 // Performance indexes
-PaymentSchema.index({ bookingId: 1 });
 PaymentSchema.index(
   { bookingId: 1 },
   {

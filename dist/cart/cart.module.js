@@ -12,6 +12,7 @@ const cart_service_1 = require("./cart.service");
 const cart_controller_1 = require("./cart.controller");
 const mongoose_1 = require("@nestjs/mongoose");
 const cart_schema_1 = require("./schemas/cart.schema");
+const auth_module_1 = require("../auth/auth.module");
 let CartModule = class CartModule {
 };
 exports.CartModule = CartModule;
@@ -19,6 +20,7 @@ exports.CartModule = CartModule = __decorate([
     (0, common_1.Module)({
         imports: [
             mongoose_1.MongooseModule.forFeature([{ name: cart_schema_1.Cart.name, schema: cart_schema_1.CartSchema }]),
+            auth_module_1.AuthModule,
         ],
         controllers: [cart_controller_1.CartController],
         providers: [cart_service_1.CartService],

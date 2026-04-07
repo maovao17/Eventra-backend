@@ -1,7 +1,7 @@
 import { Document, Schema as MongooseSchema } from 'mongoose';
 export type NotificationDocument = Notification & Document;
 export declare class Notification {
-    userId?: MongooseSchema.Types.ObjectId;
+    userId?: string;
     vendorId?: MongooseSchema.Types.ObjectId;
     type: string;
     message: string;

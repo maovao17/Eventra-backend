@@ -39,7 +39,20 @@ export class VendorController {
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles('vendor', 'admin')
   @Post()
-  create(@Req() req: { user: AuthenticatedUser }, @Body() dto: CreateVendorDto) {
+  async create(
+    @Req() req: { user: AuthenticatedUser },
+    @Body() dto: CreateVendorDto,
+  ) {
+    if (req.user.role === 'vendor') {
+      const user = await this.vendorService.getApprovedVendorUserOrThrow(
+        req.user.userId,
+      );
+
+      if (user.status !== 'approved') {
+        throw new BadRequestException('Vendor account not approved');
+      }
+    }
+
     return this.vendorService.create({
       ...dto,
       userId: req.user.role === 'admin' ? dto.userId : req.user.userId,

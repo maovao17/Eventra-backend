@@ -54,6 +54,7 @@ let User = class User {
     authProvider;
     role;
     businessName;
+    status;
 };
 exports.User = User;
 __decorate([
@@ -113,6 +114,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false, trim: true }),
     __metadata("design:type", String)
 ], User.prototype, "businessName", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: true, enum: ['pending', 'approved', 'rejected'], default: 'approved' }),
+    __metadata("design:type", String)
+], User.prototype, "status", void 0);
 exports.User = User = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], User);

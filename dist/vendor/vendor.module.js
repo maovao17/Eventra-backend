@@ -17,7 +17,6 @@ const vendor_service_1 = require("./vendor.service");
 const vendor_schema_1 = require("./schemas/vendor.schema");
 const booking_schema_1 = require("../booking/schemas/booking.schema");
 const request_schema_1 = require("../request/schemas/request.schema");
-const admin_vendor_controller_1 = require("./admin-vendor.controller");
 const service_schema_1 = require("../service/schemas/service.schema");
 const review_schema_1 = require("../review/schemas/review.schema");
 const notification_schema_1 = require("../notification/schemas/notification.schema");
@@ -51,7 +50,7 @@ exports.VendorModule = VendorModule = __decorate([
                 { name: notification_schema_1.Notification.name, schema: notification_schema_1.NotificationSchema },
             ]),
         ],
-        controllers: [vendor_controller_1.VendorController, admin_vendor_controller_1.AdminVendorController],
+        controllers: [vendor_controller_1.VendorController],
         providers: [vendor_service_1.VendorService, firebase_guard_1.FirebaseAuthGuard],
         exports: [vendor_service_1.VendorService],
     })

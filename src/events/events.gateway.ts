@@ -61,6 +61,7 @@ export class EventsGateway
     bookingId: string
     status: string
     vendorId: string
+    vendorUserId?: string
     customerId: string
   }) {
     this.server
@@ -68,7 +69,7 @@ export class EventsGateway
       .emit('bookingStatusUpdated', booking);
 
     this.server
-      .to(booking.vendorId)
+      .to(booking.vendorUserId || booking.vendorId)
       .emit('bookingStatusUpdated', booking);
   }
 
@@ -77,9 +78,11 @@ export class EventsGateway
     type: string
     bookingId?: string
     vendorId?: string
+    vendorUserId?: string
     userId?: string 
   }) {
-    const targetUserId = notification.userId || notification.vendorId;
+    const targetUserId =
+      notification.userId || notification.vendorUserId || notification.vendorId;
 
     if (!targetUserId) {
       return;

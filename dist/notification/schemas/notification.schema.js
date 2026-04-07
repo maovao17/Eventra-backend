@@ -24,8 +24,8 @@ let Notification = class Notification {
 };
 exports.Notification = Notification;
 __decorate([
-    (0, mongoose_1.Prop)({ type: mongoose_2.Schema.Types.ObjectId, ref: 'User' }),
-    __metadata("design:type", mongoose_2.Schema.Types.ObjectId)
+    (0, mongoose_1.Prop)({ required: false, trim: true }),
+    __metadata("design:type", String)
 ], Notification.prototype, "userId", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ type: mongoose_2.Schema.Types.ObjectId, ref: 'Vendor' }),

@@ -190,6 +190,9 @@ let PaymentService = class PaymentService {
             error.code === 11000);
     }
     async create(createPaymentDto) {
+        if (createPaymentDto.status === 'success') {
+            throw new common_1.ForbiddenException('Successful payments must be created through Razorpay verification');
+        }
         const customer = await this.userService.findByUserId(createPaymentDto.customerId);
         if (customer.role !== 'customer') {
             throw new common_1.ForbiddenException('Only customers can create payments');
@@ -239,36 +242,41 @@ let PaymentService = class PaymentService {
             throw error;
         }
         if (createPaymentDto.status === 'success') {
-            const payout = await this.ensurePayoutRecord({
-                bookingId: createPaymentDto.bookingId,
-                paymentId: String(savedPayment._id),
-                vendorId: booking.vendorId,
-                eventId: booking.eventId,
-                bookingAmount: breakdown.bookingAmount,
-                commissionAmount: breakdown.commissionAmount,
-                vendorPayoutAmount: breakdown.vendorPayoutAmount,
-            });
-            await this.paymentModel
-                .findByIdAndUpdate(savedPayment._id, {
-                payoutId: String(payout._id),
-            })
-                .exec();
-            await this.bookingService.update(createPaymentDto.bookingId, {
-                status: 'confirmed',
-                paymentStatus: 'paid',
-            });
-            await this.notificationService.create({
-                userId: booking.customerId,
-                bookingId: createPaymentDto.bookingId,
-                type: 'payment-confirmed',
-                message: 'Your payment was confirmed and the booking is now locked in.',
-            });
-            await this.notificationService.create({
-                vendorId: booking.vendorId,
-                bookingId: createPaymentDto.bookingId,
-                type: 'booking-paid',
-                message: 'A customer payment has been completed and payout is pending.',
-            });
+            try {
+                await this.bookingService.update(createPaymentDto.bookingId, {
+                    status: 'confirmed',
+                    paymentStatus: 'paid',
+                });
+                const payout = await this.ensurePayoutRecord({
+                    bookingId: createPaymentDto.bookingId,
+                    paymentId: String(savedPayment._id),
+                    vendorId: booking.vendorId,
+                    eventId: booking.eventId,
+                    bookingAmount: breakdown.bookingAmount,
+                    commissionAmount: breakdown.commissionAmount,
+                    vendorPayoutAmount: breakdown.vendorPayoutAmount,
+                });
+                await this.paymentModel
+                    .findByIdAndUpdate(savedPayment._id, {
+                    payoutId: String(payout._id),
+                })
+                    .exec();
+                await this.notificationService.create({
+                    userId: booking.customerId,
+                    bookingId: createPaymentDto.bookingId,
+                    type: 'payment-confirmed',
+                    message: 'Your payment was confirmed and the booking is now locked in.',
+                });
+                await this.notificationService.create({
+                    vendorId: booking.vendorId,
+                    bookingId: createPaymentDto.bookingId,
+                    type: 'booking-paid',
+                    message: 'A customer payment has been completed and payout is pending.',
+                });
+            }
+            catch (error) {
+                console.error('Payment post-processing failed', error);
+            }
         }
         return savedPayment;
     }
@@ -356,6 +364,10 @@ let PaymentService = class PaymentService {
             throw new common_1.BadRequestException('Missing bookingId in webhook notes');
         }
         const booking = await this.bookingService.findById(bookingId);
+        const expectedAmount = this.buildPaymentBreakdown(Number(booking.amount ?? booking.price ?? 0)).totalCharge;
+        if (amount !== expectedAmount) {
+            return { success: true, message: 'Ignored payment amount mismatch' };
+        }
         const existingSuccessfulPayment = await this.findSuccessfulPaymentByBooking(bookingId);
         if (existingSuccessfulPayment || booking.paymentStatus === 'paid') {
             return { success: true, message: 'Booking already paid' };
@@ -394,31 +406,36 @@ let PaymentService = class PaymentService {
             throw error;
         }
         if (status === 'success') {
-            await this.bookingService.update(bookingId, {
-                status: 'confirmed',
-                paymentStatus: 'paid',
-            });
-            await this.ensurePayoutRecord({
-                bookingId,
-                paymentId: String(savedPayment._id),
-                vendorId: booking.vendorId,
-                eventId: booking.eventId,
-                bookingAmount: savedPayment.bookingAmount || 0,
-                commissionAmount: savedPayment.commissionAmount || 0,
-                vendorPayoutAmount: savedPayment.vendorPayoutAmount || 0,
-            });
-            await this.notificationService.create({
-                userId: booking.customerId,
-                bookingId,
-                type: 'payment-confirmed',
-                message: 'Your payment was confirmed and the booking is now locked in.',
-            });
-            await this.notificationService.create({
-                vendorId: booking.vendorId,
-                bookingId,
-                type: 'booking-paid',
-                message: 'A customer payment has been completed and payout is pending.',
-            });
+            try {
+                await this.bookingService.update(bookingId, {
+                    status: 'confirmed',
+                    paymentStatus: 'paid',
+                });
+                await this.ensurePayoutRecord({
+                    bookingId,
+                    paymentId: String(savedPayment._id),
+                    vendorId: booking.vendorId,
+                    eventId: booking.eventId,
+                    bookingAmount: savedPayment.bookingAmount || 0,
+                    commissionAmount: savedPayment.commissionAmount || 0,
+                    vendorPayoutAmount: savedPayment.vendorPayoutAmount || 0,
+                });
+                await this.notificationService.create({
+                    userId: booking.customerId,
+                    bookingId,
+                    type: 'payment-confirmed',
+                    message: 'Your payment was confirmed and the booking is now locked in.',
+                });
+                await this.notificationService.create({
+                    vendorId: booking.vendorId,
+                    bookingId,
+                    type: 'booking-paid',
+                    message: 'A customer payment has been completed and payout is pending.',
+                });
+            }
+            catch (error) {
+                console.error('Webhook payment post-processing failed', error);
+            }
         }
         return { success: true, paymentId: String(savedPayment._id) };
     }
@@ -474,7 +491,7 @@ let PaymentService = class PaymentService {
             .update(body)
             .digest('hex');
         if (generatedSignature !== dto.razorpay_signature) {
-            return { success: false, message: 'Invalid signature' };
+            throw new common_1.BadRequestException('Invalid payment signature');
         }
         const razorpayPayment = await this.fetchRazorpayPayment(dto.razorpay_payment_id);
         const orderNotes = razorpayPayment.notes || {};
@@ -526,36 +543,41 @@ let PaymentService = class PaymentService {
             }
             throw error;
         }
-        const payout = await this.ensurePayoutRecord({
-            bookingId,
-            paymentId: String(payment._id),
-            vendorId: booking.vendorId,
-            eventId: booking.eventId,
-            bookingAmount: breakdown.bookingAmount,
-            commissionAmount: breakdown.commissionAmount,
-            vendorPayoutAmount: breakdown.vendorPayoutAmount,
-        });
-        await this.paymentModel
-            .findByIdAndUpdate(payment._id, {
-            payoutId: String(payout._id),
-        })
-            .exec();
-        await this.bookingService.update(bookingId, {
-            status: 'confirmed',
-            paymentStatus: 'paid',
-        });
-        await this.notificationService.create({
-            userId: booking.customerId,
-            bookingId,
-            type: 'payment-confirmed',
-            message: 'Your payment was confirmed and the booking is now locked in.',
-        });
-        await this.notificationService.create({
-            vendorId: booking.vendorId,
-            bookingId,
-            type: 'booking-paid',
-            message: 'A customer payment has been completed and payout is pending.',
-        });
+        try {
+            await this.bookingService.update(bookingId, {
+                status: 'confirmed',
+                paymentStatus: 'paid',
+            });
+            const payout = await this.ensurePayoutRecord({
+                bookingId,
+                paymentId: String(payment._id),
+                vendorId: booking.vendorId,
+                eventId: booking.eventId,
+                bookingAmount: breakdown.bookingAmount,
+                commissionAmount: breakdown.commissionAmount,
+                vendorPayoutAmount: breakdown.vendorPayoutAmount,
+            });
+            await this.paymentModel
+                .findByIdAndUpdate(payment._id, {
+                payoutId: String(payout._id),
+            })
+                .exec();
+            await this.notificationService.create({
+                userId: booking.customerId,
+                bookingId,
+                type: 'payment-confirmed',
+                message: 'Your payment was confirmed and the booking is now locked in.',
+            });
+            await this.notificationService.create({
+                vendorId: booking.vendorId,
+                bookingId,
+                type: 'booking-paid',
+                message: 'A customer payment has been completed and payout is pending.',
+            });
+        }
+        catch (error) {
+            console.error('Verified payment post-processing failed', error);
+        }
         return { success: true, paymentId: String(payment._id) };
     }
 };

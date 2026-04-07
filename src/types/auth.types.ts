@@ -3,8 +3,8 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   phoneNumber: string;
-  role: 'customer' | 'vendor' | 'admin';
+  role?: 'customer' | 'vendor' | 'admin';
   userId: string;
-  name: string;
+  name?: string;
   businessName?: string;
 }

@@ -43,12 +43,7 @@ export declare class PaymentController {
         };
     }, dto: VerifyPaymentDto): Promise<{
         success: boolean;
-        message: string;
-        paymentId?: undefined;
-    } | {
-        success: boolean;
         paymentId: string;
-        message?: undefined;
     }>;
     webhook(req: {
         rawBody?: string;

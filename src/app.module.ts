@@ -6,7 +6,7 @@ import * as winston from 'winston';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import { AdminModule } from './admin/admin.module';
-import { EventsGateway } from './events/events.gateway';
+import { EventsModule } from './events/events.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -58,6 +58,7 @@ import { ChatModule } from './chat/chat.module';
       ],
     }),
     AdminModule,
+    EventsModule,
     MongooseModule.forRoot(
       process.env.DB_URI ?? 'mongodb://localhost:27017/eventra',
     ),
@@ -82,7 +83,6 @@ import { ChatModule } from './chat/chat.module';
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
-    EventsGateway,
   ],
 })
 export class AppModule {}

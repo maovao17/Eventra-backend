@@ -13,6 +13,7 @@ const user_controller_1 = require("./user.controller");
 const mongoose_1 = require("@nestjs/mongoose");
 const user_schema_1 = require("./schemas/user.schema");
 const firebase_guard_1 = require("../auth/firebase.guard");
+const firebase_bootstrap_guard_1 = require("../auth/firebase-bootstrap.guard");
 const vendor_schema_1 = require("../vendor/schemas/vendor.schema");
 const booking_schema_1 = require("../booking/schemas/booking.schema");
 const request_schema_1 = require("../request/schemas/request.schema");
@@ -30,7 +31,7 @@ exports.UserModule = UserModule = __decorate([
             ]),
         ],
         controllers: [user_controller_1.UserController],
-        providers: [user_service_1.UserService, firebase_guard_1.FirebaseAuthGuard],
+        providers: [user_service_1.UserService, firebase_guard_1.FirebaseAuthGuard, firebase_bootstrap_guard_1.FirebaseBootstrapGuard],
         exports: [user_service_1.UserService],
     })
 ], UserModule);

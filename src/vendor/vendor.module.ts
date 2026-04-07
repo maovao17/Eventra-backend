@@ -8,7 +8,6 @@ import { VendorService } from './vendor.service';
 import { Vendor, VendorSchema } from './schemas/vendor.schema';
 import { Booking, BookingSchema } from '../booking/schemas/booking.schema';
 import { Request, RequestSchema } from '../request/schemas/request.schema';
-import { AdminVendorController } from './admin-vendor.controller';
 import { Service, ServiceSchema } from '../service/schemas/service.schema';
 import { Review, ReviewSchema } from '../review/schemas/review.schema';
 import {
@@ -43,7 +42,7 @@ import { FirebaseAuthGuard } from '../auth/firebase.guard';
       { name: Notification.name, schema: NotificationSchema },
     ]),
   ],
-  controllers: [VendorController, AdminVendorController],
+  controllers: [VendorController],
   providers: [VendorService, FirebaseAuthGuard],
   exports: [VendorService],
 })

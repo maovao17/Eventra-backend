@@ -47,6 +47,9 @@ let NotificationService = class NotificationService {
             type: saved.type,
             bookingId: saved.bookingId ? String(saved.bookingId) : undefined,
             vendorId: saved.vendorId ? String(saved.vendorId) : undefined,
+            vendorUserId: 'vendorUserId' in saved && saved.vendorUserId
+                ? String(saved.vendorUserId)
+                : undefined,
             userId: saved.userId ? String(saved.userId) : undefined,
         });
         return saved;

@@ -1,8 +1,10 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -40,6 +42,7 @@ export class BookingService {
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
     @InjectModel(Event.name) private eventModel: Model<EventDocument>,
     private userService: UserService,
+    @Inject(forwardRef(() => RequestService))
     private requestService: RequestService,
     private notificationService: NotificationService,
     private eventsGateway: EventsGateway,
@@ -254,7 +257,13 @@ export class BookingService {
     return booking;
   }
 
-  async update(id: string, dto: UpdateBookingDto) {
+  async update(
+    id: string,
+    dto: UpdateBookingDto & {
+      paymentStatus?: 'pending' | 'partial' | 'paid';
+      payoutStatus?: 'pending' | 'paid';
+    },
+  ) {
     const updated = await this.bookingModel
       .findByIdAndUpdate(id, dto, { new: true })
       .exec();
@@ -303,6 +312,7 @@ export class BookingService {
       bookingId: String(booking._id),
       status: 'accepted',
       vendorId: booking.vendorId,
+      vendorUserId: actorUserId,
       customerId: booking.customerId,
     });
 
@@ -370,6 +380,7 @@ export class BookingService {
       bookingId: String(booking._id),
       status: 'completed',
       vendorId: booking.vendorId,
+      vendorUserId: actorUserId,
       customerId: booking.customerId,
     });
 
@@ -399,7 +410,14 @@ export class BookingService {
     return booking;
   }
 
-  async markPayoutPaid(id: string) {
+  async markPayoutPaid(
+    id: string,
+    actorRole: 'customer' | 'vendor' | 'admin' | string = 'admin',
+  ) {
+    if (actorRole !== 'admin') {
+      throw new ForbiddenException('Only admin can mark payout as paid');
+    }
+
     return this.bookingModel.findByIdAndUpdate(
       id,
       { payoutStatus: 'paid' },
@@ -424,6 +442,9 @@ export class BookingService {
     const actor = await this.userService.findByUserId(actorUserId);
     if (actor.role !== 'vendor') {
       throw new ForbiddenException('Only vendors can update booking status');
+    }
+    if (actor.status !== 'approved') {
+      throw new ForbiddenException('Vendor account not approved');
     }
 
     const vendor = await this.vendorModel

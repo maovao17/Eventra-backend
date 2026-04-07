@@ -5,6 +5,7 @@ import { PayoutController } from './payout.controller';
 import { Payout, PayoutSchema } from './schemas/payout.schema';
 import { Booking, BookingSchema } from '../booking/schemas/booking.schema';
 import { VendorModule } from '../vendor/vendor.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { VendorModule } from '../vendor/vendor.module';
       { name: Booking.name, schema: BookingSchema },
     ]),
     VendorModule,
+    AuthModule,
   ],
   controllers: [PayoutController],
   providers: [PayoutService],

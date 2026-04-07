@@ -62,11 +62,6 @@ export declare class PaymentService {
     }>;
     verifyPayment(dto: VerifyPaymentDto, actorUserId: string): Promise<{
         success: boolean;
-        message: string;
-        paymentId?: undefined;
-    } | {
-        success: boolean;
         paymentId: string;
-        message?: undefined;
     }>;
 }

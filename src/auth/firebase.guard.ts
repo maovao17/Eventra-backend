@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { UserService } from '../user/user.service';
@@ -24,22 +25,24 @@ export class FirebaseAuthGuard implements CanActivate {
 
     try {
       const decodedToken = await admin.auth().verifyIdToken(token);
-
-      // Fetch user from database to get role and other details
-      const dbUser = await this.userService.findByUserId(decodedToken.uid);
-      if (!dbUser) {
-        throw new UnauthorizedException('User not found in database');
+      let dbUser: Awaited<ReturnType<UserService['findByUserId']>> | null = null;
+      try {
+        dbUser = await this.userService.findByUserId(decodedToken.uid);
+      } catch (error) {
+        if (!(error instanceof NotFoundException)) {
+          throw error;
+        }
       }
 
       const authenticatedUser: AuthenticatedUser = {
         uid: decodedToken.uid,
         id: decodedToken.uid,
-        email: decodedToken.email || dbUser.email || '',
-        phoneNumber: decodedToken.phone_number || dbUser.phoneNumber || '',
-        role: dbUser.role as 'customer' | 'vendor' | 'admin',
-        userId: dbUser.userId,
-        name: dbUser.name,
-        businessName: dbUser.businessName,
+        email: decodedToken.email || dbUser?.email || '',
+        phoneNumber: decodedToken.phone_number || dbUser?.phoneNumber || '',
+        role: dbUser?.role as 'customer' | 'vendor' | 'admin' | undefined,
+        userId: decodedToken.uid,
+        name: dbUser?.name || '',
+        businessName: dbUser?.businessName,
       };
 
       request.user = authenticatedUser;
