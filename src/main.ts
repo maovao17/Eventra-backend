@@ -41,46 +41,29 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  const allowedOrigins = (process.env.CORS_ORIGIN ||
-    'https://eventra-frontend-eight.vercel.app')
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-
   app.enableCors({
-    origin: (origin, callback) => {
-      const allowed = [
-        'https://eventra-frontend-eight.vercel.app',
-      ];
-
-      if (!origin || allowed.includes(origin)) {
-        callback(null, origin); 
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: 'https://eventra-frontend-eight.vercel.app',
     credentials: true,
   });
 
   app.use((req, res, next) => {
-    const origin = req.headers.origin;
-
-    if (
-      origin &&
-      allowedOrigins.includes(origin)
-    ) {
-      res.header('Access-Control-Allow-Origin', origin);
-    }
-
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header(
+    res.setHeader(
+      'Access-Control-Allow-Origin',
+      'https://eventra-frontend-eight.vercel.app'
+    );
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader(
       'Access-Control-Allow-Headers',
       'Origin, X-Requested-With, Content-Type, Accept, Authorization'
     );
-    res.header(
+    res.setHeader(
       'Access-Control-Allow-Methods',
       'GET, POST, PUT, PATCH, DELETE, OPTIONS'
     );
+
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(204);
+    }
 
     next();
   });
