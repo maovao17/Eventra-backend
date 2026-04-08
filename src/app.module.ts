@@ -29,7 +29,7 @@ import { ChatModule } from './chat/chat.module';
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
-        DB_URI: Joi.string().uri().default('mongodb://localhost:27017/eventra'),
+        DB_URI: Joi.string().uri().default('mongodb://mongo:NBtnHsntwJMKkCiAVpiMwkxWZTRkKsCy@mongodb.railway.internal:27017/eventra'),
         PORT: Joi.number().default(3002),
         CORS_ORIGIN: Joi.string().default('http://localhost:3000,https://eventra-frontend-eight.vercel.app'),
         RAZORPAY_KEY_ID: Joi.string().required(),

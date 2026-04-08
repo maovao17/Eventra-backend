@@ -24,12 +24,11 @@ type AuthSocket = Socket & { data: { user?: SocketUser } };
   },
 })
 export class EventsGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  afterInit() {}
+  afterInit() { }
 
   async handleConnection(client: AuthSocket) {
     const token = client.handshake.auth?.token;
@@ -43,7 +42,7 @@ export class EventsGateway
     try {
       const decodedToken = await admin.auth().verifyIdToken(token);
       const userId = decodedToken.uid;
-      
+
       client.data.user = {
         uid: userId,
         email: decodedToken.email || null,
@@ -55,7 +54,7 @@ export class EventsGateway
     }
   }
 
-  handleDisconnect(client: Socket) {}
+  handleDisconnect(client: Socket) { }
 
   broadcastBookingUpdate(booking: {
     bookingId: string
@@ -73,13 +72,13 @@ export class EventsGateway
       .emit('bookingStatusUpdated', booking);
   }
 
-  broadcastNotification(notification: { 
+  broadcastNotification(notification: {
     message: string
     type: string
     bookingId?: string
     vendorId?: string
     vendorUserId?: string
-    userId?: string 
+    userId?: string
   }) {
     const targetUserId =
       notification.userId || notification.vendorUserId || notification.vendorId;

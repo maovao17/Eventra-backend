@@ -273,7 +273,7 @@ export class BookingController {
     const filePath = join(uploadsDir, fileName);
     await writeFile(filePath, file.buffer);
 
-    const origin = `${req?.protocol ?? 'http'}://${req?.get?.('host') ?? 'localhost:3002'}`;
+    const origin = `${req?.protocol ?? 'http'}://${req?.get?.('host') ?? process.env.CORS_ORIGIN}, req.get('origin')}`;
     return `${origin}/uploads/${fileName}`;
   }
 }
