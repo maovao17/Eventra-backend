@@ -41,7 +41,8 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000')
+  const allowedOrigins = (process.env.CORS_ORIGIN ||
+    'http://localhost:3000,https://eventra-frontend-eight.vercel.app')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
@@ -70,6 +71,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
-await app.listen(Number(process.env.PORT) || 3000, '0.0.0.0');}
+  await app.listen(Number(process.env.PORT) || 3000, '0.0.0.0');
+}
 
 bootstrap();
