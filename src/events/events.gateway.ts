@@ -18,7 +18,7 @@ type AuthSocket = Socket & { data: { user?: SocketUser } };
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+    origin: (process.env.CORS_ORIGIN || 'http://localhost:3000,https://eventra-frontend-eight.vercel.app').split(',').map(o => o.trim()).filter(Boolean),
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
     credentials: true,
   },

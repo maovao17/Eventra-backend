@@ -67,19 +67,13 @@ async function bootstrap() {
         }),
     });
     app.setGlobalPrefix('api');
-    const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:3000', 'https://eventra-frontend-eight.vercel.app')
+    const allowedOrigins = (process.env.CORS_ORIGIN ||
+        'http://localhost:3000,https://eventra-frontend-eight.vercel.app')
         .split(',')
         .map((origin) => origin.trim())
         .filter(Boolean);
     app.enableCors({
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                callback(null, true);
-            }
-            else {
-                callback(new Error('CORS policy violation'), false);
-            }
-        },
+        origin: allowedOrigins,
         credentials: true,
         methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
     });
