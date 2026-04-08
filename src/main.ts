@@ -48,10 +48,20 @@ async function bootstrap() {
     .filter(Boolean);
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      const allowed = [
+        'https://eventra-frontend-eight.vercel.app',
+      ];
+
+      if (!origin || allowed.includes(origin)) {
+        callback(null, origin); 
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
   });
+
   app.use((req, res, next) => {
     const origin = req.headers.origin;
 
