@@ -48,7 +48,7 @@ export class RequestService {
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
     }
-    if (vendor.status !== 'approved') {
+    if ((vendor as any).status !== 'approved') {
       throw new ForbiddenException('Vendor is not approved');
     }
 
@@ -94,7 +94,7 @@ export class RequestService {
 
   async findByVendorUser(userId: string) {
     const vendor = await this.vendorService.findByUserIdOrThrow(userId);
-    const vendorId = String(vendor._id);
+    const vendorId = String((vendor as any)._id);
     const requests = await this.findByVendor(vendorId);
     if (!requests.length) {
       return [];
@@ -197,7 +197,7 @@ export class RequestService {
     }
 
     const vendor = await this.vendorService.findByUserId(actorUserId);
-    if (!vendor || String(vendor._id) !== String(vendorId)) {
+    if (!vendor || String((vendor as any)._id) !== String(vendorId)) {
       throw new ForbiddenException(
         'Vendors can only update their own requests',
       );
@@ -232,7 +232,7 @@ export class RequestService {
       bookingId: String(booking._id),
       status: 'accepted',
       vendorId: booking.vendorId,
-      vendorUserId: String(vendor?.userId || ''),
+      vendorUserId: String((vendor as any)?.userId || ''),
       customerId: booking.customerId,
     });
 

@@ -41,6 +41,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
+const vendor_module_1 = require("./vendor/vendor.module");
 const throttler_1 = require("@nestjs/throttler");
 const core_1 = require("@nestjs/core");
 const nest_winston_1 = require("nest-winston");
@@ -55,7 +56,6 @@ const mongoose_1 = require("@nestjs/mongoose");
 const user_module_1 = require("./user/user.module");
 const service_module_1 = require("./service/service.module");
 const cart_module_1 = require("./cart/cart.module");
-const vendor_module_1 = require("./vendor/vendor.module");
 const booking_module_1 = require("./booking/booking.module");
 const event_module_1 = require("./event/event.module");
 const request_module_1 = require("./request/request.module");
@@ -71,6 +71,7 @@ exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            vendor_module_1.VendorModule,
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
                 validationSchema: Joi.object({

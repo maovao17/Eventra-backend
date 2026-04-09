@@ -69,7 +69,7 @@ export class RequestController {
       if (!vendor) {
         throw new NotFoundException('Vendor profile not found');
       }
-      const ownVendorId = String(vendor._id);
+      const ownVendorId = String((vendor as any)._id);
 
       if (vendorId && String(vendorId) !== ownVendorId) {
         throw new ForbiddenException(

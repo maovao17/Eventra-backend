@@ -47,6 +47,7 @@ export class BookingService {
     private notificationService: NotificationService,
     private eventsGateway: EventsGateway,
   ) {}
+
   private normalizeDate(value?: string) {
     if (!value) return null;
     const date = new Date(value);
@@ -70,8 +71,8 @@ export class BookingService {
     const normalizedDate = this.normalizeDate(date);
     if (!normalizedDate) return true;
 
-    const blockedDates = Array.isArray(vendor.availability?.blockedDates)
-      ? vendor.availability.blockedDates.map((item) =>
+    const blockedDates = Array.isArray((vendor as any).availability?.blockedDates)
+      ? (vendor as any).availability.blockedDates.map((item: string) =>
           this.normalizeDate(String(item)),
         )
       : [];
@@ -89,8 +90,8 @@ export class BookingService {
     const vendor = await this.vendorModel.findById(vendorId).exec();
     if (!vendor) return;
 
-    const dates = Array.isArray(vendor.availability?.blockedDates)
-      ? vendor.availability.blockedDates.map((item) =>
+    const dates = Array.isArray((vendor as any).availability?.blockedDates)
+      ? (vendor as any).availability.blockedDates.map((item: string) =>
           this.normalizeDate(String(item)),
         )
       : [];
@@ -103,10 +104,10 @@ export class BookingService {
       return;
     }
 
-    vendor.availability = vendor.availability || {};
-    vendor.availability.blockedDates = [
-      ...(Array.isArray(vendor.availability.blockedDates)
-        ? vendor.availability.blockedDates
+    (vendor as any).availability = (vendor as any).availability || {};
+    (vendor as any).availability.blockedDates = [
+      ...(Array.isArray((vendor as any).availability.blockedDates)
+        ? (vendor as any).availability.blockedDates
         : []),
       normalizedDate,
     ];
@@ -184,8 +185,8 @@ export class BookingService {
 
     const booking = await this.create({
       ...dto,
-      amount: dto.amount ?? vendor.price ?? 0,
-      price: dto.price ?? vendor.price ?? 0,
+      amount: dto.amount ?? (vendor as any).price ?? 0,
+      price: dto.price ?? (vendor as any).price ?? 0,
       date: eventDate,
       location:
         dto.location ??
@@ -244,7 +245,7 @@ export class BookingService {
       throw new NotFoundException('Vendor not found');
     }
 
-    return this.findByVendor(String(vendor._id));
+    return this.findByVendor(String((vendor as any)._id));
   }
 
   async findByRequestId(requestId: string) {
@@ -450,7 +451,7 @@ export class BookingService {
     const vendor = await this.vendorModel
       .findOne({ userId: actorUserId })
       .exec();
-    if (!vendor || String(vendor._id) !== String(vendorId)) {
+    if (!vendor || String((vendor as any)._id) !== String(vendorId)) {
       throw new ForbiddenException(
         'Vendors can only manage their own bookings',
       );

@@ -85,7 +85,7 @@ export class ReviewService {
       throw new NotFoundException('Review not found');
     }
 
-    if (String(reviewDoc.vendorId) !== String(vendor._id)) {
+    if (String(reviewDoc.vendorId) !== String((vendor as any)._id)) {
       throw new ForbiddenException(
         'Vendors can only reply to their own reviews',
       );

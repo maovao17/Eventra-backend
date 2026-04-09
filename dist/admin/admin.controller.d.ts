@@ -14,21 +14,9 @@ export declare class AdminController {
     private readonly eventService;
     constructor(vendorService: VendorService, userService: UserService, bookingService: BookingService, paymentService: PaymentService, eventService: EventService);
     getUsers(): Promise<import("../user/schemas/user.schema").UserDocument[]>;
-    getVendors(): Promise<(import("mongoose").Document<unknown, {}, import("../vendor/schemas/vendor.schema").VendorDocument, {}, {}> & import("../vendor/schemas/vendor.schema").Vendor & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
-        _id: import("mongoose").Types.ObjectId;
-    }> & {
-        __v: number;
-    })[]>;
-    approveVendor(id: string): Promise<(import("mongoose").Document<unknown, {}, import("../vendor/schemas/vendor.schema").VendorDocument, {}, {}> & import("../vendor/schemas/vendor.schema").Vendor & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
-        _id: import("mongoose").Types.ObjectId;
-    }> & {
-        __v: number;
-    }) | null>;
-    rejectVendor(id: string): Promise<(import("mongoose").Document<unknown, {}, import("../vendor/schemas/vendor.schema").VendorDocument, {}, {}> & import("../vendor/schemas/vendor.schema").Vendor & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
-        _id: import("mongoose").Types.ObjectId;
-    }> & {
-        __v: number;
-    }) | null>;
+    getVendors(): Promise<import("../vendor/schemas/vendor.schema").Vendor[]>;
+    approveVendor(id: string): Promise<import("../vendor/schemas/vendor.schema").Vendor>;
+    rejectVendor(id: string): Promise<import("../vendor/schemas/vendor.schema").Vendor>;
     getBookings(): Promise<(import("mongoose").Document<unknown, {}, import("../booking/schemas/booking.schema").BookingDocument, {}, {}> & import("../booking/schemas/booking.schema").Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {

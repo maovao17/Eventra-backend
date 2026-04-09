@@ -12,11 +12,11 @@ export declare class ReviewController {
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
-    })[]> | Promise<(import("mongoose").Document<unknown, {}, import("./schemas/review.schema").ReviewDocument, {}, {}> & import("./schemas/review.schema").Review & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+    }) | null> | Promise<(import("mongoose").Document<unknown, {}, import("./schemas/review.schema").ReviewDocument, {}, {}> & import("./schemas/review.schema").Review & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
-    }) | null>;
+    })[]>;
     reply(req: any, payload: {
         reviewId?: string;
         actorUserId?: string;

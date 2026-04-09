@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
@@ -12,7 +12,7 @@ export class VendorService {
     return this.vendorModel.findOne({ userId }).lean();
   }
 
-async updateProfile(userId: string, data: UpdateVendorDto): Promise<Vendor> {
+  async updateProfile(userId: string, data: UpdateVendorDto): Promise<Vendor> {
     console.log("VendorService: Saving vendor - UID:", userId, "Data:", data);
     const updateData = {
       ...data,
@@ -29,5 +29,54 @@ async updateProfile(userId: string, data: UpdateVendorDto): Promise<Vendor> {
 
   async findAllCompleted(): Promise<Vendor[]> {
     return this.vendorModel.find({ profileCompleted: true }).lean();
+  }
+
+  // Stub for admin
+  async getAllVendors(): Promise<Vendor[]> {
+    return this.findAllCompleted();
+  }
+
+  async approveVendor(id: string): Promise<Vendor> {
+    return this.vendorModel.findByIdAndUpdate(
+      id,
+      { status: 'approved' },
+      { new: true, upsert: true }
+    ).lean() as unknown as Vendor;
+  }
+
+  async rejectVendor(id: string): Promise<Vendor> {
+    return this.vendorModel.findByIdAndUpdate(
+      id,
+      { status: 'rejected' },
+      { new: true, upsert: true }
+    ).lean() as unknown as Vendor;
+  }
+
+  async findOne(id: string): Promise<Vendor | null> {
+    return this.vendorModel.findById(id).lean();
+  }
+
+  async findOneOrThrow(id: string): Promise<Vendor> {
+    const vendor = await this.findOne(id);
+    if (!vendor) {
+      throw new NotFoundException(`Vendor #${id} not found`);
+    }
+    return vendor;
+  }
+
+  async findByUserIdOrThrow(userId: string): Promise<Vendor> {
+    const vendor = await this.findByUserId(userId);
+    if (!vendor) {
+      throw new NotFoundException(`Vendor for user #${userId} not found`);
+    }
+    return vendor;
+  }
+
+  async update(id: string, data: UpdateVendorDto): Promise<Vendor> {
+    return this.vendorModel.findByIdAndUpdate(
+      id,
+      { ...data, updatedAt: new Date() },
+      { new: true }
+    ).lean() as unknown as Vendor;
   }
 }

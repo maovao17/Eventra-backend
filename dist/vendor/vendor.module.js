@@ -9,49 +9,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VendorModule = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
-const platform_express_1 = require("@nestjs/platform-express");
-const multer_1 = require("multer");
-const path_1 = require("path");
 const vendor_controller_1 = require("./vendor.controller");
 const vendor_service_1 = require("./vendor.service");
 const vendor_schema_1 = require("./schemas/vendor.schema");
-const booking_schema_1 = require("../booking/schemas/booking.schema");
-const request_schema_1 = require("../request/schemas/request.schema");
-const service_schema_1 = require("../service/schemas/service.schema");
-const review_schema_1 = require("../review/schemas/review.schema");
-const notification_schema_1 = require("../notification/schemas/notification.schema");
-const user_module_1 = require("../user/user.module");
-const auth_module_1 = require("../auth/auth.module");
-const firebase_guard_1 = require("../auth/firebase.guard");
 let VendorModule = class VendorModule {
 };
 exports.VendorModule = VendorModule;
 exports.VendorModule = VendorModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            user_module_1.UserModule,
-            auth_module_1.AuthModule,
-            platform_express_1.MulterModule.register({
-                storage: (0, multer_1.diskStorage)({
-                    destination: './uploads',
-                    filename: (req, file, callback) => {
-                        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-                        const ext = (0, path_1.extname)(file.originalname);
-                        callback(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-                    },
-                }),
-            }),
-            mongoose_1.MongooseModule.forFeature([
-                { name: vendor_schema_1.Vendor.name, schema: vendor_schema_1.VendorSchema },
-                { name: booking_schema_1.Booking.name, schema: booking_schema_1.BookingSchema },
-                { name: request_schema_1.Request.name, schema: request_schema_1.RequestSchema },
-                { name: service_schema_1.Service.name, schema: service_schema_1.ServiceSchema },
-                { name: review_schema_1.Review.name, schema: review_schema_1.ReviewSchema },
-                { name: notification_schema_1.Notification.name, schema: notification_schema_1.NotificationSchema },
-            ]),
-        ],
+        imports: [mongoose_1.MongooseModule.forFeature([{ name: vendor_schema_1.Vendor.name, schema: vendor_schema_1.VendorSchema }])],
         controllers: [vendor_controller_1.VendorController],
-        providers: [vendor_service_1.VendorService, firebase_guard_1.FirebaseAuthGuard],
+        providers: [vendor_service_1.VendorService],
         exports: [vendor_service_1.VendorService],
     })
 ], VendorModule);

@@ -42,7 +42,7 @@ export class PayoutController {
     }
 
     const vendor = await this.vendorService.findByUserIdOrThrow(req.user.uid);
-    return this.payoutService.findByVendor(String(vendor._id));
+    return this.payoutService.findByVendor(String((vendor as any)._id));
   }
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
@@ -50,7 +50,7 @@ export class PayoutController {
   @Get('vendor')
   async findByVendorUser(@Req() req) {
     const vendor = await this.vendorService.findByUserIdOrThrow(req.user.uid);
-    return this.payoutService.findByVendor(String(vendor._id));
+    return this.payoutService.findByVendor(String((vendor as any)._id));
   }
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
@@ -65,7 +65,7 @@ export class PayoutController {
 
     const vendor = await this.vendorService.findByUserIdOrThrow(req.user.uid);
     return payouts.filter(
-      (payout) => String(payout.vendorId) === String(vendor._id),
+      (payout) => String(payout.vendorId) === String((vendor as any)._id),
     );
   }
 
@@ -80,7 +80,7 @@ export class PayoutController {
     }
 
     const vendor = await this.vendorService.findByUserIdOrThrow(req.user.uid);
-    if (String(payout.vendorId) !== String(vendor._id)) {
+    if (String(payout.vendorId) !== String((vendor as any)._id)) {
       throw new ForbiddenException('You do not have access to this payout');
     }
 

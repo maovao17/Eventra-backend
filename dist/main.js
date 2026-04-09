@@ -44,8 +44,7 @@ const nest_winston_1 = require("nest-winston");
 const winston = __importStar(require("winston"));
 async function bootstrap() {
     if (!admin.apps.length) {
-        const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
-            (0, path_1.join)(process.cwd(), 'serviceAccountKey.json');
+        const serviceAccountPath = (0, path_1.join)(process.cwd(), 'serviceAccountKey.json');
         if ((0, fs_1.existsSync)(serviceAccountPath)) {
             admin.initializeApp({
                 credential: admin.credential.cert(require(serviceAccountPath)),
@@ -67,15 +66,19 @@ async function bootstrap() {
         }),
     });
     app.setGlobalPrefix('api');
-    const allowedOrigins = (process.env.CORS_ORIGIN ||
-        'http://localhost:3000,https://eventra-frontend-eight.vercel.app')
-        .split(',')
-        .map((origin) => origin.trim())
-        .filter(Boolean);
     app.enableCors({
-        origin: allowedOrigins,
+        origin: 'https://eventra-frontend-eight.vercel.app',
         credentials: true,
-        methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT', 'OPTIONS'],
+    });
+    app.use((req, res, next) => {
+        res.setHeader('Access-Control-Allow-Origin', 'https://eventra-frontend-eight.vercel.app');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+        if (req.method === 'OPTIONS') {
+            return res.sendStatus(204);
+        }
+        next();
     });
     const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads');
     if (!(0, fs_1.existsSync)(uploadsDir)) {

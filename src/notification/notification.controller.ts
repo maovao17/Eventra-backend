@@ -39,7 +39,7 @@ export class NotificationController {
 
     if (req.user.role === 'vendor') {
       const vendor = await this.vendorService.findByUserIdOrThrow(req.user.uid);
-      return this.notificationService.findByVendor(String(vendor._id));
+      return this.notificationService.findByVendor(String((vendor as any)._id));
     }
 
     return this.notificationService.findByUser(req.user.uid);
@@ -64,7 +64,7 @@ export class NotificationController {
 
     if (req.user.role === 'vendor') {
       const vendor = await this.vendorService.findByUserIdOrThrow(req.user.uid);
-      if (String(notification.vendorId) === String(vendor._id)) {
+      if (String(notification.vendorId) === String((vendor as any)._id)) {
         return notification;
       }
     }
