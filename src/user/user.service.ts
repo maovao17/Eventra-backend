@@ -85,7 +85,7 @@ export class UserService {
         existingUser.role = persistedRole;
         existingUser.businessName = dto.businessName;
         existingUser.profile_photo = dto.profile_photo;
-        existingUser.status = persistedRole === 'vendor' ? 'pending' : 'approved';
+        existingUser.status = 'approved';
         await existingUser.save();
         return this.sanitize(existingUser);
       }

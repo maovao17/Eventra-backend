@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { VendorModule } from './vendor/vendor.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { WinstonModule } from 'nest-winston';
@@ -13,7 +14,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './user/user.module';
 import { ServiceModule } from './service/service.module';
 import { CartModule } from './cart/cart.module';
-import { VendorModule } from './vendor/vendor.module';
 import { BookingModule } from './booking/booking.module';
 import { EventModule } from './event/event.module';
 import { RequestModule } from './request/request.module';
@@ -26,6 +26,7 @@ import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
+    VendorModule,
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: Joi.object({
