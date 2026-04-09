@@ -10,10 +10,7 @@ import * as winston from 'winston';
 
 async function bootstrap() {
   if (!admin.apps.length) {
-    const serviceAccountPath =
-      process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
-      join(process.cwd(), 'serviceAccountKey.json');
-
+    const serviceAccountPath = join(process.cwd(), 'serviceAccountKey.json');
     if (existsSync(serviceAccountPath)) {
       admin.initializeApp({
         credential: admin.credential.cert(require(serviceAccountPath)),
