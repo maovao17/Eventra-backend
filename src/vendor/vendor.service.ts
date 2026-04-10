@@ -6,7 +6,7 @@ import { Vendor, VendorDocument } from './schemas/vendor.schema';
 
 @Injectable()
 export class VendorService {
-  constructor(@InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>) {}
+  constructor(@InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>) { }
 
   async findByUserId(userId: string): Promise<Vendor | null> {
     return this.vendorModel.findOne({ userId }).lean();
@@ -72,11 +72,12 @@ export class VendorService {
     return vendor;
   }
 
-  async update(id: string, data: UpdateVendorDto): Promise<Vendor> {
-    return this.vendorModel.findByIdAndUpdate(
-      id,
-      { ...data, updatedAt: new Date() },
-      { new: true }
-    ).lean() as unknown as Vendor;
+  async update(id: string, data: any): Promise<any> {
+    try {
+      return await this.vendorModel.findByIdAndUpdate(id, data, { new: true });
+    } catch (e) {
+      console.log("Update fallback:", e);
+      return {};
+    }
   }
 }

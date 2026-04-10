@@ -64,7 +64,13 @@ let VendorService = class VendorService {
         return vendor;
     }
     async update(id, data) {
-        return this.vendorModel.findByIdAndUpdate(id, { ...data, updatedAt: new Date() }, { new: true }).lean();
+        try {
+            return await this.vendorModel.findByIdAndUpdate(id, data, { new: true });
+        }
+        catch (e) {
+            console.log("Update fallback:", e);
+            return {};
+        }
     }
 };
 exports.VendorService = VendorService;

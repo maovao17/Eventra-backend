@@ -13,5 +13,5 @@ export declare class VendorService {
     findOne(id: string): Promise<Vendor | null>;
     findOneOrThrow(id: string): Promise<Vendor>;
     findByUserIdOrThrow(userId: string): Promise<Vendor>;
-    update(id: string, data: UpdateVendorDto): Promise<Vendor>;
+    update(id: string, data: any): Promise<any>;
 }

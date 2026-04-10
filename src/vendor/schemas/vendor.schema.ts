@@ -3,6 +3,35 @@ import { HydratedDocument } from 'mongoose';
 
 export type VendorDocument = HydratedDocument<Vendor>;
 
+class Package {
+  @Prop({ required: true })
+  name!: string;
+
+  @Prop({ required: true, min: 0 })
+  price!: number;
+
+  @Prop()
+  description?: string;
+
+  @Prop([String])
+  servicesIncluded?: string[];
+}
+
+export const PackageSchema = SchemaFactory.createForClass(Package);
+
+class Location {
+  @Prop()
+  city?: string;
+
+  @Prop()
+  area?: string;
+
+  @Prop()
+  address?: string;
+}
+
+export const LocationSchema = SchemaFactory.createForClass(Location);
+
 @Schema({ timestamps: true })
 export class Vendor {
   @Prop({ required: true, index: true })
@@ -17,8 +46,8 @@ export class Vendor {
   @Prop([String])
   category?: string[];
 
-  @Prop()
-  location?: any;
+  @Prop({ type: LocationSchema })
+  location?: Location;
 
   @Prop()
   experience?: string;
@@ -32,8 +61,15 @@ export class Vendor {
   @Prop({ default: false })
   profileCompleted!: boolean;
 
+  @Prop([{ type: PackageSchema }])
+  packages?: Package[];
+
   @Prop()
-  packages?: any[];
+  status?: string;
+
+  @Prop({ default: false })
+  isVerified?: boolean;
 }
 
 export const VendorSchema = SchemaFactory.createForClass(Vendor);
+
