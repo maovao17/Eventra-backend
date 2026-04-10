@@ -39,8 +39,13 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  app.enableCors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()) : ['https://eventra-frontend-eight.vercel.app'], methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'], credentials: true, allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With',], });
-
+  app.enableCors({
+    origin: [
+      'https://eventra-frontend-eight.vercel.app',
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
   const uploadsDir = join(process.cwd(), 'uploads');
   if (!existsSync(uploadsDir)) {
     mkdirSync(uploadsDir, { recursive: true });
