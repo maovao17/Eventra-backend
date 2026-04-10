@@ -7,6 +7,7 @@ import { static as expressStatic, Request } from 'express';
 import * as admin from 'firebase-admin';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
+import * as express from 'express';
 
 async function bootstrap() {
   if (!admin.apps.length) {
@@ -77,6 +78,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.use('/uploads', express.static(uploadsDir));
   await app.listen(Number(process.env.PORT) || 3000, '0.0.0.0');
 }
 
