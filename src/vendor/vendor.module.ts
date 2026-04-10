@@ -1,12 +1,14 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { VendorController } from './vendor.controller';
 import { VendorService } from './vendor.service';
 import { Vendor, VendorSchema } from './schemas/vendor.schema';
 import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }]), UserModule],
+  imports: [MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }]), UserModule, forwardRef(() => NotificationModule)],
+
   controllers: [VendorController],
   providers: [VendorService],
   exports: [VendorService],

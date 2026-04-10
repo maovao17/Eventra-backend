@@ -1,12 +1,14 @@
 import { UpdateVendorDto } from './dto/update-vendor.dto';
 import { AuthenticatedUser } from '../types/auth.types';
 import { VendorService } from './vendor.service';
+import { NotificationService } from '../notification/notification.service';
 export declare class VendorController {
     private readonly vendorService;
-    constructor(vendorService: VendorService);
+    private readonly notificationService;
+    constructor(vendorService: VendorService, notificationService: NotificationService);
     getMe(req: {
         user: AuthenticatedUser;
-    }): Promise<import("./schemas/vendor.schema").Vendor | null>;
+    }): Promise<any>;
     updateProfile(req: {
         user: AuthenticatedUser;
     }, body: UpdateVendorDto): Promise<import("./schemas/vendor.schema").Vendor>;
@@ -23,4 +25,7 @@ export declare class VendorController {
         }[];
     };
     approve(id: string): Promise<import("./schemas/vendor.schema").Vendor>;
+    getNotifications(req: {
+        user: AuthenticatedUser;
+    }): Promise<import("../notification/schemas/notification.schema").Notification[]>;
 }

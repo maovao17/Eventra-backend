@@ -9,7 +9,7 @@ import { UserModule } from '../user/user.module';
 export class VendorService {
   constructor(@InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>) { }
 
-  async findByUserId(userId: string): Promise<Vendor | null> {
+async findByUserId(userId: string): Promise<any | null> {
     return this.vendorModel.findOne({ userId }).lean();
   }
 

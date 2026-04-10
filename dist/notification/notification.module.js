@@ -28,7 +28,7 @@ exports.NotificationModule = NotificationModule = __decorate([
                 { name: booking_schema_1.Booking.name, schema: booking_schema_1.BookingSchema },
             ]),
             auth_module_1.AuthModule,
-            vendor_module_1.VendorModule,
+            (0, common_1.forwardRef)(() => vendor_module_1.VendorModule),
             user_module_1.UserModule,
             events_module_1.EventsModule,
         ],

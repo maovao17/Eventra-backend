@@ -17,11 +17,14 @@ const common_1 = require("@nestjs/common");
 const update_vendor_dto_1 = require("./dto/update-vendor.dto");
 const firebase_guard_1 = require("../auth/firebase.guard");
 const vendor_service_1 = require("./vendor.service");
+const notification_service_1 = require("../notification/notification.service");
 const platform_express_1 = require("@nestjs/platform-express");
 let VendorController = class VendorController {
     vendorService;
-    constructor(vendorService) {
+    notificationService;
+    constructor(vendorService, notificationService) {
         this.vendorService = vendorService;
+        this.notificationService = notificationService;
     }
     getMe(req) {
         return this.vendorService.findByUserId(req.user.userId);
@@ -52,6 +55,13 @@ let VendorController = class VendorController {
     }
     approve(id) {
         return this.vendorService.approveVendor(id);
+    }
+    async getNotifications(req) {
+        const vendor = await this.vendorService.findByUserId(req.user.userId);
+        if (!vendor) {
+            return [];
+        }
+        return this.notificationService.findByVendor(String(vendor._id));
     }
 };
 exports.VendorController = VendorController;
@@ -116,8 +126,17 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "approve", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.Get)('notifications'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], VendorController.prototype, "getNotifications", null);
 exports.VendorController = VendorController = __decorate([
     (0, common_1.Controller)('vendors'),
-    __metadata("design:paramtypes", [vendor_service_1.VendorService])
+    __metadata("design:paramtypes", [vendor_service_1.VendorService,
+        notification_service_1.NotificationService])
 ], VendorController);
 //# sourceMappingURL=vendor.controller.js.map

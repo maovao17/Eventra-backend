@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { NotificationService } from './notification.service';
 import { NotificationController } from './notification.controller';
@@ -19,7 +19,7 @@ import { EventsModule } from '../events/events.module';
       { name: Booking.name, schema: BookingSchema },
     ]),
     AuthModule,
-    VendorModule,
+    forwardRef(() => VendorModule),
     UserModule,
     EventsModule,
   ],

@@ -4,7 +4,7 @@ import { Vendor, VendorDocument } from './schemas/vendor.schema';
 export declare class VendorService {
     private vendorModel;
     constructor(vendorModel: Model<VendorDocument>);
-    findByUserId(userId: string): Promise<Vendor | null>;
+    findByUserId(userId: string): Promise<any | null>;
     updateProfile(userId: string, data: UpdateVendorDto): Promise<Vendor>;
     findAllCompleted(): Promise<Vendor[]>;
     approveVendor(id: string): Promise<Vendor>;
