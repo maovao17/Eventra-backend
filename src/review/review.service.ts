@@ -20,8 +20,8 @@ export class ReviewService {
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
     private bookingService: BookingService,
     private userService: UserService,
-    private vendorService: VendorService,
-  ) {}
+    @Inject(forwardRef(() => VendorService))
+    private vendorService: VendorService,) { }
 
   async create(dto: CreateReviewDto) {
     const customerId = dto.customerId ?? dto.userId;
