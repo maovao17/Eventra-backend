@@ -78,11 +78,12 @@ export class UserService {
         .findOne({ userId: dto.userId })
         .exec();
       if (existingUser) {
+        console.log('Updating existing user, preserving role:', existingUser.role);
         existingUser.name = dto.name;
         existingUser.phoneNumber = dto.phoneNumber;
         existingUser.email = dto.email?.toLowerCase();
         existingUser.authProvider = dto.authProvider;
-        existingUser.role = persistedRole;
+        // Preserve original role - do not overwrite
         existingUser.businessName = dto.businessName;
         existingUser.profile_photo = dto.profile_photo;
         existingUser.status = 'approved';
