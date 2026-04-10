@@ -43,6 +43,11 @@ export class VendorController {
     return this.vendorService.findAllCompleted();
   }
 
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.vendorService.findOne(id);
+  }
+
   @Post('upload')
   @UseGuards(FirebaseAuthGuard)
   @UseInterceptors(FileInterceptor('file'))

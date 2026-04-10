@@ -36,10 +36,18 @@ let VendorController = class VendorController {
     findApproved() {
         return this.vendorService.findAllCompleted();
     }
-    uploadFile(file, req) {
+    findOne(id) {
+        return this.vendorService.findOne(id);
+    }
+    uploadFile(file) {
         return {
-            fullUrl: `https://your-storage-url.com/uploads/${file.filename}`,
+            fullUrl: `/uploads/${file.filename}`,
             filename: file.filename
+        };
+    }
+    uploadMultiple(file) {
+        return {
+            data: [{ url: `/uploads/${file.filename}` }]
         };
     }
     approve(id) {
@@ -57,7 +65,6 @@ __decorate([
 ], VendorController.prototype, "getMe", null);
 __decorate([
     (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
     (0, common_1.Patch)('profile'),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
@@ -66,7 +73,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "updateProfile", null);
 __decorate([
-    (0, common_1.Get)(),
     (0, common_1.Get)('all'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -79,15 +85,30 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "findApproved", null);
 __decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "findOne", null);
+__decorate([
     (0, common_1.Post)('upload'),
     (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
     __param(0, (0, common_1.UploadedFile)()),
-    __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "uploadFile", null);
+__decorate([
+    (0, common_1.Post)('upload-multiple'),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('files')),
+    __param(0, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "uploadMultiple", null);
 __decorate([
     (0, common_1.Patch)('approve/:id'),
     __param(0, (0, common_1.Param)('id')),

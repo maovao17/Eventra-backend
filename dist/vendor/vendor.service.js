@@ -39,7 +39,7 @@ let VendorService = class VendorService {
         return this.vendorModel.find({ profileCompleted: true }).lean();
     }
     async approveVendor(id) {
-        return this.vendorModel.findByIdAndUpdate(id, { isApproved: true, status: 'approved' }, { new: true }).lean();
+        return this.vendorModel.findByIdAndUpdate(id, { isApproved: true, isVerified: true, status: 'approved' }, { new: true }).lean();
     }
     async getAllVendors() {
         return this.vendorModel.find().lean();

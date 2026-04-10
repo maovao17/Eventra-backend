@@ -34,10 +34,10 @@ export class VendorService {
     return this.vendorModel.find({ profileCompleted: true }).lean();
   }
 
-  async approveVendor(id: string): Promise<Vendor> {
+async approveVendor(id: string): Promise<Vendor> {
     return this.vendorModel.findByIdAndUpdate(
       id,
-      { isApproved: true, status: 'approved' },
+      { isApproved: true, isVerified: true, status: 'approved' },
       { new: true }
     ).lean() as unknown as Vendor;
   }
