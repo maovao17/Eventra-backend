@@ -16,7 +16,6 @@ import { AuthenticatedUser } from '../types/auth.types';
 import { VendorService } from './vendor.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-
 @Controller('vendors')
 export class VendorController {
   constructor(private readonly vendorService: VendorService) { }
@@ -28,14 +27,12 @@ export class VendorController {
   }
 
   @UseGuards(FirebaseAuthGuard)
-  @UseGuards(FirebaseAuthGuard)
   @Patch('profile')
   updateProfile(@Req() req: { user: AuthenticatedUser }, @Body() body: UpdateVendorDto) {
     console.log("Saving vendor profile - UID:", req.user.userId, "Data:", body);
     return this.vendorService.updateProfile(req.user.userId, body);
   }
 
-  @Get()
   @Get('all')
   findAll() {
     return this.vendorService.getAllVendors();
@@ -49,10 +46,19 @@ export class VendorController {
   @Post('upload')
   @UseGuards(FirebaseAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
-  uploadFile(@UploadedFile() file: any, @Req() req: { user: AuthenticatedUser }) {
+  uploadFile(@UploadedFile() file: any) {
     return {
-      fullUrl: `https://your-storage-url.com/uploads/${file.filename}`,
+      fullUrl: `/uploads/${file.filename}`,
       filename: file.filename
+    };
+  }
+
+  @Post('upload-multiple')
+  @UseGuards(FirebaseAuthGuard)
+  @UseInterceptors(FileInterceptor('files'))
+  uploadMultiple(@UploadedFile() file: any) {
+    return {
+      data: [{ url: `/uploads/${file.filename}` }]
     };
   }
 
@@ -61,3 +67,4 @@ export class VendorController {
     return this.vendorService.approveVendor(id);
   }
 }
+
