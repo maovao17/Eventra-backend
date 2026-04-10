@@ -47,11 +47,6 @@ constructor(
     return this.vendorService.findAllCompleted();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.vendorService.findOne(id);
-  }
-
   @Post('upload')
   @UseGuards(FirebaseAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
@@ -83,6 +78,11 @@ constructor(
     return this.vendorService.getVendorBookings(req.user.userId);
   }
 
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.vendorService.findOne(id);
+  }
+  
   @Patch('approve/:id')
   approve(@Param('id') id: string) {
     return this.vendorService.approveVendor(id);
