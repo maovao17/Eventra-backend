@@ -39,11 +39,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  app.enableCors({
-    origin: true,
-    credentials: true,
-  });
-  console.log("CORS ENABLED - PRODUCTION MODE");
+  app.enableCors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()) : ['https://eventra-frontend-eight.vercel.app'], methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'], credentials: true, allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept', 'X-Requested-With',], });
 
   const uploadsDir = join(process.cwd(), 'uploads');
   if (!existsSync(uploadsDir)) {
