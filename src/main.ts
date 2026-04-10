@@ -39,14 +39,19 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-app.enableCors({
-    origin: (process.env.CORS_ORIGIN || 'http://localhost:3000,https://eventra-frontend-eight.vercel.app').split(',').map(o => o.trim()),
-    credentials: true,
-    allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
-    methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  });
-
-  // Removed conflicting manual CORS - use NestJS enableCors only
+  app.enableCors({
+  origin: [
+    "http://localhost:3000",
+    "https://eventra-frontend-eight.vercel.app",
+  ],
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "Accept",
+  ],
+  credentials: true,
+});
 
   const uploadsDir = join(process.cwd(), 'uploads');
   if (!existsSync(uploadsDir)) {
