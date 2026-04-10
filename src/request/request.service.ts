@@ -31,10 +31,11 @@ export class RequestService {
     @Inject(forwardRef(() => BookingService))
     private bookingService: BookingService,
     private userService: UserService,
+    @Inject(forwardRef(() => VendorService))
     private vendorService: VendorService,
     private eventService: EventService,
     private eventsGateway: EventsGateway,
-  ) {}
+  ) { }
 
   async create(createRequestDto: CreateRequestDto): Promise<RequestDocument> {
     const customer = await this.userService.findByUserId(

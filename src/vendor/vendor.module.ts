@@ -7,9 +7,10 @@ import { UserModule } from '../user/user.module';
 import { NotificationModule } from '../notification/notification.module';
 import { ReviewModule } from '../review/review.module';
 import { BookingModule } from '../booking/booking.module';
+import { RequestModule } from '../request/request.module';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }]), UserModule, forwardRef(() => NotificationModule), forwardRef(() => ReviewModule), BookingModule],
+  imports: [MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }]), UserModule, forwardRef(() => NotificationModule), forwardRef(() => ReviewModule), forwardRef(() => RequestModule), BookingModule],
 
   controllers: [VendorController],
   providers: [VendorService],
