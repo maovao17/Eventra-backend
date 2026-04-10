@@ -23,7 +23,7 @@ import { Booking, BookingSchema } from '../booking/schemas/booking.schema';
     ]),
     forwardRef(() => BookingModule),
     UserModule,
-    VendorModule,
+    forwardRef(() => VendorModule),
     EventModule,
     AuthModule,
     EventsModule,

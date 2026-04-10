@@ -14,12 +14,14 @@ const vendor_service_1 = require("./vendor.service");
 const vendor_schema_1 = require("./schemas/vendor.schema");
 const user_module_1 = require("../user/user.module");
 const notification_module_1 = require("../notification/notification.module");
+const review_module_1 = require("../review/review.module");
+const booking_module_1 = require("../booking/booking.module");
 let VendorModule = class VendorModule {
 };
 exports.VendorModule = VendorModule;
 exports.VendorModule = VendorModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([{ name: vendor_schema_1.Vendor.name, schema: vendor_schema_1.VendorSchema }]), user_module_1.UserModule, (0, common_1.forwardRef)(() => notification_module_1.NotificationModule)],
+        imports: [mongoose_1.MongooseModule.forFeature([{ name: vendor_schema_1.Vendor.name, schema: vendor_schema_1.VendorSchema }]), user_module_1.UserModule, (0, common_1.forwardRef)(() => notification_module_1.NotificationModule), review_module_1.ReviewModule, booking_module_1.BookingModule],
         controllers: [vendor_controller_1.VendorController],
         providers: [vendor_service_1.VendorService],
         exports: [vendor_service_1.VendorService],

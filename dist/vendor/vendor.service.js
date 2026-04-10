@@ -17,10 +17,19 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const vendor_schema_1 = require("./schemas/vendor.schema");
+const review_service_1 = require("../review/review.service");
+const booking_service_1 = require("../booking/booking.service");
+const notification_service_1 = require("../notification/notification.service");
 let VendorService = class VendorService {
     vendorModel;
-    constructor(vendorModel) {
+    reviewService;
+    bookingService;
+    notificationService;
+    constructor(vendorModel, reviewService, bookingService, notificationService) {
         this.vendorModel = vendorModel;
+        this.reviewService = reviewService;
+        this.bookingService = bookingService;
+        this.notificationService = notificationService;
     }
     async findByUserId(userId) {
         return this.vendorModel.findOne({ userId }).lean();
@@ -73,11 +82,52 @@ let VendorService = class VendorService {
             return {};
         }
     }
+    async getVendorReviews(uid) {
+        try {
+            const vendor = await this.findByUserId(uid);
+            if (!vendor?._id)
+                return [];
+            console.log("UID:", uid, "Vendor:", vendor);
+            return await this.reviewService.findByVendor(String(vendor._id));
+        }
+        catch (e) {
+            console.error("getVendorReviews ERROR:", e);
+            return [];
+        }
+    }
+    async getVendorBookings(uid) {
+        try {
+            console.log("UID:", uid);
+            const result = await this.bookingService.findByVendorUser(uid);
+            console.log("Bookings result:", result);
+            return result;
+        }
+        catch (e) {
+            console.error("getVendorBookings ERROR:", e);
+            return [];
+        }
+    }
+    async getVendorNotifications(uid) {
+        try {
+            const vendor = await this.findByUserId(uid);
+            if (!vendor?._id)
+                return [];
+            console.log("UID:", uid, "Vendor:", vendor);
+            return await this.notificationService.findByVendor(String(vendor._id));
+        }
+        catch (e) {
+            console.error("getVendorNotifications ERROR:", e);
+            return [];
+        }
+    }
 };
 exports.VendorService = VendorService;
 exports.VendorService = VendorService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(vendor_schema_1.Vendor.name)),
-    __metadata("design:paramtypes", [mongoose_2.Model])
+    __metadata("design:paramtypes", [mongoose_2.Model,
+        review_service_1.ReviewService,
+        booking_service_1.BookingService,
+        notification_service_1.NotificationService])
 ], VendorService);
 //# sourceMappingURL=vendor.service.js.map

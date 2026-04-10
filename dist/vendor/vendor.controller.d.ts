@@ -24,6 +24,20 @@ export declare class VendorController {
             url: string;
         }[];
     };
+    getReviews(req: {
+        user: AuthenticatedUser;
+    }): Promise<(import("mongoose").Document<unknown, {}, import("../review/schemas/review.schema").ReviewDocument, {}, {}> & import("../review/schemas/review.schema").Review & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+        _id: import("mongoose").Types.ObjectId;
+    }> & {
+        __v: number;
+    })[]>;
+    getBookings(req: {
+        user: AuthenticatedUser;
+    }): Promise<(import("mongoose").Document<unknown, {}, import("../booking/schemas/booking.schema").BookingDocument, {}, {}> & import("../booking/schemas/booking.schema").Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+        _id: import("mongoose").Types.ObjectId;
+    }> & {
+        __v: number;
+    })[]>;
     approve(id: string): Promise<import("./schemas/vendor.schema").Vendor>;
     getNotifications(req: {
         user: AuthenticatedUser;

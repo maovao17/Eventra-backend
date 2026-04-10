@@ -53,6 +53,12 @@ let VendorController = class VendorController {
             data: [{ url: `/uploads/${file.filename}` }]
         };
     }
+    getReviews(req) {
+        return this.vendorService.getVendorReviews(req.user.userId);
+    }
+    getBookings(req) {
+        return this.vendorService.getVendorBookings(req.user.userId);
+    }
     approve(id) {
         return this.vendorService.approveVendor(id);
     }
@@ -119,6 +125,22 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "uploadMultiple", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.Get)('reviews'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "getReviews", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.Get)('bookings'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "getBookings", null);
 __decorate([
     (0, common_1.Patch)('approve/:id'),
     __param(0, (0, common_1.Param)('id')),

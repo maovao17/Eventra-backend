@@ -68,18 +68,10 @@ async function bootstrap() {
     });
     app.setGlobalPrefix('api');
     app.enableCors({
-        origin: [
-            "http://localhost:3000",
-            "https://eventra-frontend-eight.vercel.app",
-        ],
-        methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
-        allowedHeaders: [
-            "Content-Type",
-            "Authorization",
-            "Accept",
-        ],
+        origin: true,
         credentials: true,
     });
+    console.log("CORS ENABLED - PRODUCTION MODE");
     const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads');
     if (!(0, fs_1.existsSync)(uploadsDir)) {
         (0, fs_1.mkdirSync)(uploadsDir, { recursive: true });
