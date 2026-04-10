@@ -70,16 +70,8 @@ async function bootstrap() {
     app.enableCors({
         origin: (process.env.CORS_ORIGIN || 'http://localhost:3000,https://eventra-frontend-eight.vercel.app').split(',').map(o => o.trim()),
         credentials: true,
-    });
-    app.use((req, res, next) => {
-        res.setHeader('Access-Control-Allow-Origin', 'https://eventra-frontend-eight.vercel.app');
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-        res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-        if (req.method === 'OPTIONS') {
-            return res.sendStatus(204);
-        }
-        next();
+        allowedHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+        methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     });
     const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads');
     if (!(0, fs_1.existsSync)(uploadsDir)) {
