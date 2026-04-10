@@ -61,6 +61,9 @@ export class Vendor {
   @Prop({ default: false })
   profileCompleted!: boolean;
 
+  @Prop({ default: false })
+  isApproved!: boolean;
+
   @Prop([{ type: PackageSchema }])
   packages?: Package[];
 
@@ -69,6 +72,7 @@ export class Vendor {
 
   @Prop({ default: false })
   isVerified?: boolean;
+
 }
 
 export const VendorSchema = SchemaFactory.createForClass(Vendor);

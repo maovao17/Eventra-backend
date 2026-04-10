@@ -18,6 +18,7 @@ export class VendorService {
     const updateData = {
       ...data,
       profileCompleted: true,
+      isApproved: false,
       updatedAt: new Date(),
     };
 
@@ -29,20 +30,20 @@ export class VendorService {
   }
 
   async findAllCompleted(): Promise<Vendor[]> {
+    // Visible to customers if completed (admin approves verified badge)
     return this.vendorModel.find({ profileCompleted: true }).lean();
-  }
-
-  // Stub for admin
-  async getAllVendors(): Promise<Vendor[]> {
-    return this.findAllCompleted();
   }
 
   async approveVendor(id: string): Promise<Vendor> {
     return this.vendorModel.findByIdAndUpdate(
       id,
-      { status: 'approved' },
-      { new: true, upsert: true }
+      { isApproved: true, status: 'approved' },
+      { new: true }
     ).lean() as unknown as Vendor;
+  }
+
+  async getAllVendors(): Promise<Vendor[]> {
+    return this.vendorModel.find().lean();
   }
 
   async rejectVendor(id: string): Promise<Vendor> {

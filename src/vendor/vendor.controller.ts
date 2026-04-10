@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Patch,
   Req,
   UseGuards,
@@ -22,6 +23,7 @@ export class VendorController {
   }
 
 @UseGuards(FirebaseAuthGuard)
+  @UseGuards(FirebaseAuthGuard)
   @Patch('profile')
   updateProfile(@Req() req: { user: AuthenticatedUser }, @Body() body: UpdateVendorDto) {
     console.log("Saving vendor profile - UID:", req.user.userId, "Data:", body);
@@ -29,7 +31,18 @@ export class VendorController {
   }
 
   @Get()
+  @Get('all')
   findAll() {
+    return this.vendorService.getAllVendors();
+  }
+
+  @Get()
+  findApproved() {
     return this.vendorService.findAllCompleted();
+  }
+
+  @Patch('approve/:id')
+  approve(@Param('id') id: string) {
+    return this.vendorService.approveVendor(id);
   }
 }
