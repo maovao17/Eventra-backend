@@ -12,7 +12,6 @@ import { CreateReviewDto } from './dto/create-review.dto';
 import { BookingService } from '../booking/booking.service';
 import { UserService } from '../user/user.service';
 import { VendorService } from '../vendor/vendor.service';
-import { Inject, forwardRef } from '@nestjs/common';
 
 @Injectable()
 export class ReviewService {
@@ -20,7 +19,6 @@ export class ReviewService {
     @InjectModel(Review.name) private reviewModel: Model<ReviewDocument>,
     private bookingService: BookingService,
     private userService: UserService,
-    @Inject(forwardRef(() => VendorService))
     private vendorService: VendorService,
   ) {}
 

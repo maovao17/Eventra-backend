@@ -25,7 +25,7 @@ exports.ReviewModule = ReviewModule = __decorate([
             mongoose_1.MongooseModule.forFeature([{ name: review_schema_1.Review.name, schema: review_schema_1.ReviewSchema }]),
             booking_module_1.BookingModule,
             user_module_1.UserModule,
-            vendor_module_1.VendorModule,
+            (0, common_1.forwardRef)(() => vendor_module_1.VendorModule),
             auth_module_1.AuthModule,
         ],
         controllers: [review_controller_1.ReviewController],

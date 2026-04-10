@@ -35,7 +35,7 @@ exports.RequestModule = RequestModule = __decorate([
             ]),
             (0, common_1.forwardRef)(() => booking_module_1.BookingModule),
             user_module_1.UserModule,
-            vendor_module_1.VendorModule,
+            (0, common_1.forwardRef)(() => vendor_module_1.VendorModule),
             event_module_1.EventModule,
             auth_module_1.AuthModule,
             events_module_1.EventsModule,

@@ -9,7 +9,7 @@ import { ReviewModule } from '../review/review.module';
 import { BookingModule } from '../booking/booking.module';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }]), UserModule, forwardRef(() => NotificationModule), ReviewModule, BookingModule],
+  imports: [MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }]), UserModule, forwardRef(() => NotificationModule), forwardRef(() => ReviewModule), BookingModule],
 
   controllers: [VendorController],
   providers: [VendorService],

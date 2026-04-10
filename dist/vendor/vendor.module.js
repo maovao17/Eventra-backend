@@ -21,7 +21,7 @@ let VendorModule = class VendorModule {
 exports.VendorModule = VendorModule;
 exports.VendorModule = VendorModule = __decorate([
     (0, common_1.Module)({
-        imports: [mongoose_1.MongooseModule.forFeature([{ name: vendor_schema_1.Vendor.name, schema: vendor_schema_1.VendorSchema }]), user_module_1.UserModule, (0, common_1.forwardRef)(() => notification_module_1.NotificationModule), review_module_1.ReviewModule, booking_module_1.BookingModule],
+        imports: [mongoose_1.MongooseModule.forFeature([{ name: vendor_schema_1.Vendor.name, schema: vendor_schema_1.VendorSchema }]), user_module_1.UserModule, (0, common_1.forwardRef)(() => notification_module_1.NotificationModule), (0, common_1.forwardRef)(() => review_module_1.ReviewModule), booking_module_1.BookingModule],
         controllers: [vendor_controller_1.VendorController],
         providers: [vendor_service_1.VendorService],
         exports: [vendor_service_1.VendorService],
