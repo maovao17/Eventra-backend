@@ -62,7 +62,7 @@ constructor(
     };
   }
 
-  @Post('upload-multiple')
+@Post('upload-multiple')
   @UseGuards(FirebaseAuthGuard)
   @UseInterceptors(FileInterceptor('files'))
   uploadMultiple(@UploadedFile() file: any) {
@@ -71,7 +71,19 @@ constructor(
     };
   }
 
-@Patch('approve/:id')
+  @UseGuards(FirebaseAuthGuard)
+  @Get('reviews')
+  getReviews(@Req() req: { user: AuthenticatedUser }) {
+    return this.vendorService.getVendorReviews(req.user.userId);
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Get('bookings')
+  getBookings(@Req() req: { user: AuthenticatedUser }) {
+    return this.vendorService.getVendorBookings(req.user.userId);
+  }
+
+  @Patch('approve/:id')
   approve(@Param('id') id: string) {
     return this.vendorService.approveVendor(id);
   }
