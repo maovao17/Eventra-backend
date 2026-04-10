@@ -3,9 +3,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { VendorController } from './vendor.controller';
 import { VendorService } from './vendor.service';
 import { Vendor, VendorSchema } from './schemas/vendor.schema';
+import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }])],
+  imports: [MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }]), UserModule],
   controllers: [VendorController],
   providers: [VendorService],
   exports: [VendorService],
