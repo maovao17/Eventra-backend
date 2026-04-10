@@ -7,8 +7,8 @@ export declare class VendorService {
     findByUserId(userId: string): Promise<Vendor | null>;
     updateProfile(userId: string, data: UpdateVendorDto): Promise<Vendor>;
     findAllCompleted(): Promise<Vendor[]>;
-    getAllVendors(): Promise<Vendor[]>;
     approveVendor(id: string): Promise<Vendor>;
+    getAllVendors(): Promise<Vendor[]>;
     rejectVendor(id: string): Promise<Vendor>;
     findOne(id: string): Promise<Vendor | null>;
     findOneOrThrow(id: string): Promise<Vendor>;

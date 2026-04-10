@@ -11,4 +11,12 @@ export declare class VendorController {
         user: AuthenticatedUser;
     }, body: UpdateVendorDto): Promise<import("./schemas/vendor.schema").Vendor>;
     findAll(): Promise<import("./schemas/vendor.schema").Vendor[]>;
+    findApproved(): Promise<import("./schemas/vendor.schema").Vendor[]>;
+    uploadFile(file: any, req: {
+        user: AuthenticatedUser;
+    }): {
+        fullUrl: string;
+        filename: any;
+    };
+    approve(id: string): Promise<import("./schemas/vendor.schema").Vendor>;
 }

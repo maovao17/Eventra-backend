@@ -42,6 +42,7 @@ export declare class Vendor {
         caption: string;
     }>;
     profileCompleted: boolean;
+    isApproved: boolean;
     packages?: Package[];
     status?: string;
     isVerified?: boolean;

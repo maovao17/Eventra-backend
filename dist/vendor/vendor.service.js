@@ -30,6 +30,7 @@ let VendorService = class VendorService {
         const updateData = {
             ...data,
             profileCompleted: true,
+            isApproved: false,
             updatedAt: new Date(),
         };
         return this.vendorModel.findOneAndUpdate({ userId }, updateData, { new: true, upsert: true }).lean();
@@ -37,11 +38,11 @@ let VendorService = class VendorService {
     async findAllCompleted() {
         return this.vendorModel.find({ profileCompleted: true }).lean();
     }
-    async getAllVendors() {
-        return this.findAllCompleted();
-    }
     async approveVendor(id) {
-        return this.vendorModel.findByIdAndUpdate(id, { status: 'approved' }, { new: true, upsert: true }).lean();
+        return this.vendorModel.findByIdAndUpdate(id, { isApproved: true, status: 'approved' }, { new: true }).lean();
+    }
+    async getAllVendors() {
+        return this.vendorModel.find().lean();
     }
     async rejectVendor(id) {
         return this.vendorModel.findByIdAndUpdate(id, { status: 'rejected' }, { new: true, upsert: true }).lean();

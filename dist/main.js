@@ -42,6 +42,7 @@ const express_1 = require("express");
 const admin = __importStar(require("firebase-admin"));
 const nest_winston_1 = require("nest-winston");
 const winston = __importStar(require("winston"));
+const express = __importStar(require("express"));
 async function bootstrap() {
     if (!admin.apps.length) {
         const serviceAccountPath = (0, path_1.join)(process.cwd(), 'serviceAccountKey.json');
@@ -90,6 +91,7 @@ async function bootstrap() {
         forbidNonWhitelisted: false,
         transform: true,
     }));
+    app.use('/uploads', express.static(uploadsDir));
     await app.listen(Number(process.env.PORT) || 3000, '0.0.0.0');
 }
 bootstrap();

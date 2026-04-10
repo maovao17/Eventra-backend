@@ -62,6 +62,7 @@ let Vendor = class Vendor {
     profileImage;
     portfolio;
     profileCompleted;
+    isApproved;
     packages;
     status;
     isVerified;
@@ -103,6 +104,10 @@ __decorate([
     (0, mongoose_1.Prop)({ default: false }),
     __metadata("design:type", Boolean)
 ], Vendor.prototype, "profileCompleted", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: false }),
+    __metadata("design:type", Boolean)
+], Vendor.prototype, "isApproved", void 0);
 __decorate([
     (0, mongoose_1.Prop)([{ type: exports.PackageSchema }]),
     __metadata("design:type", Array)
