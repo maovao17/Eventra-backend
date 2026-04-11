@@ -11,8 +11,23 @@ import * as express from 'express';
 
 async function bootstrap() {
   if (!admin.apps.length) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!);
-    serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!raw) {
+      throw new Error(
+        'FIREBASE_SERVICE_ACCOUNT environment variable is not set. ' +
+        'Set it in Railway to the full JSON content of your serviceAccountKey.json file.',
+      );
+    }
+    let serviceAccount: admin.ServiceAccount;
+    try {
+      serviceAccount = JSON.parse(raw);
+    } catch {
+      throw new Error(
+        'FIREBASE_SERVICE_ACCOUNT is set but contains invalid JSON. ' +
+        'Make sure the value is the raw JSON string from serviceAccountKey.json.',
+      );
+    }
+    (serviceAccount as any).private_key = (serviceAccount as any).private_key?.replace(/\\n/g, '\n');
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
