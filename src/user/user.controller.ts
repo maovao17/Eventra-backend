@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Controller,
   Get,
   Post,
@@ -11,7 +10,6 @@ import {
   Req,
   UseGuards,
   ForbiddenException,
-  NotFoundException,
 } from '@nestjs/common';
 import { AuthenticatedUser } from '../types/auth.types';
 import { FirebaseAuthGuard } from '../auth/firebase.guard';
@@ -50,23 +48,7 @@ export class UserController {
   @UseGuards(FirebaseAuthGuard)
   @Get('me')
   async getMe(@Req() req: { user: AuthenticatedUser }) {
-    try {
-      return await this.userservice.findByUserId(req.user.userId);
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        console.log('Auto-creating user for uid:', req.user.userId);
-        const newUser = await this.userservice.create({
-          userId: req.user.userId,
-          name: req.user.name || 'New User',
-          email: req.user.email || '',
-          phoneNumber: req.user.phoneNumber || '',
-          authProvider: req.user.phoneNumber ? 'phone' : 'google',
-          role: 'customer',
-        });
-        return newUser;
-      }
-      throw error;
-    }
+    return await this.userservice.findByUserId(req.user.userId);
   }
 
   @UseGuards(FirebaseAuthGuard)

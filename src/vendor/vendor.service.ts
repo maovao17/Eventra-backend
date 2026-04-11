@@ -25,7 +25,7 @@ async findByUserId(userId: string): Promise<any | null> {
     const updateData = {
       ...data,
       profileCompleted: true,
-      isApproved: false,
+
       updatedAt: new Date(),
     };
 

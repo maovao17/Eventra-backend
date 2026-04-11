@@ -78,15 +78,17 @@ export class UserService {
         .findOne({ userId: dto.userId })
         .exec();
       if (existingUser) {
-        console.log('Updating existing user, preserving role:', existingUser.role);
         existingUser.name = dto.name;
         existingUser.phoneNumber = dto.phoneNumber;
         existingUser.email = dto.email?.toLowerCase();
         existingUser.authProvider = dto.authProvider;
-        // Preserve original role - do not overwrite
+        // Allow upgrade from customer → vendor on explicit re-signup
+        if (dto.role === 'vendor' && existingUser.role === 'customer') {
+          existingUser.role = 'vendor';
+        }
         existingUser.businessName = dto.businessName;
         existingUser.profile_photo = dto.profile_photo;
-        existingUser.status = 'approved';
+        existingUser.status = existingUser.role === 'vendor' ? 'pending' : 'approved';
         await existingUser.save();
         return this.sanitize(existingUser);
       }

@@ -40,9 +40,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   app.enableCors({
-    origin: [
-      'https://eventra-frontend-eight.vercel.app',
-    ],
+    origin: (process.env.CORS_ORIGIN || 'https://eventra-frontend-eight.vercel.app')
+      .split(',').map(o => o.trim()).filter(Boolean),
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
