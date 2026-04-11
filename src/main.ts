@@ -10,15 +10,21 @@ import * as winston from 'winston';
 import * as express from 'express';
 
 async function bootstrap() {
+  const serviceAccount = {
+    type: process.env.type,
+    project_id: process.env.project_id,
+    private_key_id: process.env.private_key_id,
+    private_key: process.env.private_key?.replace(/\\n/g, '\n'),
+    client_email: process.env.client_email,
+    client_id: process.env.client_id,
+    auth_uri: process.env.auth_uri,
+    token_uri: process.env.token_uri,
+  };
+
   if (!admin.apps.length) {
-    const serviceAccountPath = join(process.cwd(), 'serviceAccountKey.json');
-    if (existsSync(serviceAccountPath)) {
-      admin.initializeApp({
-        credential: admin.credential.cert(require(serviceAccountPath)),
-      });
-    } else {
-      admin.initializeApp();
-    }
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+    });
   }
 
   const app = await NestFactory.create(AppModule, {
