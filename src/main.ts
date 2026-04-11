@@ -2,21 +2,15 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { join } from 'path';
-import { existsSync, mkdirSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { static as expressStatic } from 'express';
 import * as admin from 'firebase-admin';
 import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
+import serviceAccount from './firebase/serviceAccountKey.json';
 
 async function bootstrap() {
   if (!admin.apps.length) {
-    const serviceAccountPath = join(process.cwd(), 'src/firebase/serviceAccountKey.json');
-    const raw = readFileSync(serviceAccountPath, 'utf8');
-    let serviceAccount = JSON.parse(raw);
-    
-    // Fix private_key newlines (same as original env logic)
-    (serviceAccount as any).private_key = (serviceAccount as any).private_key?.replace(/\\n/g, '\n');
-    
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
     });
