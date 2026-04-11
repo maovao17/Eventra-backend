@@ -20,6 +20,7 @@ const review_schema_1 = require("./schemas/review.schema");
 const booking_service_1 = require("../booking/booking.service");
 const user_service_1 = require("../user/user.service");
 const vendor_service_1 = require("../vendor/vendor.service");
+const common_2 = require("@nestjs/common");
 let ReviewService = class ReviewService {
     reviewModel;
     bookingService;
@@ -116,6 +117,7 @@ exports.ReviewService = ReviewService;
 exports.ReviewService = ReviewService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(review_schema_1.Review.name)),
+    __param(3, (0, common_2.Inject)((0, common_2.forwardRef)(() => vendor_service_1.VendorService))),
     __metadata("design:paramtypes", [mongoose_2.Model,
         booking_service_1.BookingService,
         user_service_1.UserService,

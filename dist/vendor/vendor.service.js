@@ -39,7 +39,6 @@ let VendorService = class VendorService {
         const updateData = {
             ...data,
             profileCompleted: true,
-            isApproved: false,
             updatedAt: new Date(),
         };
         return this.vendorModel.findOneAndUpdate({ userId }, updateData, { new: true, upsert: true }).lean();

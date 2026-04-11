@@ -34,8 +34,8 @@ let UserController = class UserController {
             email: req.user.email || undefined,
         });
     }
-    getMe(req) {
-        return this.userservice.findByUserId(req.user.userId);
+    async getMe(req) {
+        return await this.userservice.findByUserId(req.user.userId);
     }
     async list(req, limit = '20', offset = '0', userId) {
         if (userId) {
@@ -106,7 +106,7 @@ __decorate([
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], UserController.prototype, "getMe", null);
 __decorate([
     (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),

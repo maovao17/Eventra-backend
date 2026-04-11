@@ -14,7 +14,6 @@ export declare class VendorController {
     }, body: UpdateVendorDto): Promise<import("./schemas/vendor.schema").Vendor>;
     findAll(): Promise<import("./schemas/vendor.schema").Vendor[]>;
     findApproved(): Promise<import("./schemas/vendor.schema").Vendor[]>;
-    findOne(id: string): Promise<import("./schemas/vendor.schema").Vendor | null>;
     uploadFile(file: any): {
         fullUrl: string;
         filename: any;
@@ -38,6 +37,7 @@ export declare class VendorController {
     }> & {
         __v: number;
     })[]>;
+    findOne(id: string): Promise<import("./schemas/vendor.schema").Vendor | null>;
     approve(id: string): Promise<import("./schemas/vendor.schema").Vendor>;
     getNotifications(req: {
         user: AuthenticatedUser;

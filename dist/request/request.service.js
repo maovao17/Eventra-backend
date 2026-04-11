@@ -216,6 +216,7 @@ exports.RequestService = RequestService = __decorate([
     __param(2, (0, mongoose_1.InjectModel)(user_schema_1.User.name)),
     __param(3, (0, mongoose_1.InjectModel)(booking_schema_1.Booking.name)),
     __param(4, (0, common_1.Inject)((0, common_1.forwardRef)(() => booking_service_1.BookingService))),
+    __param(6, (0, common_1.Inject)((0, common_1.forwardRef)(() => vendor_service_1.VendorService))),
     __metadata("design:paramtypes", [mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,

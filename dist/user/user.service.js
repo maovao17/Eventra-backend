@@ -79,10 +79,12 @@ let UserService = class UserService {
                 existingUser.phoneNumber = dto.phoneNumber;
                 existingUser.email = dto.email?.toLowerCase();
                 existingUser.authProvider = dto.authProvider;
-                existingUser.role = persistedRole;
+                if (dto.role === 'vendor' && existingUser.role === 'customer') {
+                    existingUser.role = 'vendor';
+                }
                 existingUser.businessName = dto.businessName;
                 existingUser.profile_photo = dto.profile_photo;
-                existingUser.status = 'approved';
+                existingUser.status = existingUser.role === 'vendor' ? 'pending' : 'approved';
                 await existingUser.save();
                 return this.sanitize(existingUser);
             }

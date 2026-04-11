@@ -42,18 +42,16 @@ const express_1 = require("express");
 const admin = __importStar(require("firebase-admin"));
 const nest_winston_1 = require("nest-winston");
 const winston = __importStar(require("winston"));
-const express = __importStar(require("express"));
 async function bootstrap() {
     if (!admin.apps.length) {
-        const serviceAccountPath = (0, path_1.join)(process.cwd(), 'serviceAccountKey.json');
-        if ((0, fs_1.existsSync)(serviceAccountPath)) {
-            admin.initializeApp({
-                credential: admin.credential.cert(require(serviceAccountPath)),
-            });
-        }
-        else {
-            admin.initializeApp();
-        }
+        const serviceAccountPath = (0, path_1.join)(process.cwd(), 'src/firebase/serviceAccountKey.json');
+        const raw = (0, fs_1.readFileSync)(serviceAccountPath, 'utf8');
+        let serviceAccount = JSON.parse(raw);
+        serviceAccount.private_key = serviceAccount.private_key?.replace(/\\n/g, '\n');
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+        });
+        console.log('✅ Firebase Admin initialized from serviceAccountKey.json');
     }
     const app = await core_1.NestFactory.create(app_module_1.AppModule, {
         logger: nest_winston_1.WinstonModule.createLogger({
@@ -68,10 +66,11 @@ async function bootstrap() {
     });
     app.setGlobalPrefix('api');
     app.enableCors({
-        origin: true,
+        origin: (process.env.CORS_ORIGIN || 'https://eventra-frontend-eight.vercel.app')
+            .split(',').map(o => o.trim()).filter(Boolean),
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
     });
-    console.log("CORS ENABLED - PRODUCTION MODE");
     const uploadsDir = (0, path_1.join)(process.cwd(), 'uploads');
     if (!(0, fs_1.existsSync)(uploadsDir)) {
         (0, fs_1.mkdirSync)(uploadsDir, { recursive: true });
@@ -82,8 +81,9 @@ async function bootstrap() {
         forbidNonWhitelisted: false,
         transform: true,
     }));
-    app.use('/uploads', express.static(uploadsDir));
+    app.use('/uploads', (0, express_1.static)(uploadsDir));
     await app.listen(Number(process.env.PORT) || 3000, '0.0.0.0');
+    console.log(`🚀 Backend running on port ${Number(process.env.PORT) || 3000}`);
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

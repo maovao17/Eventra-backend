@@ -39,9 +39,6 @@ let VendorController = class VendorController {
     findApproved() {
         return this.vendorService.findAllCompleted();
     }
-    findOne(id) {
-        return this.vendorService.findOne(id);
-    }
     uploadFile(file) {
         return {
             fullUrl: `/uploads/${file.filename}`,
@@ -58,6 +55,9 @@ let VendorController = class VendorController {
     }
     getBookings(req) {
         return this.vendorService.getVendorBookings(req.user.userId);
+    }
+    findOne(id) {
+        return this.vendorService.findOne(id);
     }
     approve(id) {
         return this.vendorService.approveVendor(id);
@@ -101,13 +101,6 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "findApproved", null);
 __decorate([
-    (0, common_1.Get)(':id'),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], VendorController.prototype, "findOne", null);
-__decorate([
     (0, common_1.Post)('upload'),
     (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file')),
@@ -141,6 +134,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], VendorController.prototype, "getBookings", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)('approve/:id'),
     __param(0, (0, common_1.Param)('id')),
