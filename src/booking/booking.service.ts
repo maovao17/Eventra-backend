@@ -229,9 +229,7 @@ export class BookingService {
   async findByUser(customerId: string) {
     return this.bookingModel
       .find({ customerId })
-      .populate('vendorId', 'businessName profileImage category userId')
-      .populate('event')
-      .populate('customer')
+      .lean()
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -239,9 +237,7 @@ export class BookingService {
   async findByVendor(vendorId: string) {
     return this.bookingModel
       .find({ vendorId })
-      .populate('vendorId', 'businessName profileImage category userId')
-      .populate('event')
-      .populate('customer')
+      .lean()
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -249,11 +245,9 @@ export class BookingService {
   async findByVendorUser(actorUserId: string) {
     const vendor = await this.vendorModel
       .findOne({ userId: actorUserId })
+      .lean()
       .exec();
-    if (!vendor) {
-      throw new NotFoundException('Vendor not found');
-    }
-
+    if (!vendor) return [];
     return this.findByVendor(String((vendor as any)._id));
   }
 
