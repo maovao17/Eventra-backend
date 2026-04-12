@@ -34,7 +34,7 @@ async findByUserId(userId: string): Promise<any | null> {
     return this.vendorModel.findOneAndUpdate(
       { userId },
       { $push: { packages: pkg } },
-      { new: true }
+      { new: true, upsert: true }
     ).lean() as unknown as Vendor;
   }
 
@@ -42,7 +42,7 @@ async findByUserId(userId: string): Promise<any | null> {
     return this.vendorModel.findOneAndUpdate(
       { userId },
       { $pull: { packages: { _id: packageId } } },
-      { new: true }
+      { new: true, upsert: true }
     ).lean() as unknown as Vendor;
   }
 
