@@ -15,6 +15,7 @@ import { UpdateVendorDto } from './dto/update-vendor.dto';
 import { FirebaseAuthGuard } from '../auth/firebase.guard';
 import { AuthenticatedUser } from '../types/auth.types';
 import { VendorService } from './vendor.service';
+import { UserService } from '../user/user.service';
 import { NotificationService } from '../notification/notification.service';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -26,7 +27,8 @@ const memStorage = memoryStorage();
 @Controller('vendors')
 export class VendorController {
   constructor(
-    private readonly vendorService: VendorService,
+    public readonly vendorService: VendorService,
+    private readonly userService: UserService,
     private readonly notificationService: NotificationService,
     private readonly cloudinaryService: CloudinaryService,
   ) { }
@@ -110,14 +112,21 @@ export class VendorController {
     return this.vendorService.findOne(id);
   }
 
-  @Patch('approve/:id')
-  approve(@Param('id') id: string) {
-    return this.vendorService.approveVendor(id);
-  }
+@Patch('approve/:id')
+async approveVendor(@Param('id') id: string) {
+  const vendor = await this.vendorService.approveVendor(id);
 
+  await this.userService.setVendorStatus(vendor.userId, 'approved');
+
+  return vendor;
+}
   @Patch('reject/:id')
-  reject(@Param('id') id: string) {
-    return this.vendorService.rejectVendor(id);
+  async reject(@Param('id') id: string) {
+    const vendor = await this.vendorService.rejectVendor(id);
+    if (vendor && (vendor as any).userId) {
+      await this.userService.rejectVendor((vendor as any).userId).catch(() => null);
+    }
+    return vendor;
   }
 
   @UseGuards(FirebaseAuthGuard)

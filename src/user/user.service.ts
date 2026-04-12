@@ -14,6 +14,7 @@ import { Vendor, VendorDocument } from '../vendor/schemas/vendor.schema';
 import { Booking, BookingDocument } from '../booking/schemas/booking.schema';
 import { Request, RequestDocument } from '../request/schemas/request.schema';
 
+type VendorStatus = 'pending' | 'approved' | 'rejected';
 @Injectable()
 export class UserService {
   constructor(
@@ -21,7 +22,7 @@ export class UserService {
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
     @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
-  ) {}
+  ) { }
 
   private getAdminEmail() {
     return process.env.ADMIN_EMAIL?.trim().toLowerCase() || '';
@@ -221,6 +222,35 @@ export class UserService {
     return this.sanitize(deleteUser);
   }
 
+  
+  async setVendorStatus(userId: string, status: VendorStatus) {
+    const user = await this.userModel.findOne({ userId }).exec();
+
+    if (!user) throw new NotFoundException('User not found');
+
+    if (user.role !== 'vendor') {
+      throw new BadRequestException('User is not a vendor');
+    }
+
+    if (user.status === status) {
+      return this.sanitize(user);
+    }
+
+    user.status = status;
+    await user.save();
+
+    const vendor = await this.vendorModel.findOneAndUpdate(
+      { userId },
+      { status },
+      { new: true }
+    );
+
+    if (!vendor) {
+      throw new NotFoundException('Vendor profile not found');
+    }
+
+    return this.sanitize(user);
+  }
   async approveVendor(userId: string) {
     return this.setVendorStatus(userId, 'approved');
   }
@@ -229,31 +259,4 @@ export class UserService {
     return this.setVendorStatus(userId, 'rejected');
   }
 
-  private async setVendorStatus(
-    userId: string,
-    status: 'approved' | 'rejected',
-  ) {
-    const user = await this.userModel.findOne({ userId }).exec();
-    if (!user) throw new NotFoundException('User not found');
-    if (user.role !== 'vendor') throw new BadRequestException('User is not a vendor');
-    if (status === 'approved' && user.status !== 'pending') {
-      throw new BadRequestException('Vendor is not pending approval');
-    }
-    user.status = status;
-    await user.save();
-
-    await this.vendorModel
-      .findOneAndUpdate(
-        { userId },
-        {
-          status,
-          isVerified: status === 'approved',
-          verified: status === 'approved',
-        },
-        { new: true },
-      )
-      .exec();
-
-    return this.sanitize(user);
-  }
 }
