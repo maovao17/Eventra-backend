@@ -7,6 +7,7 @@ import {
   Post,
   Req,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -15,14 +16,14 @@ import { FirebaseAuthGuard } from '../auth/firebase.guard';
 import { AuthenticatedUser } from '../types/auth.types';
 import { VendorService } from './vendor.service';
 import { NotificationService } from '../notification/notification.service';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('vendors')
 export class VendorController {
-constructor(
-  private readonly vendorService: VendorService,
-  private readonly notificationService: NotificationService
-) { }
+  constructor(
+    private readonly vendorService: VendorService,
+    private readonly notificationService: NotificationService
+  ) { }
 
   @UseGuards(FirebaseAuthGuard)
   @Get('me')
@@ -49,7 +50,9 @@ constructor(
 
   @Post('upload')
   @UseGuards(FirebaseAuthGuard)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', {
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB per file
+  }))
   uploadFile(@UploadedFile() file: any) {
     return {
       fullUrl: `/uploads/${file.filename}`,
@@ -57,12 +60,17 @@ constructor(
     };
   }
 
-@Post('upload-multiple')
+  @Post('upload-multiple')
   @UseGuards(FirebaseAuthGuard)
-  @UseInterceptors(FileInterceptor('files'))
-  uploadMultiple(@UploadedFile() file: any) {
+  @UseInterceptors(FilesInterceptor('files', 7, {
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB per file
+  }))
+  uploadMultiple(@UploadedFiles() files: any[]) {
+    if (!files || files.length === 0) {
+      return { data: [] };
+    }
     return {
-      data: [{ url: `/uploads/${file.filename}` }]
+      data: files.map(file => ({ url: `/uploads/${file.filename}` }))
     };
   }
 
@@ -78,16 +86,7 @@ constructor(
     return this.vendorService.getVendorBookings(req.user.userId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.vendorService.findOne(id);
-  }
-  
-  @Patch('approve/:id')
-  approve(@Param('id') id: string) {
-    return this.vendorService.approveVendor(id);
-  }
-
+  // NOTE: 'notifications' must be BEFORE ':id' — NestJS matches routes in order
   @UseGuards(FirebaseAuthGuard)
   @Get('notifications')
   async getNotifications(@Req() req: { user: AuthenticatedUser }) {
@@ -97,5 +96,35 @@ constructor(
     }
     return this.notificationService.findByVendor(String(vendor._id));
   }
-}
 
+  // Parameterised route LAST so it doesn't swallow named routes above
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.vendorService.findOne(id);
+  }
+
+  @Patch('approve/:id')
+  approve(@Param('id') id: string) {
+    return this.vendorService.approveVendor(id);
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Patch('services')
+  async updateServices(
+    @Req() req: { user: AuthenticatedUser },
+    @Body() body: { servicesOffered: string[] }
+  ) {
+    return this.vendorService.updateProfile(req.user.userId, {
+      servicesOffered: body.servicesOffered,
+    } as any);
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Patch('availability')
+  async updateAvailability(
+    @Req() req: { user: AuthenticatedUser },
+    @Body() body: { blockedDates: string[] }
+  ) {
+    return this.vendorService.updateProfile(req.user.userId, body as any);
+  }
+}

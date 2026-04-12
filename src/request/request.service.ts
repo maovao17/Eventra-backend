@@ -49,7 +49,7 @@ export class RequestService {
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
     }
-    if ((vendor as any).status !== 'approved') {
+    if (!(vendor as any).isApproved) {
       throw new ForbiddenException('Vendor is not approved');
     }
 

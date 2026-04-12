@@ -37,8 +37,7 @@ async findByUserId(userId: string): Promise<any | null> {
   }
 
   async findAllCompleted(): Promise<Vendor[]> {
-    // Visible to customers if completed (admin approves verified badge)
-    return this.vendorModel.find({ profileCompleted: true }).lean();
+    return this.vendorModel.find({ profileCompleted: true, isApproved: true }).lean();
   }
 
 async approveVendor(id: string): Promise<Vendor> {
