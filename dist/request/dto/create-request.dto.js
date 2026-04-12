@@ -15,6 +15,8 @@ class CreateRequestDto {
     customerId;
     vendorId;
     eventId;
+    amount;
+    packageName;
 }
 exports.CreateRequestDto = CreateRequestDto;
 __decorate([
@@ -32,4 +34,14 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateRequestDto.prototype, "eventId", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateRequestDto.prototype, "amount", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateRequestDto.prototype, "packageName", void 0);
 //# sourceMappingURL=create-request.dto.js.map

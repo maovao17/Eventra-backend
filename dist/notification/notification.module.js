@@ -13,6 +13,7 @@ const notification_service_1 = require("./notification.service");
 const notification_controller_1 = require("./notification.controller");
 const notification_schema_1 = require("./schemas/notification.schema");
 const booking_schema_1 = require("../booking/schemas/booking.schema");
+const vendor_schema_1 = require("../vendor/schemas/vendor.schema");
 const auth_module_1 = require("../auth/auth.module");
 const vendor_module_1 = require("../vendor/vendor.module");
 const user_module_1 = require("../user/user.module");
@@ -26,6 +27,7 @@ exports.NotificationModule = NotificationModule = __decorate([
             mongoose_1.MongooseModule.forFeature([
                 { name: notification_schema_1.Notification.name, schema: notification_schema_1.NotificationSchema },
                 { name: booking_schema_1.Booking.name, schema: booking_schema_1.BookingSchema },
+                { name: vendor_schema_1.Vendor.name, schema: vendor_schema_1.VendorSchema },
             ]),
             auth_module_1.AuthModule,
             (0, common_1.forwardRef)(() => vendor_module_1.VendorModule),

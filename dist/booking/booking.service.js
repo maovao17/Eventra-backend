@@ -193,7 +193,12 @@ let BookingService = class BookingService {
             .exec();
     }
     async findByVendor(vendorId) {
-        return this.bookingModel.find({ vendorId }).sort({ createdAt: -1 }).exec();
+        return this.bookingModel
+            .find({ vendorId: vendorId })
+            .sort({ createdAt: -1 })
+            .populate('event')
+            .populate('customer')
+            .exec();
     }
     async findByVendorUser(actorUserId) {
         const vendor = await this.vendorModel

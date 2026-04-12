@@ -18,6 +18,7 @@ let Notification = class Notification {
     type;
     message;
     bookingId;
+    vendorUserId;
     daysBefore;
     read;
     createdAt;
@@ -43,6 +44,10 @@ __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", String)
 ], Notification.prototype, "bookingId", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ required: false }),
+    __metadata("design:type", String)
+], Notification.prototype, "vendorUserId", void 0);
 __decorate([
     (0, mongoose_1.Prop)({ required: false }),
     __metadata("design:type", Number)

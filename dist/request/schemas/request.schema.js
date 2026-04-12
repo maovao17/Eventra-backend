@@ -16,6 +16,8 @@ let Request = class Request {
     vendorId;
     eventId;
     status;
+    amount;
+    packageName;
 };
 exports.Request = Request;
 __decorate([
@@ -38,6 +40,14 @@ __decorate([
     }),
     __metadata("design:type", String)
 ], Request.prototype, "status", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: 0 }),
+    __metadata("design:type", Number)
+], Request.prototype, "amount", void 0);
+__decorate([
+    (0, mongoose_1.Prop)({ default: '' }),
+    __metadata("design:type", String)
+], Request.prototype, "packageName", void 0);
 exports.Request = Request = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Request);

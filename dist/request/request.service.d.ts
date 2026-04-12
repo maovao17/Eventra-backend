@@ -33,17 +33,10 @@ export declare class RequestService {
         eventId?: string;
     }): Promise<RequestDocument[]>;
     findOne(id: string): Promise<RequestDocument>;
-    update(id: string, updateRequestDto: UpdateRequestDto): Promise<RequestDocument | (import("mongoose").Document<unknown, {}, RequestDocument, {}, {}> & Request & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+    update(id: string, updateRequestDto: UpdateRequestDto): Promise<import("mongoose").Document<unknown, {}, RequestDocument, {}, {}> & Request & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
-    }) | {
-        request: RequestDocument;
-        booking: (import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
-            _id: import("mongoose").Types.ObjectId;
-        }> & {
-            __v: number;
-        }) | null;
     }>;
     remove(id: string): Promise<import("mongoose").Document<unknown, {}, RequestDocument, {}, {}> & Request & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
@@ -51,7 +44,7 @@ export declare class RequestService {
         __v: number;
     }>;
     private validateVendorActor;
-    accept(id: string, actorUserId?: string): Promise<{
+    accept(id: string, actorUserIdFromToken: string): Promise<{
         request: RequestDocument;
         booking: (import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
             _id: import("mongoose").Types.ObjectId;
@@ -59,5 +52,5 @@ export declare class RequestService {
             __v: number;
         }) | null;
     }>;
-    reject(id: string, actorUserId?: string): Promise<RequestDocument>;
+    reject(id: string, actorUserIdFromToken: string): Promise<RequestDocument>;
 }

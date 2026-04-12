@@ -10,7 +10,7 @@ export declare const PackageSchema: import("mongoose").Schema<Package, import("m
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
-}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Package, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<Package>, {}, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & import("mongoose").FlatRecord<Package> & {
+}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Package, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<Package>, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").FlatRecord<Package> & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
@@ -24,7 +24,7 @@ export declare const LocationSchema: import("mongoose").Schema<Location, import(
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
-}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Location, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<Location>, {}, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & import("mongoose").FlatRecord<Location> & {
+}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Location, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<Location>, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").FlatRecord<Location> & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
@@ -51,7 +51,7 @@ export declare const VendorSchema: import("mongoose").Schema<Vendor, import("mon
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;
-}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Vendor, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<Vendor>, {}, import("mongoose").ResolveSchemaOptions<import("mongoose").DefaultSchemaOptions>> & import("mongoose").FlatRecord<Vendor> & {
+}, any>, {}, {}, {}, {}, import("mongoose").DefaultSchemaOptions, Vendor, import("mongoose").Document<unknown, {}, import("mongoose").FlatRecord<Vendor>, {}, import("mongoose").DefaultSchemaOptions> & import("mongoose").FlatRecord<Vendor> & {
     _id: import("mongoose").Types.ObjectId;
 } & {
     __v: number;

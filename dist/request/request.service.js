@@ -55,7 +55,7 @@ let RequestService = class RequestService {
         if (!vendor) {
             throw new common_1.NotFoundException('Vendor not found');
         }
-        if (vendor.status !== 'approved') {
+        if (!vendor.isApproved) {
             throw new common_1.ForbiddenException('Vendor is not approved');
         }
         const event = await this.eventService.findById(createRequestDto.eventId);
@@ -135,10 +135,10 @@ let RequestService = class RequestService {
     }
     async update(id, updateRequestDto) {
         if (updateRequestDto.status === 'accepted') {
-            return this.accept(id, updateRequestDto.actorUserId);
+            throw new common_1.BadRequestException("Use /accept endpoint");
         }
         if (updateRequestDto.status === 'rejected') {
-            return this.reject(id, updateRequestDto.actorUserId);
+            throw new common_1.BadRequestException("Use /reject endpoint");
         }
         const updatedRequest = await this.requestModel
             .findByIdAndUpdate(id, updateRequestDto, { new: true })
@@ -169,9 +169,9 @@ let RequestService = class RequestService {
             throw new common_1.ForbiddenException('Vendors can only update their own requests');
         }
     }
-    async accept(id, actorUserId) {
+    async accept(id, actorUserIdFromToken) {
         const request = await this.findOne(id);
-        await this.validateVendorActor(actorUserId, request.vendorId);
+        await this.validateVendorActor(actorUserIdFromToken, request.vendorId);
         if (request.status === 'accepted') {
             const booking = await this.bookingService.findByRequestId(id);
             return { request, booking };
@@ -181,11 +181,13 @@ let RequestService = class RequestService {
         }
         request.status = 'accepted';
         await request.save();
+        const requestAmount = Number(request.amount ?? 0);
         const booking = await this.bookingService.createFromRequest({
             requestId: String(request._id),
             customerId: request.customerId,
             vendorId: request.vendorId,
             eventId: request.eventId,
+            ...(requestAmount > 0 ? { amount: requestAmount, price: requestAmount } : {}),
         });
         const vendor = await this.vendorService.findOne(String(request.vendorId));
         this.eventsGateway.broadcastBookingUpdate({
@@ -197,11 +199,11 @@ let RequestService = class RequestService {
         });
         return { request, booking };
     }
-    async reject(id, actorUserId) {
+    async reject(id, actorUserIdFromToken) {
         const request = await this.findOne(id);
-        await this.validateVendorActor(actorUserId, request.vendorId);
-        if (request.status === 'accepted') {
-            throw new common_1.BadRequestException('Accepted requests cannot be rejected');
+        await this.validateVendorActor(actorUserIdFromToken, request.vendorId);
+        if (request.status === 'rejected') {
+            throw new common_1.BadRequestException('Rejected requests cannot be accepted');
         }
         request.status = 'rejected';
         await request.save();

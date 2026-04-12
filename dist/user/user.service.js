@@ -204,31 +204,29 @@ let UserService = class UserService {
             throw new common_1.NotFoundException('User not found');
         return this.sanitize(deleteUser);
     }
+    async setVendorStatus(userId, status) {
+        const user = await this.userModel.findOne({ userId }).exec();
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        if (user.role !== 'vendor') {
+            throw new common_1.BadRequestException('User is not a vendor');
+        }
+        if (user.status === status) {
+            return this.sanitize(user);
+        }
+        user.status = status;
+        await user.save();
+        const vendor = await this.vendorModel.findOneAndUpdate({ userId }, { status }, { new: true });
+        if (!vendor) {
+            throw new common_1.NotFoundException('Vendor profile not found');
+        }
+        return this.sanitize(user);
+    }
     async approveVendor(userId) {
         return this.setVendorStatus(userId, 'approved');
     }
     async rejectVendor(userId) {
         return this.setVendorStatus(userId, 'rejected');
-    }
-    async setVendorStatus(userId, status) {
-        const user = await this.userModel.findOne({ userId }).exec();
-        if (!user)
-            throw new common_1.NotFoundException('User not found');
-        if (user.role !== 'vendor')
-            throw new common_1.BadRequestException('User is not a vendor');
-        if (status === 'approved' && user.status !== 'pending') {
-            throw new common_1.BadRequestException('Vendor is not pending approval');
-        }
-        user.status = status;
-        await user.save();
-        await this.vendorModel
-            .findOneAndUpdate({ userId }, {
-            status,
-            isVerified: status === 'approved',
-            verified: status === 'approved',
-        }, { new: true })
-            .exec();
-        return this.sanitize(user);
     }
 };
 exports.UserService = UserService;

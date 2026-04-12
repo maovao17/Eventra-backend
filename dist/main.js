@@ -32,6 +32,9 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
@@ -42,14 +45,11 @@ const express_1 = require("express");
 const admin = __importStar(require("firebase-admin"));
 const nest_winston_1 = require("nest-winston");
 const winston = __importStar(require("winston"));
+const serviceAccountKey_json_1 = __importDefault(require("./firebase/serviceAccountKey.json"));
 async function bootstrap() {
     if (!admin.apps.length) {
-        const serviceAccountPath = (0, path_1.join)(process.cwd(), 'src/firebase/serviceAccountKey.json');
-        const raw = (0, fs_1.readFileSync)(serviceAccountPath, 'utf8');
-        let serviceAccount = JSON.parse(raw);
-        serviceAccount.private_key = serviceAccount.private_key?.replace(/\\n/g, '\n');
         admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
+            credential: admin.credential.cert(serviceAccountKey_json_1.default),
         });
         console.log('✅ Firebase Admin initialized from serviceAccountKey.json');
     }
@@ -65,9 +65,11 @@ async function bootstrap() {
         }),
     });
     app.setGlobalPrefix('api');
+    const corsOrigins = process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean)
+        : ['https://eventra-frontend-eight.vercel.app'];
     app.enableCors({
-        origin: (process.env.CORS_ORIGIN || 'https://eventra-frontend-eight.vercel.app')
-            .split(',').map(o => o.trim()).filter(Boolean),
+        origin: corsOrigins.length > 0 ? corsOrigins : ['https://eventra-frontend-eight.vercel.app'],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         credentials: true,
     });

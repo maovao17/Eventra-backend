@@ -5,6 +5,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { VendorDocument } from '../vendor/schemas/vendor.schema';
 import { BookingDocument } from '../booking/schemas/booking.schema';
 import { RequestDocument } from '../request/schemas/request.schema';
+type VendorStatus = 'pending' | 'approved' | 'rejected';
 export declare class UserService {
     private userModel;
     private vendorModel;
@@ -27,7 +28,8 @@ export declare class UserService {
     assertVendorCanAccessUser(vendorUserId: string, targetUserId: string): Promise<UserDocument>;
     update(id: string, dto: UpdateUserDto): Promise<UserDocument>;
     remove(id: string): Promise<UserDocument>;
+    setVendorStatus(userId: string, status: VendorStatus): Promise<UserDocument>;
     approveVendor(userId: string): Promise<UserDocument>;
     rejectVendor(userId: string): Promise<UserDocument>;
-    private setVendorStatus;
 }
+export {};

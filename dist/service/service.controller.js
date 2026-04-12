@@ -44,8 +44,8 @@ let ServiceController = class ServiceController {
 };
 exports.ServiceController = ServiceController;
 __decorate([
-    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard, admin_guard_1.AdminGuard),
-    (0, common_1.UsePipes)(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })),
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.UsePipes)(new common_1.ValidationPipe({ whitelist: true, forbidNonWhitelisted: false })),
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),

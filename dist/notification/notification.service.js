@@ -18,14 +18,17 @@ const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const notification_schema_1 = require("./schemas/notification.schema");
 const booking_schema_1 = require("../booking/schemas/booking.schema");
+const vendor_schema_1 = require("../vendor/schemas/vendor.schema");
 const events_gateway_1 = require("../events/events.gateway");
 let NotificationService = class NotificationService {
     notificationModel;
     bookingModel;
+    vendorModel;
     eventsGateway;
-    constructor(notificationModel, bookingModel, eventsGateway) {
+    constructor(notificationModel, bookingModel, vendorModel, eventsGateway) {
         this.notificationModel = notificationModel;
         this.bookingModel = bookingModel;
+        this.vendorModel = vendorModel;
         this.eventsGateway = eventsGateway;
     }
     onModuleInit() {
@@ -36,8 +39,20 @@ let NotificationService = class NotificationService {
         interval.unref();
     }
     async create(createNotificationDto) {
+        let resolvedVendorUserId = createNotificationDto.vendorUserId;
+        if (!resolvedVendorUserId && createNotificationDto.vendorId) {
+            const vendor = await this.vendorModel
+                .findById(createNotificationDto.vendorId)
+                .select('userId')
+                .lean()
+                .exec();
+            if (vendor?.userId) {
+                resolvedVendorUserId = vendor.userId;
+            }
+        }
         const createdNotification = new this.notificationModel({
             ...createNotificationDto,
+            vendorUserId: resolvedVendorUserId,
             read: false,
             createdAt: new Date(),
         });
@@ -47,9 +62,7 @@ let NotificationService = class NotificationService {
             type: saved.type,
             bookingId: saved.bookingId ? String(saved.bookingId) : undefined,
             vendorId: saved.vendorId ? String(saved.vendorId) : undefined,
-            vendorUserId: 'vendorUserId' in saved && saved.vendorUserId
-                ? String(saved.vendorUserId)
-                : undefined,
+            vendorUserId: resolvedVendorUserId,
             userId: saved.userId ? String(saved.userId) : undefined,
         });
         return saved;
@@ -136,7 +149,9 @@ exports.NotificationService = NotificationService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(notification_schema_1.Notification.name)),
     __param(1, (0, mongoose_1.InjectModel)(booking_schema_1.Booking.name)),
+    __param(2, (0, mongoose_1.InjectModel)(vendor_schema_1.Vendor.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         events_gateway_1.EventsGateway])
 ], NotificationService);
