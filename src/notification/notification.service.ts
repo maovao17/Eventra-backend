@@ -7,6 +7,7 @@ import {
 } from './schemas/notification.schema';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { Booking, BookingDocument } from '../booking/schemas/booking.schema';
+import { Vendor, VendorDocument } from '../vendor/schemas/vendor.schema';
 import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
@@ -15,6 +16,7 @@ export class NotificationService implements OnModuleInit {
     @InjectModel(Notification.name)
     private notificationModel: Model<NotificationDocument>,
     @InjectModel(Booking.name) private bookingModel: Model<BookingDocument>,
+    @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
     private eventsGateway: EventsGateway,
   ) {}
 
@@ -32,21 +34,33 @@ export class NotificationService implements OnModuleInit {
   async create(
     createNotificationDto: CreateNotificationDto,
   ): Promise<Notification> {
+    // Resolve vendorUserId (Firebase UID) from vendorId (MongoDB ObjectId) if not provided
+    let resolvedVendorUserId = createNotificationDto.vendorUserId;
+    if (!resolvedVendorUserId && createNotificationDto.vendorId) {
+      const vendor = await this.vendorModel
+        .findById(createNotificationDto.vendorId)
+        .select('userId')
+        .lean()
+        .exec();
+      if (vendor?.userId) {
+        resolvedVendorUserId = vendor.userId;
+      }
+    }
+
     const createdNotification = new this.notificationModel({
       ...createNotificationDto,
+      vendorUserId: resolvedVendorUserId,
       read: false,
       createdAt: new Date(),
     });
     const saved = await createdNotification.save();
+
     this.eventsGateway.broadcastNotification({
       message: saved.message,
       type: saved.type,
       bookingId: saved.bookingId ? String(saved.bookingId) : undefined,
       vendorId: saved.vendorId ? String(saved.vendorId) : undefined,
-      vendorUserId:
-        'vendorUserId' in saved && (saved as NotificationDocument & { vendorUserId?: string }).vendorUserId
-          ? String((saved as NotificationDocument & { vendorUserId?: string }).vendorUserId)
-          : undefined,
+      vendorUserId: resolvedVendorUserId,
       userId: saved.userId ? String(saved.userId) : undefined,
     });
     return saved;

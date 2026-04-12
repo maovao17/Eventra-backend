@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
 
 export class CreateRequestDto {
   @IsNotEmpty()
@@ -12,4 +12,12 @@ export class CreateRequestDto {
   @IsNotEmpty()
   @IsString()
   eventId: string;
+
+  @IsOptional()
+  @IsNumber()
+  amount?: number;
+
+  @IsOptional()
+  @IsString()
+  packageName?: string;
 }

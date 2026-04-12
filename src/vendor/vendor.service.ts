@@ -37,7 +37,10 @@ async findByUserId(userId: string): Promise<any | null> {
   }
 
   async findAllCompleted(): Promise<Vendor[]> {
-    return this.vendorModel.find({ profileCompleted: true }).lean();
+    return this.vendorModel.find({
+      profileCompleted: true,
+      $or: [{ status: 'approved' }, { isApproved: true }],
+    }).lean();
   }
 
 async approveVendor(id: string): Promise<Vendor> {

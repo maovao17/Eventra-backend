@@ -21,8 +21,8 @@ import { AdminGuard } from '../auth/admin.guard';
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
 
-  @UseGuards(FirebaseAuthGuard, AdminGuard)
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
+  @UseGuards(FirebaseAuthGuard)
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: false }))
   @Post()
   create(@Body() dto: CreateServiceDto) {
     return this.serviceService.create(dto);

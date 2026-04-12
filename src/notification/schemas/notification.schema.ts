@@ -21,6 +21,9 @@ export class Notification {
   bookingId?: string;
 
   @Prop({ required: false })
+  vendorUserId?: string;
+
+  @Prop({ required: false })
   daysBefore?: number;
 
   @Prop({ required: true, default: false })

@@ -220,11 +220,13 @@ export class RequestService {
     request.status = 'accepted';
     await request.save();
 
+    const requestAmount = Number((request as any).amount ?? 0);
     const booking = await this.bookingService.createFromRequest({
       requestId: String(request._id),
       customerId: request.customerId,
       vendorId: request.vendorId,
       eventId: request.eventId,
+      ...(requestAmount > 0 ? { amount: requestAmount, price: requestAmount } : {}),
     });
     const vendor = await this.vendorService.findOne(String(request.vendorId));
 

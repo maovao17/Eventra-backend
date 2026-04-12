@@ -80,15 +80,14 @@ export class EventsGateway
     vendorUserId?: string
     userId?: string
   }) {
-    const targetUserId =
-      notification.userId || notification.vendorUserId || notification.vendorId;
-
-    if (!targetUserId) {
-      return;
+    // Emit to customer if userId (Firebase UID) is present
+    if (notification.userId) {
+      this.server.to(notification.userId).emit('notificationCreated', notification);
     }
 
-    this.server
-      .to(targetUserId)
-      .emit('notificationCreated', notification);
+    // Emit to vendor using vendorUserId (Firebase UID), not vendorId (MongoDB ObjectId)
+    if (notification.vendorUserId && notification.vendorUserId !== notification.userId) {
+      this.server.to(notification.vendorUserId).emit('notificationCreated', notification);
+    }
   }
 }

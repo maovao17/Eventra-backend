@@ -20,6 +20,12 @@ export class Request {
     enum: ['pending', 'accepted', 'rejected'],
   })
   status: string;
+
+  @Prop({ default: 0 })
+  amount: number;
+
+  @Prop({ default: '' })
+  packageName: string;
 }
 
 export const RequestSchema = SchemaFactory.createForClass(Request);
