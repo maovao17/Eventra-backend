@@ -17,6 +17,22 @@ import { AuthenticatedUser } from '../types/auth.types';
 import { VendorService } from './vendor.service';
 import { NotificationService } from '../notification/notification.service';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
+import { randomUUID } from 'crypto';
+
+const uploadsStorage = diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = join(process.cwd(), 'uploads');
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = extname(file.originalname) || '.jpg';
+    cb(null, `${randomUUID()}${ext}`);
+  },
+});
 
 @Controller('vendors')
 export class VendorController {
@@ -51,26 +67,28 @@ export class VendorController {
   @Post('upload')
   @UseGuards(FirebaseAuthGuard)
   @UseInterceptors(FileInterceptor('file', {
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB per file
+    storage: uploadsStorage,
+    limits: { fileSize: 5 * 1024 * 1024 },
   }))
   uploadFile(@UploadedFile() file: any) {
     return {
       fullUrl: `/uploads/${file.filename}`,
-      filename: file.filename
+      filename: file.filename,
     };
   }
 
   @Post('upload-multiple')
   @UseGuards(FirebaseAuthGuard)
   @UseInterceptors(FilesInterceptor('files', 7, {
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB per file
+    storage: uploadsStorage,
+    limits: { fileSize: 5 * 1024 * 1024 },
   }))
   uploadMultiple(@UploadedFiles() files: any[]) {
     if (!files || files.length === 0) {
       return { data: [] };
     }
     return {
-      data: files.map(file => ({ url: `/uploads/${file.filename}` }))
+      data: files.map(file => ({ url: `/uploads/${file.filename}` })),
     };
   }
 
