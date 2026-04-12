@@ -24,16 +24,9 @@ async findByUserId(userId: string): Promise<any | null> {
 
   async updateProfile(userId: string, data: UpdateVendorDto): Promise<Vendor> {
     console.log("VendorService: Saving vendor - UID:", userId, "Data:", data);
-    const updateData = {
-      ...data,
-      profileCompleted: true,
-
-      updatedAt: new Date(),
-    };
-
     return this.vendorModel.findOneAndUpdate(
       { userId },
-      updateData,
+      { $set: { ...data, profileCompleted: true, updatedAt: new Date() } },
       { new: true, upsert: true }
     ).lean() as unknown as Vendor;
   }
