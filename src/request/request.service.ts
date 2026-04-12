@@ -138,6 +138,30 @@ export class RequestService {
       bookings.map((booking) => [String(booking.requestId), booking]),
     );
 
+    // Auto-heal: create missing bookings for accepted requests that have none
+    const acceptedWithoutBooking = requests.filter(
+      (r) => r.status === 'accepted' && !bookingsByRequestId.has(String(r._id)),
+    );
+    if (acceptedWithoutBooking.length > 0) {
+      console.log(`[findByVendorUser] auto-creating ${acceptedWithoutBooking.length} missing bookings`);
+      for (const req of acceptedWithoutBooking) {
+        try {
+          const booking = await this.bookingService.createFromRequest({
+            requestId: String(req._id),
+            customerId: req.customerId,
+            vendorId: req.vendorId,
+            eventId: req.eventId,
+            amount: Number((req as any).amount ?? 0),
+            price: Number((req as any).amount ?? 0),
+          });
+          bookingsByRequestId.set(String(req._id), (booking as any).toObject ? (booking as any).toObject() : booking);
+          console.log(`[findByVendorUser] auto-created booking ${String((booking as any)._id)} for request ${String(req._id)}`);
+        } catch (e) {
+          console.error(`[findByVendorUser] failed to auto-create booking for request ${String(req._id)}:`, e);
+        }
+      }
+    }
+
     return requests.map((request) => ({
       ...request.toObject(),
       event: eventsById.get(String(request.eventId)),
