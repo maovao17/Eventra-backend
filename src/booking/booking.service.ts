@@ -235,11 +235,23 @@ export class BookingService {
   }
 
   async findByVendor(vendorId: string) {
-    return this.bookingModel
+    console.log(`[findByVendor] querying vendorId="${vendorId}"`);
+    const results = await this.bookingModel
       .find({ vendorId })
       .lean()
       .sort({ createdAt: -1 })
       .exec();
+    console.log(`[findByVendor] found ${results.length} bookings`);
+    if (results.length === 0) {
+      const sample = await this.bookingModel
+        .find({})
+        .select('vendorId customerId requestId status')
+        .lean()
+        .limit(10)
+        .exec();
+      console.log(`[findByVendor] sample bookings in DB:`, JSON.stringify(sample));
+    }
+    return results;
   }
 
   async findByVendorUser(actorUserId: string) {

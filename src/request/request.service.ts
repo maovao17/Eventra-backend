@@ -96,8 +96,15 @@ export class RequestService {
   async findByVendorUser(userId: string) {
     const vendor = await this.vendorService.findByUserIdOrThrow(userId);
     const vendorId = String((vendor as any)._id);
+    console.log(`[findByVendorUser] userId=${userId} vendorId=${vendorId}`);
+
     const requests = await this.findByVendor(vendorId);
+    console.log(`[findByVendorUser] found ${requests.length} requests`);
+
     if (!requests.length) {
+      // Debug: sample all requests to see what vendorIds exist
+      const sample = await this.requestModel.find({}).select('vendorId customerId status').lean().limit(10).exec();
+      console.log(`[findByVendorUser] sample requests in DB:`, JSON.stringify(sample));
       return [];
     }
 
@@ -108,14 +115,18 @@ export class RequestService {
       new Set(requests.map((request) => String(request.customerId))),
     );
 
+    const requestIds = requests.map((request) => String(request._id));
+    console.log(`[findByVendorUser] requestIds:`, requestIds);
+
     const [events, customers, bookings] = await Promise.all([
       this.eventModel.find({ _id: { $in: eventIds } }).lean().exec(),
       this.userModel.find({ userId: { $in: customerIds } }).lean().exec(),
       this.bookingModel
-        .find({ requestId: { $in: requests.map((request) => String(request._id)) } })
+        .find({ requestId: { $in: requestIds } })
         .lean()
         .exec(),
     ]);
+    console.log(`[findByVendorUser] found ${bookings.length} bookings for those requests`);
 
     const eventsById = new Map(
       events.map((event) => [String((event as { _id: unknown })._id), event]),
