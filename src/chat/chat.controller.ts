@@ -13,6 +13,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { BookingService } from '../booking/booking.service';
 import { VendorService } from '../vendor/vendor.service';
+import { RequestService } from '../request/request.service';
 import * as admin from 'firebase-admin';
 import { AuthenticatedUser } from '../types/auth.types';
 
@@ -21,31 +22,61 @@ export class ChatController {
   constructor(
     private readonly bookingService: BookingService,
     private readonly vendorService: VendorService,
+    private readonly requestService: RequestService,
   ) {}
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles('customer', 'vendor')
   @Post('init')
-async initChat(
+  async initChat(
     @Req() req: { user: AuthenticatedUser },
-    @Body() body: { bookingId?: string },
+    @Body() body: { bookingId?: string; requestId?: string },
   ): Promise<{ chatId: string; initialized: true }> {
-    console.log("🔥 INIT CHAT:", { bookingId: body?.bookingId, actorUserId: req.user.uid });
+    const actorUserId = req.user.uid;
+
+    // ── Request-based chat (new flow) ──────────────────────────────────
+    if (body?.requestId) {
+      const requestId = String(body.requestId).trim();
+      const request = await this.requestService.findOne(requestId);
+
+      const vendor = await this.vendorService.findOneOrThrow(String(request.vendorId));
+      const vendorUserId = String((vendor as any).userId || '');
+
+      if (
+        String(request.customerId) !== actorUserId &&
+        vendorUserId !== actorUserId
+      ) {
+        throw new ForbiddenException('You do not have access to this request chat');
+      }
+
+      if (request.status !== 'accepted') {
+        throw new ForbiddenException('Chat is only available for accepted requests');
+      }
+
+      const chatId = `request-${requestId}`;
+      const chatRef = admin.firestore().collection('chats').doc(chatId);
+      const existing = await chatRef.get();
+
+      if (!existing.exists) {
+        await chatRef.set({
+          requestId,
+          participantIds: [String(request.customerId), vendorUserId],
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+
+      return { chatId, initialized: true };
+    }
+
+    // ── Legacy booking-based chat ───────────────────────────────────────
     const bookingId = String(body?.bookingId || '').trim();
     if (!bookingId) {
-      throw new ForbiddenException('bookingId is required');
+      throw new ForbiddenException('requestId or bookingId is required');
     }
 
     const booking = await this.bookingService.findById(bookingId);
-    console.log("📋 BOOKING:", { 
-      id: booking.id, 
-      customerId: booking.customerId, 
-      vendorId: booking.vendorId 
-    });
-    const actorUserId = req.user.uid;
     const bookingVendor = await this.vendorService.findOneOrThrow(booking.vendorId);
-    const vendorUserId = String(bookingVendor.userId || '');
-    console.log("👥 PARTICIPANTS:", [String(booking.customerId), vendorUserId]);
+    const vendorUserId = String((bookingVendor as any).userId || '');
 
     if (
       String(booking.customerId) !== actorUserId &&
@@ -59,20 +90,11 @@ async initChat(
     const existing = await chatRef.get();
 
     if (!existing.exists) {
-      console.log("💾 Creating chat doc:", chatId);
-      try {
-        await chatRef.set({
-          bookingId,
-          participantIds: [String(booking.customerId), vendorUserId],
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        console.log("✅ Chat doc created:", chatId);
-      } catch (error) {
-        console.error("❌ Failed to create chat doc:", error);
-        throw error;
-      }
-    } else {
-      console.log("ℹ️ Chat doc already exists:", chatId);
+      await chatRef.set({
+        bookingId,
+        participantIds: [String(booking.customerId), vendorUserId],
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
     }
 
     return { chatId, initialized: true };
@@ -80,13 +102,26 @@ async initChat(
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles('customer', 'vendor')
-@Get(':chatId/verify')
+  @Get(':chatId/verify')
   async verifyAccess(
     @Req() req: { user: AuthenticatedUser },
     @Param('chatId') chatId: string,
   ): Promise<{ allowed: boolean }> {
-    console.log("🔐 VERIFY ACCESS:", { chatId, userUid: req.user.uid });
     try {
+      // ── Request-based chat ────────────────────────────────────────────
+      const requestIdMatch = chatId.match(/^request-(.+)$/);
+      if (requestIdMatch) {
+        const requestId = requestIdMatch[1];
+        const request = await this.requestService.findOne(requestId);
+        const vendor = await this.vendorService.findOneOrThrow(String(request.vendorId));
+        const vendorUserId = String((vendor as any).userId || '');
+        const isAllowed =
+          String(request.customerId) === req.user.uid ||
+          vendorUserId === req.user.uid;
+        return { allowed: isAllowed };
+      }
+
+      // ── Legacy booking-based chat ─────────────────────────────────────
       const bookingIdMatch = chatId.match(/^booking-(.+)$/);
       if (!bookingIdMatch) {
         return { allowed: false };
@@ -95,9 +130,10 @@ async initChat(
       const bookingId = bookingIdMatch[1];
       const booking = await this.bookingService.findById(bookingId);
       const bookingVendor = await this.vendorService.findOneOrThrow(booking.vendorId);
-      const vendorUserId = String(bookingVendor.userId || '');
-      const isAllowed = booking.customerId === req.user.uid ||
-                       vendorUserId === req.user.uid;
+      const vendorUserId = String((bookingVendor as any).userId || '');
+      const isAllowed =
+        String(booking.customerId) === req.user.uid ||
+        vendorUserId === req.user.uid;
 
       return { allowed: isAllowed };
     } catch {
