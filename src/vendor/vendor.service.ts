@@ -24,10 +24,31 @@ async findByUserId(userId: string): Promise<any | null> {
 
   async updateProfile(userId: string, data: UpdateVendorDto): Promise<Vendor> {
     console.log("VendorService: Saving vendor - UID:", userId, "Data:", data);
+    const updateData = {
+      ...data,
+      profileCompleted: true,
+      updatedAt: new Date(),
+    };
     return this.vendorModel.findOneAndUpdate(
       { userId },
-      { $set: { ...data, profileCompleted: true, updatedAt: new Date() } },
+      updateData,
       { new: true, upsert: true }
+    ).lean() as unknown as Vendor;
+  }
+
+  async addPackage(userId: string, pkg: { name: string; price: number; description?: string; servicesIncluded?: string[] }): Promise<Vendor> {
+    return this.vendorModel.findOneAndUpdate(
+      { userId },
+      { $push: { packages: pkg } },
+      { new: true }
+    ).lean() as unknown as Vendor;
+  }
+
+  async removePackage(userId: string, packageId: string): Promise<Vendor> {
+    return this.vendorModel.findOneAndUpdate(
+      { userId },
+      { $pull: { packages: { _id: packageId } } },
+      { new: true }
     ).lean() as unknown as Vendor;
   }
 

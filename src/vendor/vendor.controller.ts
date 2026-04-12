@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -12,6 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
+import { CreatePackageDto } from './dto/create-package.dto';
 import { FirebaseAuthGuard } from '../auth/firebase.guard';
 import { AuthenticatedUser } from '../types/auth.types';
 import { VendorService } from './vendor.service';
@@ -110,6 +112,18 @@ export class VendorController {
     const vendor = await this.vendorService.findByUserId(req.user.userId);
     if (!vendor) return [];
     return this.notificationService.findByVendor(String(vendor._id));
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Post('packages')
+  addPackage(@Req() req: { user: AuthenticatedUser }, @Body() body: CreatePackageDto) {
+    return this.vendorService.addPackage(req.user.userId, body);
+  }
+
+  @UseGuards(FirebaseAuthGuard)
+  @Delete('packages/:packageId')
+  removePackage(@Req() req: { user: AuthenticatedUser }, @Param('packageId') packageId: string) {
+    return this.vendorService.removePackage(req.user.userId, packageId);
   }
 
   // Parameterised route LAST so it doesn't swallow named routes above
