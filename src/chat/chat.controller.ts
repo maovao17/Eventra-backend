@@ -26,19 +26,26 @@ export class ChatController {
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles('customer', 'vendor')
   @Post('init')
-  async initChat(
+async initChat(
     @Req() req: { user: AuthenticatedUser },
     @Body() body: { bookingId?: string },
   ): Promise<{ chatId: string; initialized: true }> {
+    console.log("🔥 INIT CHAT:", { bookingId: body?.bookingId, actorUserId: req.user.uid });
     const bookingId = String(body?.bookingId || '').trim();
     if (!bookingId) {
       throw new ForbiddenException('bookingId is required');
     }
 
     const booking = await this.bookingService.findById(bookingId);
+    console.log("📋 BOOKING:", { 
+      id: booking.id, 
+      customerId: booking.customerId, 
+      vendorId: booking.vendorId 
+    });
     const actorUserId = req.user.uid;
     const bookingVendor = await this.vendorService.findOneOrThrow(booking.vendorId);
     const vendorUserId = String(bookingVendor.userId || '');
+    console.log("👥 PARTICIPANTS:", [String(booking.customerId), vendorUserId]);
 
     if (
       String(booking.customerId) !== actorUserId &&
@@ -52,11 +59,20 @@ export class ChatController {
     const existing = await chatRef.get();
 
     if (!existing.exists) {
-      await chatRef.set({
-        bookingId,
-        participantIds: [String(booking.customerId), vendorUserId],
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      console.log("💾 Creating chat doc:", chatId);
+      try {
+        await chatRef.set({
+          bookingId,
+          participantIds: [String(booking.customerId), vendorUserId],
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        console.log("✅ Chat doc created:", chatId);
+      } catch (error) {
+        console.error("❌ Failed to create chat doc:", error);
+        throw error;
+      }
+    } else {
+      console.log("ℹ️ Chat doc already exists:", chatId);
     }
 
     return { chatId, initialized: true };
@@ -64,11 +80,12 @@ export class ChatController {
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles('customer', 'vendor')
-  @Get(':chatId/verify')
+@Get(':chatId/verify')
   async verifyAccess(
     @Req() req: { user: AuthenticatedUser },
     @Param('chatId') chatId: string,
   ): Promise<{ allowed: boolean }> {
+    console.log("🔐 VERIFY ACCESS:", { chatId, userUid: req.user.uid });
     try {
       const bookingIdMatch = chatId.match(/^booking-(.+)$/);
       if (!bookingIdMatch) {
