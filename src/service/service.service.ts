@@ -40,6 +40,7 @@ export class ServiceService {
   async findAll(limit = 20, offset = 0) {
     const items = await this.serviceModel
       .find()
+      .populate('vendor_Id', 'businessName profileImage category')
       .skip(offset)
       .limit(limit)
       .sort({ createdAt: -1 })
