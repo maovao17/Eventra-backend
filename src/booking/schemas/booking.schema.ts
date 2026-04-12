@@ -59,16 +59,8 @@ export class Booking {
   })
   paymentStatus?: string;
 
-  @Prop({
-    type: {
-      type: { type: String, default: '' },
-      date: { type: String, default: '' },
-      time: { type: String, default: '' },
-      location: { type: String, default: '' },
-      guests: { type: Number, default: 0 },
-    },
-    default: {},
-  })
+  // Use Object/Mixed to avoid Mongoose treating "type" as a schema keyword
+  @Prop({ type: Object, default: {} })
   eventDetails?: {
     type?: string;
     date?: string;
