@@ -8,12 +8,13 @@ import { NotificationModule } from '../notification/notification.module';
 import { ReviewModule } from '../review/review.module';
 import { BookingModule } from '../booking/booking.module';
 import { RequestModule } from '../request/request.module';
+import { CloudinaryService } from './cloudinary.service';
 
 @Module({
   imports: [MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }]), UserModule, forwardRef(() => NotificationModule), forwardRef(() => ReviewModule), forwardRef(() => RequestModule), BookingModule],
 
   controllers: [VendorController],
-  providers: [VendorService],
+  providers: [VendorService, CloudinaryService],
   exports: [VendorService],
 })
 export class VendorModule {}

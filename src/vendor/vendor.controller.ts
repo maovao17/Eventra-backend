@@ -17,28 +17,18 @@ import { AuthenticatedUser } from '../types/auth.types';
 import { VendorService } from './vendor.service';
 import { NotificationService } from '../notification/notification.service';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname, join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { memoryStorage } from 'multer';
 import { randomUUID } from 'crypto';
+import { CloudinaryService } from './cloudinary.service';
 
-const uploadsStorage = diskStorage({
-  destination: (_req, _file, cb) => {
-    const dir = join(process.cwd(), 'uploads');
-    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (_req, file, cb) => {
-    const ext = extname(file.originalname) || '.jpg';
-    cb(null, `${randomUUID()}${ext}`);
-  },
-});
+const memStorage = memoryStorage();
 
 @Controller('vendors')
 export class VendorController {
   constructor(
     private readonly vendorService: VendorService,
-    private readonly notificationService: NotificationService
+    private readonly notificationService: NotificationService,
+    private readonly cloudinaryService: CloudinaryService,
   ) { }
 
   @UseGuards(FirebaseAuthGuard)
@@ -50,7 +40,6 @@ export class VendorController {
   @UseGuards(FirebaseAuthGuard)
   @Patch('profile')
   updateProfile(@Req() req: { user: AuthenticatedUser }, @Body() body: UpdateVendorDto) {
-    console.log("Saving vendor profile - UID:", req.user.userId, "Data:", body);
     return this.vendorService.updateProfile(req.user.userId, body);
   }
 
@@ -67,29 +56,31 @@ export class VendorController {
   @Post('upload')
   @UseGuards(FirebaseAuthGuard)
   @UseInterceptors(FileInterceptor('file', {
-    storage: uploadsStorage,
+    storage: memStorage,
     limits: { fileSize: 5 * 1024 * 1024 },
   }))
-  uploadFile(@UploadedFile() file: any) {
-    return {
-      fullUrl: `/uploads/${file.filename}`,
-      filename: file.filename,
-    };
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+    const filename = `${randomUUID()}`;
+    const url = await this.cloudinaryService.uploadBuffer(file.buffer, 'eventra', filename);
+    return { fullUrl: url, url };
   }
 
   @Post('upload-multiple')
   @UseGuards(FirebaseAuthGuard)
   @UseInterceptors(FilesInterceptor('files', 7, {
-    storage: uploadsStorage,
+    storage: memStorage,
     limits: { fileSize: 5 * 1024 * 1024 },
   }))
-  uploadMultiple(@UploadedFiles() files: any[]) {
+  async uploadMultiple(@UploadedFiles() files: Express.Multer.File[]) {
     if (!files || files.length === 0) {
       return { data: [] };
     }
-    return {
-      data: files.map(file => ({ url: `/uploads/${file.filename}` })),
-    };
+    const urls = await Promise.all(
+      files.map(file =>
+        this.cloudinaryService.uploadBuffer(file.buffer, 'eventra', randomUUID())
+      )
+    );
+    return { data: urls.map(url => ({ url })) };
   }
 
   @UseGuards(FirebaseAuthGuard)
@@ -109,9 +100,7 @@ export class VendorController {
   @Get('notifications')
   async getNotifications(@Req() req: { user: AuthenticatedUser }) {
     const vendor = await this.vendorService.findByUserId(req.user.userId);
-    if (!vendor) {
-      return [];
-    }
+    if (!vendor) return [];
     return this.notificationService.findByVendor(String(vendor._id));
   }
 
