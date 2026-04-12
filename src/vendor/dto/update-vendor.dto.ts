@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, IsArray, ValidateNested, IsNumber } from 'class-validator';
+import { IsOptional, IsString, IsArray, ValidateNested, IsNumber, IsBoolean } from 'class-validator';
 
 
 class UpdateVendorLocationDto {
@@ -36,6 +36,16 @@ class UpdateVendorPackageDto {
   servicesIncluded?: string[];
 }
 
+class PortfolioItemDto {
+  @IsOptional()
+  @IsString()
+  url?: string;
+
+  @IsOptional()
+  @IsString()
+  caption?: string;
+}
+
 export class UpdateVendorDto {
   @IsOptional()
   @IsString()
@@ -60,10 +70,18 @@ export class UpdateVendorDto {
   experience?: string;
 
   @IsOptional()
+  @IsString()
+  profileImage?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PortfolioItemDto)
+  portfolio?: PortfolioItemDto[];
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateVendorPackageDto)
   packages?: UpdateVendorPackageDto[];
 }
-
-

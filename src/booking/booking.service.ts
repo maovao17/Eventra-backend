@@ -459,9 +459,6 @@ export class BookingService {
     if (actor.role !== 'vendor') {
       throw new ForbiddenException('Only vendors can update booking status');
     }
-    if (actor.status !== 'approved') {
-      throw new ForbiddenException('Vendor account not approved');
-    }
 
     const vendor = await this.vendorModel
       .findOne({ userId: actorUserId })
@@ -470,6 +467,15 @@ export class BookingService {
       throw new ForbiddenException(
         'Vendors can only manage their own bookings',
       );
+    }
+
+    // Check approval on User document OR Vendor document (admin may approve via vendor route only)
+    const isApproved =
+      actor.status === 'approved' ||
+      (vendor as any).isApproved === true ||
+      (vendor as any).status === 'approved';
+    if (!isApproved) {
+      throw new ForbiddenException('Vendor account not approved');
     }
   }
 }

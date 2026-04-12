@@ -227,15 +227,21 @@ export class RequestService {
     if (actor.role !== 'vendor') {
       throw new ForbiddenException('Only vendors can update request status');
     }
-    if (actor.status !== 'approved') {
-      throw new ForbiddenException('Vendor account not approved');
-    }
 
     const vendor = await this.vendorService.findByUserId(actorUserId);
     if (!vendor || String((vendor as any)._id) !== String(vendorId)) {
       throw new ForbiddenException(
         'Vendors can only update their own requests',
       );
+    }
+
+    // Check approval on User document OR Vendor document (admin may approve via vendor route only)
+    const isApproved =
+      actor.status === 'approved' ||
+      (vendor as any).isApproved === true ||
+      (vendor as any).status === 'approved';
+    if (!isApproved) {
+      throw new ForbiddenException('Vendor account not approved');
     }
   }
 

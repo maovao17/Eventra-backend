@@ -43,7 +43,12 @@ export class AdminController {
 
   @Patch('vendors/:id/approve')
   async approveVendor(@Param('id') id: string) {
-    return this.vendorService.approveVendor(id);
+    const vendor = await this.vendorService.approveVendor(id);
+    // Also update the User document so validateVendorActor checks pass
+    if (vendor && (vendor as any).userId) {
+      await this.userService.setVendorStatus((vendor as any).userId, 'approved').catch(() => null);
+    }
+    return vendor;
   }
 
   @Patch('vendors/:id/reject')
