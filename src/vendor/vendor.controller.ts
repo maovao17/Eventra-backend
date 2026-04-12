@@ -126,6 +126,11 @@ export class VendorController {
     return this.vendorService.approveVendor(id);
   }
 
+  @Patch('reject/:id')
+  reject(@Param('id') id: string) {
+    return this.vendorService.rejectVendor(id);
+  }
+
   @UseGuards(FirebaseAuthGuard)
   @Patch('services')
   async updateServices(
