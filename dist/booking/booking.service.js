@@ -189,15 +189,19 @@ let BookingService = class BookingService {
     async findByUser(customerId) {
         return this.bookingModel
             .find({ customerId })
+            .populate('vendorId', 'businessName profileImage category userId')
+            .populate('event')
+            .populate('customer')
             .sort({ createdAt: -1 })
             .exec();
     }
     async findByVendor(vendorId) {
         return this.bookingModel
-            .find({ vendorId: vendorId })
-            .sort({ createdAt: -1 })
+            .find({ vendorId })
+            .populate('vendorId', 'businessName profileImage category userId')
             .populate('event')
             .populate('customer')
+            .sort({ createdAt: -1 })
             .exec();
     }
     async findByVendorUser(actorUserId) {

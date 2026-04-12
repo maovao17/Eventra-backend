@@ -46,7 +46,7 @@ export class BookingService {
     private requestService: RequestService,
     private notificationService: NotificationService,
     private eventsGateway: EventsGateway,
-  ) {}
+  ) { }
 
   private normalizeDate(value?: string) {
     if (!value) return null;
@@ -73,8 +73,8 @@ export class BookingService {
 
     const blockedDates = Array.isArray((vendor as any).availability?.blockedDates)
       ? (vendor as any).availability.blockedDates.map((item: string) =>
-          this.normalizeDate(String(item)),
-        )
+        this.normalizeDate(String(item)),
+      )
       : [];
 
     return !blockedDates.some(
@@ -92,8 +92,8 @@ export class BookingService {
 
     const dates = Array.isArray((vendor as any).availability?.blockedDates)
       ? (vendor as any).availability.blockedDates.map((item: string) =>
-          this.normalizeDate(String(item)),
-        )
+        this.normalizeDate(String(item)),
+      )
       : [];
 
     if (
@@ -229,17 +229,21 @@ export class BookingService {
   async findByUser(customerId: string) {
     return this.bookingModel
       .find({ customerId })
+      .populate('vendorId', 'businessName profileImage category userId')
+      .populate('event')
+      .populate('customer')
       .sort({ createdAt: -1 })
       .exec();
   }
 
   async findByVendor(vendorId: string) {
-return this.bookingModel
-  .find({ vendorId: vendorId })
-  .sort({ createdAt: -1 })
-  .populate('event')
-  .populate('customer')
-  .exec();
+    return this.bookingModel
+      .find({ vendorId })
+      .populate('vendorId', 'businessName profileImage category userId')
+      .populate('event')
+      .populate('customer')
+      .sort({ createdAt: -1 })
+      .exec();
   }
 
   async findByVendorUser(actorUserId: string) {
