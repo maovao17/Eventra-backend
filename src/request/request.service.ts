@@ -160,13 +160,12 @@ export class RequestService {
 
   async update(id: string, updateRequestDto: UpdateRequestDto) {
     if (updateRequestDto.status === 'accepted') {
-      return this.accept(id, updateRequestDto.actorUserId);
+      throw new BadRequestException("Use /accept endpoint");
     }
 
     if (updateRequestDto.status === 'rejected') {
-      return this.reject(id, updateRequestDto.actorUserId);
+      throw new BadRequestException("Use /reject endpoint");
     }
-
     const updatedRequest = await this.requestModel
       .findByIdAndUpdate(id, updateRequestDto, { new: true })
       .exec();
@@ -205,9 +204,9 @@ export class RequestService {
     }
   }
 
-  async accept(id: string, actorUserId?: string) {
+  async accept(id: string, actorUserIdFromToken: string) {
     const request = await this.findOne(id);
-    await this.validateVendorActor(actorUserId, request.vendorId);
+    await this.validateVendorActor(actorUserIdFromToken, request.vendorId);
 
     if (request.status === 'accepted') {
       const booking = await this.bookingService.findByRequestId(id);
@@ -240,12 +239,12 @@ export class RequestService {
     return { request, booking };
   }
 
-  async reject(id: string, actorUserId?: string) {
+  async reject(id: string, actorUserIdFromToken: string) {
     const request = await this.findOne(id);
-    await this.validateVendorActor(actorUserId, request.vendorId);
+    await this.validateVendorActor(actorUserIdFromToken, request.vendorId);
 
-    if (request.status === 'accepted') {
-      throw new BadRequestException('Accepted requests cannot be rejected');
+    if (request.status === 'rejected') {
+      throw new BadRequestException('Rejected requests cannot be accepted');
     }
 
     request.status = 'rejected';
