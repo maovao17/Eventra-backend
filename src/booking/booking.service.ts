@@ -235,7 +235,7 @@ export class BookingService {
 
   async findByVendor(vendorId: string) {
 return this.bookingModel
-  .find({ vendor: vendorId })
+  .find({ vendorId: vendorId })
   .sort({ createdAt: -1 })
   .populate('event')
   .populate('customer')
