@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { UpdateVendorDto } from './dto/update-vendor.dto';
 import { Vendor, VendorDocument } from './schemas/vendor.schema';
+import { Request, RequestDocument } from '../request/schemas/request.schema';
 import { ReviewService } from '../review/review.service';
 import { BookingService } from '../booking/booking.service';
 import { NotificationService } from '../notification/notification.service';
@@ -11,6 +12,7 @@ import { NotificationService } from '../notification/notification.service';
 export class VendorService {
   constructor(
     @InjectModel(Vendor.name) private vendorModel: Model<VendorDocument>,
+    @InjectModel(Request.name) private requestModel: Model<RequestDocument>,
     private reviewService: ReviewService,
     private bookingService: BookingService,
     private notificationService: NotificationService
@@ -114,6 +116,70 @@ async approveVendor(id: string): Promise<Vendor> {
       console.error("getVendorBookings ERROR:", e);
       return [];
     }
+  }
+
+  async getDashboardStats(userId: string) {
+    const vendor = await this.findByUserId(userId);
+    if (!vendor) return null;
+
+    const vendorId = String((vendor as any)._id);
+    const currentYear = new Date().getFullYear();
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    const [bookings, pendingCount, reviews] = await Promise.all([
+      this.bookingService.findByVendor(vendorId),
+      this.requestModel.countDocuments({ vendorId, status: 'pending' }).exec(),
+      this.reviewService.findByVendor(vendorId),
+    ]);
+
+    const paidBookings = bookings.filter(b => b.paymentStatus === 'paid');
+    const revenue = paidBookings.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+
+    const monthlyRevenue = months.map((month, i) => ({
+      month,
+      revenue: paidBookings
+        .filter(b => {
+          const d = new Date((b as any).createdAt || 0);
+          return d.getFullYear() === currentYear && d.getMonth() === i;
+        })
+        .reduce((sum, b) => sum + Number(b.amount || 0), 0),
+    }));
+
+    const averageRating = reviews.length > 0
+      ? reviews.reduce((sum: number, r: any) => sum + Number(r.rating || 0), 0) / reviews.length
+      : 0;
+
+    const recentBookings = bookings.slice(0, 5).map(b => ({
+      id: String((b as any)._id),
+      status: b.status,
+      amount: b.amount,
+      createdAt: (b as any).createdAt,
+      eventType: (b.eventDetails as any)?.type || 'Event',
+    }));
+
+    const today = new Date().toISOString().split('T')[0];
+    const upcomingEvents = bookings
+      .filter(b => ['accepted', 'confirmed'].includes(b.status) && ((b.eventDetails as any)?.date ?? '') >= today)
+      .slice(0, 5)
+      .map(b => ({
+        id: String((b as any)._id),
+        eventType: (b.eventDetails as any)?.type || 'Event',
+        date: (b.eventDetails as any)?.date || '',
+        location: (b.eventDetails as any)?.location || '',
+        guests: (b.eventDetails as any)?.guests || 0,
+        status: b.status,
+        amount: b.amount || 0,
+      }));
+
+    return {
+      totalBookings: bookings.length,
+      revenue,
+      pendingBookings: pendingCount,
+      averageRating,
+      recentBookings,
+      monthlyRevenue,
+      upcomingEvents,
+    };
   }
 
   async getVendorNotifications(uid: string) {

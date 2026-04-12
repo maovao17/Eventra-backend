@@ -97,6 +97,12 @@ export class VendorController {
     return this.vendorService.getVendorBookings(req.user.userId);
   }
 
+  @UseGuards(FirebaseAuthGuard)
+  @Get('dashboard')
+  async getDashboard(@Req() req: { user: AuthenticatedUser }) {
+    return this.vendorService.getDashboardStats(req.user.userId);
+  }
+
   // NOTE: 'notifications' must be BEFORE ':id' — NestJS matches routes in order
   @UseGuards(FirebaseAuthGuard)
   @Get('notifications')
