@@ -21,7 +21,6 @@ import { NotificationService } from '../notification/notification.service';
 @Injectable()
 export class PaymentService {
   private razorpay: Razorpay | null = null;
-  private static readonly PLATFORM_FEE = 2500;
   private static readonly COMMISSION_RATE = 0.1;
 
   constructor(
@@ -35,14 +34,11 @@ export class PaymentService {
 
   private buildPaymentBreakdown(bookingAmount: number) {
     const normalizedBookingAmount = Number(bookingAmount || 0);
-    const platformFee = PaymentService.PLATFORM_FEE;
-    const commissionAmount = Math.round(
+    const platformFee = Math.round(
       normalizedBookingAmount * PaymentService.COMMISSION_RATE,
     );
-    const vendorPayoutAmount = Math.max(
-      0,
-      normalizedBookingAmount - commissionAmount,
-    );
+    const commissionAmount = platformFee;
+    const vendorPayoutAmount = normalizedBookingAmount;
 
     return {
       bookingAmount: normalizedBookingAmount,
