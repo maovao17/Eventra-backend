@@ -59,7 +59,6 @@ export class Booking {
   })
   paymentStatus?: string;
 
-  // Use Object/Mixed to avoid Mongoose treating "type" as a schema keyword
   @Prop({ type: Object, default: {} })
   eventDetails?: {
     type?: string;
@@ -78,7 +77,6 @@ export class Booking {
 
 export const BookingSchema = SchemaFactory.createForClass(Booking);
 
-// Performance indexes
 BookingSchema.index({ vendorId: 1, date: 1 });
 BookingSchema.index({ customerId: 1, status: 1 });
 

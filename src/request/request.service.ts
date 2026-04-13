@@ -38,9 +38,8 @@ export class RequestService {
   ) { }
 
   async create(createRequestDto: CreateRequestDto): Promise<RequestDocument> {
-    const customer = await this.userService.findByUserId(
-      createRequestDto.customerId,
-    );
+    const customerId = createRequestDto.customerId!;
+    const customer = await this.userService.findByUserId(customerId);
     if (customer.role !== 'customer') {
       throw new ForbiddenException('Only customers can create requests');
     }
@@ -54,7 +53,7 @@ export class RequestService {
     }
 
     const event = await this.eventService.findById(createRequestDto.eventId);
-    if (event.customerId !== createRequestDto.customerId) {
+    if (event.customerId !== customerId) {
       throw new ForbiddenException(
         'Customers can only request vendors for their own events',
       );
@@ -62,7 +61,7 @@ export class RequestService {
 
     const existingRequest = await this.requestModel
       .findOne({
-        customerId: createRequestDto.customerId,
+        customerId,
         vendorId: createRequestDto.vendorId,
         eventId: createRequestDto.eventId,
       })

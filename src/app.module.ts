@@ -12,8 +12,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserModule } from './user/user.module';
-import { ServiceModule } from './service/service.module';
-import { CartModule } from './cart/cart.module';
 import { BookingModule } from './booking/booking.module';
 import { EventModule } from './event/event.module';
 import { RequestModule } from './request/request.module';
@@ -64,8 +62,6 @@ import { ChatModule } from './chat/chat.module';
       process.env.DB_URI ?? 'mongodb://localhost:27017/eventra',
     ),
     UserModule,
-    ServiceModule,
-    CartModule,
     VendorModule,
     BookingModule,
     EventModule,
