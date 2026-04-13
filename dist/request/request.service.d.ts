@@ -52,5 +52,6 @@ export declare class RequestService {
             __v: number;
         }) | null;
     }>;
+    resolveAmount(requestId: string): Promise<number>;
     reject(id: string, actorUserIdFromToken: string): Promise<RequestDocument>;
 }

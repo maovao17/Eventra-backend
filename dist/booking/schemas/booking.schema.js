@@ -98,16 +98,7 @@ __decorate([
     __metadata("design:type", String)
 ], Booking.prototype, "paymentStatus", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({
-        type: {
-            type: { type: String, default: '' },
-            date: { type: String, default: '' },
-            time: { type: String, default: '' },
-            location: { type: String, default: '' },
-            guests: { type: Number, default: 0 },
-        },
-        default: {},
-    }),
+    (0, mongoose_1.Prop)({ type: Object, default: {} }),
     __metadata("design:type", Object)
 ], Booking.prototype, "eventDetails", void 0);
 __decorate([

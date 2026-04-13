@@ -17,16 +17,19 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const mongoose_2 = require("mongoose");
 const vendor_schema_1 = require("./schemas/vendor.schema");
+const request_schema_1 = require("../request/schemas/request.schema");
 const review_service_1 = require("../review/review.service");
 const booking_service_1 = require("../booking/booking.service");
 const notification_service_1 = require("../notification/notification.service");
 let VendorService = class VendorService {
     vendorModel;
+    requestModel;
     reviewService;
     bookingService;
     notificationService;
-    constructor(vendorModel, reviewService, bookingService, notificationService) {
+    constructor(vendorModel, requestModel, reviewService, bookingService, notificationService) {
         this.vendorModel = vendorModel;
+        this.requestModel = requestModel;
         this.reviewService = reviewService;
         this.bookingService = bookingService;
         this.notificationService = notificationService;
@@ -35,18 +38,29 @@ let VendorService = class VendorService {
         return this.vendorModel.findOne({ userId }).lean();
     }
     async updateProfile(userId, data) {
-        console.log("VendorService: Saving vendor - UID:", userId, "Data:", data);
-        const updateData = {
-            ...data,
-            profileCompleted: true,
-            updatedAt: new Date(),
-        };
-        return this.vendorModel.findOneAndUpdate({ userId }, updateData, { new: true, upsert: true }).lean();
+        return this.vendorModel.findOneAndUpdate({ userId }, { $set: { ...data, profileCompleted: true, updatedAt: new Date() } }, { new: true, upsert: true }).lean();
+    }
+    async addPackage(userId, pkg) {
+        return this.vendorModel.findOneAndUpdate({ userId }, { $push: { packages: pkg } }, { new: true, upsert: true }).lean();
+    }
+    async removePackage(userId, packageId) {
+        return this.vendorModel.findOneAndUpdate({ userId }, { $pull: { packages: { _id: packageId } } }, { new: true, upsert: true }).lean();
     }
     async findAllCompleted() {
         return this.vendorModel.find({
             profileCompleted: true,
             $or: [{ status: 'approved' }, { isApproved: true }],
+        }).lean();
+    }
+    async findByServices(services) {
+        const normalized = services.map(s => s.trim().toLowerCase()).filter(Boolean);
+        if (!normalized.length)
+            return this.findAllCompleted();
+        const regex = normalized.map(s => new RegExp(s, 'i'));
+        return this.vendorModel.find({
+            profileCompleted: true,
+            $or: [{ status: 'approved' }, { isApproved: true }],
+            category: { $elemMatch: { $in: regex } },
         }).lean();
     }
     async approveVendor(id) {
@@ -109,6 +123,62 @@ let VendorService = class VendorService {
             return [];
         }
     }
+    async getDashboardStats(userId) {
+        const vendor = await this.findByUserId(userId);
+        if (!vendor)
+            return null;
+        const vendorId = String(vendor._id);
+        const currentYear = new Date().getFullYear();
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const [bookings, pendingCount, reviews] = await Promise.all([
+            this.bookingService.findByVendor(vendorId),
+            this.requestModel.countDocuments({ vendorId, status: 'pending' }).exec(),
+            this.reviewService.findByVendor(vendorId),
+        ]);
+        const paidBookings = bookings.filter(b => b.paymentStatus === 'paid');
+        const revenue = paidBookings.reduce((sum, b) => sum + Number(b.amount || 0), 0);
+        const monthlyRevenue = months.map((month, i) => ({
+            month,
+            revenue: paidBookings
+                .filter(b => {
+                const d = new Date(b.createdAt || 0);
+                return d.getFullYear() === currentYear && d.getMonth() === i;
+            })
+                .reduce((sum, b) => sum + Number(b.amount || 0), 0),
+        }));
+        const averageRating = reviews.length > 0
+            ? reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / reviews.length
+            : 0;
+        const recentBookings = bookings.slice(0, 5).map(b => ({
+            id: String(b._id),
+            status: b.status,
+            amount: b.amount,
+            createdAt: b.createdAt,
+            eventType: b.eventDetails?.type || 'Event',
+        }));
+        const today = new Date().toISOString().split('T')[0];
+        const upcomingEvents = bookings
+            .filter(b => ['accepted', 'confirmed'].includes(b.status) && (b.eventDetails?.date ?? '') >= today)
+            .slice(0, 5)
+            .map(b => ({
+            id: String(b._id),
+            eventType: b.eventDetails?.type || 'Event',
+            date: b.eventDetails?.date || '',
+            location: b.eventDetails?.location || '',
+            guests: b.eventDetails?.guests || 0,
+            status: b.status,
+            amount: b.amount || 0,
+        }));
+        return {
+            totalBookings: bookings.length,
+            revenue,
+            pendingBookings: pendingCount,
+            averageRating,
+            recentBookings,
+            monthlyRevenue,
+            upcomingEvents,
+        };
+    }
     async getVendorNotifications(uid) {
         try {
             const vendor = await this.findByUserId(uid);
@@ -127,7 +197,9 @@ exports.VendorService = VendorService;
 exports.VendorService = VendorService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(vendor_schema_1.Vendor.name)),
+    __param(1, (0, mongoose_1.InjectModel)(request_schema_1.Request.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         review_service_1.ReviewService,
         booking_service_1.BookingService,
         notification_service_1.NotificationService])

@@ -145,7 +145,8 @@ let BookingController = class BookingController {
         const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
         const filePath = (0, path_1.join)(uploadsDir, fileName);
         await (0, promises_1.writeFile)(filePath, file.buffer);
-        const origin = `${req?.protocol ?? 'http'}://${req?.get?.('host') ?? process.env.CORS_ORIGIN}, req.get('origin')}`;
+        const host = req?.get?.('host') || process.env.CORS_ORIGIN || 'localhost:3000';
+        const origin = `${req?.protocol ?? 'http'}://${host}`;
         return `${origin}/uploads/${fileName}`;
     }
 };

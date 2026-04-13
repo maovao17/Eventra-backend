@@ -47,7 +47,6 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var PaymentService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentService = void 0;
 const common_1 = require("@nestjs/common");
@@ -62,7 +61,6 @@ const user_service_1 = require("../user/user.service");
 const payout_service_1 = require("../payout/payout.service");
 const notification_service_1 = require("../notification/notification.service");
 let PaymentService = class PaymentService {
-    static { PaymentService_1 = this; }
     paymentModel;
     bookingService;
     requestService;
@@ -70,8 +68,6 @@ let PaymentService = class PaymentService {
     payoutService;
     notificationService;
     razorpay = null;
-    static PLATFORM_FEE = 2500;
-    static COMMISSION_RATE = 0.1;
     constructor(paymentModel, bookingService, requestService, userService, payoutService, notificationService) {
         this.paymentModel = paymentModel;
         this.bookingService = bookingService;
@@ -82,15 +78,15 @@ let PaymentService = class PaymentService {
     }
     buildPaymentBreakdown(bookingAmount) {
         const normalizedBookingAmount = Number(bookingAmount || 0);
-        const platformFee = PaymentService_1.PLATFORM_FEE;
-        const commissionAmount = Math.round(normalizedBookingAmount * PaymentService_1.COMMISSION_RATE);
-        const vendorPayoutAmount = Math.max(0, normalizedBookingAmount - commissionAmount);
+        const platformFee = 0;
+        const commissionAmount = 0;
+        const vendorPayoutAmount = normalizedBookingAmount;
         return {
             bookingAmount: normalizedBookingAmount,
             platformFee,
             commissionAmount,
             vendorPayoutAmount,
-            totalCharge: normalizedBookingAmount + platformFee,
+            totalCharge: normalizedBookingAmount,
         };
     }
     async ensurePayoutRecord(params) {
@@ -462,7 +458,17 @@ let PaymentService = class PaymentService {
         if (booking.paymentStatus === 'paid') {
             throw new common_1.BadRequestException('This booking has already been paid');
         }
-        const breakdown = this.buildPaymentBreakdown(Number(booking.amount ?? booking.price ?? 0));
+        let bookingAmount = Number(booking.amount ?? booking.price ?? 0);
+        if (bookingAmount === 0 && booking.requestId) {
+            try {
+                bookingAmount = await this.requestService.resolveAmount(booking.requestId);
+                if (bookingAmount > 0) {
+                    await this.bookingService.update(bookingId, { amount: bookingAmount });
+                }
+            }
+            catch { }
+        }
+        const breakdown = this.buildPaymentBreakdown(bookingAmount);
         const amount = breakdown.totalCharge;
         try {
             const order = await this.getRazorpayClient().orders.create({
@@ -582,7 +588,7 @@ let PaymentService = class PaymentService {
     }
 };
 exports.PaymentService = PaymentService;
-exports.PaymentService = PaymentService = PaymentService_1 = __decorate([
+exports.PaymentService = PaymentService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, mongoose_1.InjectModel)(payment_schema_1.Payment.name)),
     __metadata("design:paramtypes", [mongoose_2.Model,

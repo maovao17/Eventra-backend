@@ -60,12 +60,28 @@ __decorate([
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
 ], UpdateVendorPackageDto.prototype, "servicesIncluded", void 0);
+class PortfolioItemDto {
+    url;
+    caption;
+}
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], PortfolioItemDto.prototype, "url", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], PortfolioItemDto.prototype, "caption", void 0);
 class UpdateVendorDto {
     businessName;
     description;
     category;
     location;
     experience;
+    profileImage;
+    portfolio;
     packages;
 }
 exports.UpdateVendorDto = UpdateVendorDto;
@@ -96,6 +112,18 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], UpdateVendorDto.prototype, "experience", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateVendorDto.prototype, "profileImage", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ValidateNested)({ each: true }),
+    (0, class_transformer_1.Type)(() => PortfolioItemDto),
+    __metadata("design:type", Array)
+], UpdateVendorDto.prototype, "portfolio", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsArray)(),

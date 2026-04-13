@@ -189,28 +189,36 @@ let BookingService = class BookingService {
     async findByUser(customerId) {
         return this.bookingModel
             .find({ customerId })
-            .populate('vendorId', 'businessName profileImage category userId')
-            .populate('event')
-            .populate('customer')
+            .lean()
             .sort({ createdAt: -1 })
             .exec();
     }
     async findByVendor(vendorId) {
-        return this.bookingModel
+        console.log(`[findByVendor] querying vendorId="${vendorId}"`);
+        const results = await this.bookingModel
             .find({ vendorId })
-            .populate('vendorId', 'businessName profileImage category userId')
-            .populate('event')
-            .populate('customer')
+            .lean()
             .sort({ createdAt: -1 })
             .exec();
+        console.log(`[findByVendor] found ${results.length} bookings`);
+        if (results.length === 0) {
+            const sample = await this.bookingModel
+                .find({})
+                .select('vendorId customerId requestId status')
+                .lean()
+                .limit(10)
+                .exec();
+            console.log(`[findByVendor] sample bookings in DB:`, JSON.stringify(sample));
+        }
+        return results;
     }
     async findByVendorUser(actorUserId) {
         const vendor = await this.vendorModel
             .findOne({ userId: actorUserId })
+            .lean()
             .exec();
-        if (!vendor) {
-            throw new common_1.NotFoundException('Vendor not found');
-        }
+        if (!vendor)
+            return [];
         return this.findByVendor(String(vendor._id));
     }
     async findByRequestId(requestId) {
@@ -350,14 +358,17 @@ let BookingService = class BookingService {
         if (actor.role !== 'vendor') {
             throw new common_1.ForbiddenException('Only vendors can update booking status');
         }
-        if (actor.status !== 'approved') {
-            throw new common_1.ForbiddenException('Vendor account not approved');
-        }
         const vendor = await this.vendorModel
             .findOne({ userId: actorUserId })
             .exec();
         if (!vendor || String(vendor._id) !== String(vendorId)) {
             throw new common_1.ForbiddenException('Vendors can only manage their own bookings');
+        }
+        const isApproved = actor.status === 'approved' ||
+            vendor.isApproved === true ||
+            vendor.status === 'approved';
+        if (!isApproved) {
+            throw new common_1.ForbiddenException('Vendor account not approved');
         }
     }
 };

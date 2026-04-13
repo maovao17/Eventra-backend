@@ -1,5 +1,5 @@
 export declare class CreateRequestDto {
-    customerId: string;
+    customerId?: string;
     vendorId: string;
     eventId: string;
     amount?: number;

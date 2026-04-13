@@ -47,7 +47,8 @@ let RequestService = class RequestService {
         this.eventsGateway = eventsGateway;
     }
     async create(createRequestDto) {
-        const customer = await this.userService.findByUserId(createRequestDto.customerId);
+        const customerId = createRequestDto.customerId;
+        const customer = await this.userService.findByUserId(customerId);
         if (customer.role !== 'customer') {
             throw new common_1.ForbiddenException('Only customers can create requests');
         }
@@ -55,16 +56,18 @@ let RequestService = class RequestService {
         if (!vendor) {
             throw new common_1.NotFoundException('Vendor not found');
         }
-        if (!vendor.isApproved) {
+        const vendorApproved = vendor.isApproved === true ||
+            vendor.status === 'approved';
+        if (!vendorApproved) {
             throw new common_1.ForbiddenException('Vendor is not approved');
         }
         const event = await this.eventService.findById(createRequestDto.eventId);
-        if (event.customerId !== createRequestDto.customerId) {
+        if (event.customerId !== customerId) {
             throw new common_1.ForbiddenException('Customers can only request vendors for their own events');
         }
         const existingRequest = await this.requestModel
             .findOne({
-            customerId: createRequestDto.customerId,
+            customerId,
             vendorId: createRequestDto.vendorId,
             eventId: createRequestDto.eventId,
         })
@@ -90,23 +93,51 @@ let RequestService = class RequestService {
     async findByVendorUser(userId) {
         const vendor = await this.vendorService.findByUserIdOrThrow(userId);
         const vendorId = String(vendor._id);
+        console.log(`[findByVendorUser] userId=${userId} vendorId=${vendorId}`);
         const requests = await this.findByVendor(vendorId);
+        console.log(`[findByVendorUser] found ${requests.length} requests`);
         if (!requests.length) {
+            const sample = await this.requestModel.find({}).select('vendorId customerId status').lean().limit(10).exec();
+            console.log(`[findByVendorUser] sample requests in DB:`, JSON.stringify(sample));
             return [];
         }
         const eventIds = Array.from(new Set(requests.map((request) => String(request.eventId))));
         const customerIds = Array.from(new Set(requests.map((request) => String(request.customerId))));
+        const requestIds = requests.map((request) => String(request._id));
+        console.log(`[findByVendorUser] requestIds:`, requestIds);
         const [events, customers, bookings] = await Promise.all([
             this.eventModel.find({ _id: { $in: eventIds } }).lean().exec(),
             this.userModel.find({ userId: { $in: customerIds } }).lean().exec(),
             this.bookingModel
-                .find({ requestId: { $in: requests.map((request) => String(request._id)) } })
+                .find({ requestId: { $in: requestIds } })
                 .lean()
                 .exec(),
         ]);
+        console.log(`[findByVendorUser] found ${bookings.length} bookings for those requests`);
         const eventsById = new Map(events.map((event) => [String(event._id), event]));
         const customersById = new Map(customers.map((customer) => [String(customer.userId), customer]));
         const bookingsByRequestId = new Map(bookings.map((booking) => [String(booking.requestId), booking]));
+        const acceptedWithoutBooking = requests.filter((r) => r.status === 'accepted' && !bookingsByRequestId.has(String(r._id)));
+        if (acceptedWithoutBooking.length > 0) {
+            console.log(`[findByVendorUser] auto-creating ${acceptedWithoutBooking.length} missing bookings`);
+            for (const req of acceptedWithoutBooking) {
+                try {
+                    const booking = await this.bookingService.createFromRequest({
+                        requestId: String(req._id),
+                        customerId: req.customerId,
+                        vendorId: req.vendorId,
+                        eventId: req.eventId,
+                        amount: Number(req.amount ?? 0),
+                        price: Number(req.amount ?? 0),
+                    });
+                    bookingsByRequestId.set(String(req._id), booking.toObject ? booking.toObject() : booking);
+                    console.log(`[findByVendorUser] auto-created booking ${String(booking._id)} for request ${String(req._id)}`);
+                }
+                catch (e) {
+                    console.error(`[findByVendorUser] failed to auto-create booking for request ${String(req._id)}:`, e);
+                }
+            }
+        }
         return requests.map((request) => ({
             ...request.toObject(),
             event: eventsById.get(String(request.eventId)),
@@ -161,12 +192,15 @@ let RequestService = class RequestService {
         if (actor.role !== 'vendor') {
             throw new common_1.ForbiddenException('Only vendors can update request status');
         }
-        if (actor.status !== 'approved') {
-            throw new common_1.ForbiddenException('Vendor account not approved');
-        }
         const vendor = await this.vendorService.findByUserId(actorUserId);
         if (!vendor || String(vendor._id) !== String(vendorId)) {
             throw new common_1.ForbiddenException('Vendors can only update their own requests');
+        }
+        const isApproved = actor.status === 'approved' ||
+            vendor.isApproved === true ||
+            vendor.status === 'approved';
+        if (!isApproved) {
+            throw new common_1.ForbiddenException('Vendor account not approved');
         }
     }
     async accept(id, actorUserIdFromToken) {
@@ -181,15 +215,31 @@ let RequestService = class RequestService {
         }
         request.status = 'accepted';
         await request.save();
-        const requestAmount = Number(request.amount ?? 0);
+        const vendor = await this.vendorService.findOne(String(request.vendorId));
+        let bookingAmount = Number(request.amount ?? 0);
+        if (bookingAmount === 0) {
+            const packageName = String(request.packageName ?? '');
+            const packages = vendor.packages ?? [];
+            const matchedPkg = packages.find((p) => p.name === packageName && Number(p.price) > 0);
+            if (matchedPkg) {
+                bookingAmount = Number(matchedPkg.price);
+                await this.requestModel.findByIdAndUpdate(request._id, { amount: bookingAmount });
+            }
+            else if (packages.length > 0) {
+                const firstPkg = packages.find((p) => Number(p.price) > 0);
+                if (firstPkg) {
+                    bookingAmount = Number(firstPkg.price);
+                    await this.requestModel.findByIdAndUpdate(request._id, { amount: bookingAmount });
+                }
+            }
+        }
         const booking = await this.bookingService.createFromRequest({
             requestId: String(request._id),
             customerId: request.customerId,
             vendorId: request.vendorId,
             eventId: request.eventId,
-            ...(requestAmount > 0 ? { amount: requestAmount, price: requestAmount } : {}),
+            ...(bookingAmount > 0 ? { amount: bookingAmount, price: bookingAmount } : {}),
         });
-        const vendor = await this.vendorService.findOne(String(request.vendorId));
         this.eventsGateway.broadcastBookingUpdate({
             bookingId: String(booking._id),
             status: 'accepted',
@@ -198,6 +248,25 @@ let RequestService = class RequestService {
             customerId: booking.customerId,
         });
         return { request, booking };
+    }
+    async resolveAmount(requestId) {
+        const request = await this.findOne(requestId);
+        let amount = Number(request.amount ?? 0);
+        if (amount > 0)
+            return amount;
+        const packageName = String(request.packageName ?? '');
+        try {
+            const vendor = await this.vendorService.findOne(request.vendorId);
+            const packages = vendor.packages ?? [];
+            const pkg = (packageName && packages.find((p) => p.name === packageName && Number(p.price) > 0)) ||
+                packages.find((p) => Number(p.price) > 0);
+            if (pkg) {
+                amount = Number(pkg.price);
+                await this.requestModel.findByIdAndUpdate(request._id, { amount });
+            }
+        }
+        catch { }
+        return amount;
     }
     async reject(id, actorUserIdFromToken) {
         const request = await this.findOne(id);

@@ -15,8 +15,6 @@ export declare class PaymentService {
     private payoutService;
     private notificationService;
     private razorpay;
-    private static readonly PLATFORM_FEE;
-    private static readonly COMMISSION_RATE;
     constructor(paymentModel: Model<PaymentDocument>, bookingService: BookingService, requestService: RequestService, userService: UserService, payoutService: PayoutService, notificationService: NotificationService);
     private buildPaymentBreakdown;
     private ensurePayoutRecord;

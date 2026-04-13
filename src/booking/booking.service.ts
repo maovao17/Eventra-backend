@@ -278,6 +278,8 @@ export class BookingService {
     dto: UpdateBookingDto & {
       paymentStatus?: 'pending' | 'partial' | 'paid';
       payoutStatus?: 'pending' | 'paid';
+      amount?: number;
+      price?: number;
     },
   ) {
     const updated = await this.bookingModel

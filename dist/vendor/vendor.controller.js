@@ -15,6 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VendorController = void 0;
 const common_1 = require("@nestjs/common");
 const update_vendor_dto_1 = require("./dto/update-vendor.dto");
+const create_package_dto_1 = require("./dto/create-package.dto");
 const firebase_guard_1 = require("../auth/firebase.guard");
 const vendor_service_1 = require("./vendor.service");
 const user_service_1 = require("../user/user.service");
@@ -65,11 +66,24 @@ let VendorController = class VendorController {
     getBookings(req) {
         return this.vendorService.getVendorBookings(req.user.userId);
     }
+    async getDashboard(req) {
+        return this.vendorService.getDashboardStats(req.user.userId);
+    }
     async getNotifications(req) {
         const vendor = await this.vendorService.findByUserId(req.user.userId);
         if (!vendor)
             return [];
         return this.notificationService.findByVendor(String(vendor._id));
+    }
+    addPackage(req, body) {
+        return this.vendorService.addPackage(req.user.userId, body);
+    }
+    removePackage(req, packageId) {
+        return this.vendorService.removePackage(req.user.userId, packageId);
+    }
+    findByServices(services) {
+        const list = services ? services.split(',') : [];
+        return this.vendorService.findByServices(list);
     }
     findOne(id) {
         return this.vendorService.findOne(id);
@@ -167,12 +181,45 @@ __decorate([
 ], VendorController.prototype, "getBookings", null);
 __decorate([
     (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.Get)('dashboard'),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], VendorController.prototype, "getDashboard", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
     (0, common_1.Get)('notifications'),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], VendorController.prototype, "getNotifications", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.Post)('packages'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, create_package_dto_1.CreatePackageDto]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "addPackage", null);
+__decorate([
+    (0, common_1.UseGuards)(firebase_guard_1.FirebaseAuthGuard),
+    (0, common_1.Delete)('packages/:packageId'),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('packageId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "removePackage", null);
+__decorate([
+    (0, common_1.Get)('by-services'),
+    __param(0, (0, common_1.Query)('services')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], VendorController.prototype, "findByServices", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),

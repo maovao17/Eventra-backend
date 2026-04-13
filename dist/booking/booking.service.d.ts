@@ -42,17 +42,17 @@ export declare class BookingService {
     }> & {
         __v: number;
     }>;
-    findByUser(customerId: string): Promise<(import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+    findByUser(customerId: string): Promise<(import("mongoose").FlattenMaps<BookingDocument> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
     })[]>;
-    findByVendor(vendorId: string): Promise<(import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+    findByVendor(vendorId: string): Promise<(import("mongoose").FlattenMaps<BookingDocument> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
     })[]>;
-    findByVendorUser(actorUserId: string): Promise<(import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
+    findByVendorUser(actorUserId: string): Promise<(import("mongoose").FlattenMaps<BookingDocument> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
@@ -70,6 +70,8 @@ export declare class BookingService {
     update(id: string, dto: UpdateBookingDto & {
         paymentStatus?: 'pending' | 'partial' | 'paid';
         payoutStatus?: 'pending' | 'paid';
+        amount?: number;
+        price?: number;
     }): Promise<import("mongoose").Document<unknown, {}, BookingDocument, {}, {}> & Booking & import("mongoose").Document<import("mongoose").Types.ObjectId, any, any, Record<string, any>, {}> & Required<{
         _id: import("mongoose").Types.ObjectId;
     }> & {

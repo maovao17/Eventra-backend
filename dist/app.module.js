@@ -54,8 +54,6 @@ const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const mongoose_1 = require("@nestjs/mongoose");
 const user_module_1 = require("./user/user.module");
-const service_module_1 = require("./service/service.module");
-const cart_module_1 = require("./cart/cart.module");
 const booking_module_1 = require("./booking/booking.module");
 const event_module_1 = require("./event/event.module");
 const request_module_1 = require("./request/request.module");
@@ -103,8 +101,6 @@ exports.AppModule = AppModule = __decorate([
             events_module_1.EventsModule,
             mongoose_1.MongooseModule.forRoot(process.env.DB_URI ?? 'mongodb://localhost:27017/eventra'),
             user_module_1.UserModule,
-            service_module_1.ServiceModule,
-            cart_module_1.CartModule,
             vendor_module_1.VendorModule,
             booking_module_1.BookingModule,
             event_module_1.EventModule,

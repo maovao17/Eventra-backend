@@ -11,12 +11,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VendorSchema = exports.Vendor = exports.LocationSchema = exports.PackageSchema = void 0;
 const mongoose_1 = require("@nestjs/mongoose");
-class Package {
+let Package = class Package {
     name;
     price;
     description;
     servicesIncluded;
-}
+};
 __decorate([
     (0, mongoose_1.Prop)({ required: true }),
     __metadata("design:type", String)
@@ -33,12 +33,15 @@ __decorate([
     (0, mongoose_1.Prop)([String]),
     __metadata("design:type", Array)
 ], Package.prototype, "servicesIncluded", void 0);
+Package = __decorate([
+    (0, mongoose_1.Schema)({ _id: true })
+], Package);
 exports.PackageSchema = mongoose_1.SchemaFactory.createForClass(Package);
-class Location {
+let Location = class Location {
     city;
     area;
     address;
-}
+};
 __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
@@ -51,6 +54,9 @@ __decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", String)
 ], Location.prototype, "address", void 0);
+Location = __decorate([
+    (0, mongoose_1.Schema)({ _id: true })
+], Location);
 exports.LocationSchema = mongoose_1.SchemaFactory.createForClass(Location);
 let Vendor = class Vendor {
     userId;

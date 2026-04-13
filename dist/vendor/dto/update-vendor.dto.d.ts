@@ -9,12 +9,18 @@ declare class UpdateVendorPackageDto {
     description?: string;
     servicesIncluded?: string[];
 }
+declare class PortfolioItemDto {
+    url?: string;
+    caption?: string;
+}
 export declare class UpdateVendorDto {
     businessName?: string;
     description?: string;
     category?: string[];
     location?: UpdateVendorLocationDto;
     experience?: string;
+    profileImage?: string;
+    portfolio?: PortfolioItemDto[];
     packages?: UpdateVendorPackageDto[];
 }
 export {};

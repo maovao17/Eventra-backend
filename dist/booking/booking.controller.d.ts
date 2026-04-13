@@ -13,6 +13,10 @@ export declare class BookingController {
         _id: import("mongoose").Types.ObjectId;
     }> & {
         __v: number;
+    })[] | (import("mongoose").FlattenMaps<import("./schemas/booking.schema").BookingDocument> & Required<{
+        _id: import("mongoose").Types.ObjectId;
+    }> & {
+        __v: number;
     })[]>;
     findByRequestId(req: {
         user: AuthUser;

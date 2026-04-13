@@ -44,7 +44,11 @@ let AdminController = class AdminController {
         return this.vendorService.getAllVendors();
     }
     async approveVendor(id) {
-        return this.vendorService.approveVendor(id);
+        const vendor = await this.vendorService.approveVendor(id);
+        if (vendor && vendor.userId) {
+            await this.userService.setVendorStatus(vendor.userId, 'approved').catch(() => null);
+        }
+        return vendor;
     }
     async rejectVendor(id) {
         return this.vendorService.rejectVendor(id);
