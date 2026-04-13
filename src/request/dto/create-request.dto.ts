@@ -1,9 +1,9 @@
 import { IsNotEmpty, IsString, IsOptional, IsNumber } from 'class-validator';
 
 export class CreateRequestDto {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  customerId: string;
+  customerId?: string;
 
   @IsNotEmpty()
   @IsString()
