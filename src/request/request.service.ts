@@ -48,7 +48,10 @@ export class RequestService {
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
     }
-    if (!(vendor as any).isApproved) {
+    const vendorApproved =
+      (vendor as any).isApproved === true ||
+      (vendor as any).status === 'approved';
+    if (!vendorApproved) {
       throw new ForbiddenException('Vendor is not approved');
     }
 
@@ -260,15 +263,38 @@ export class RequestService {
     request.status = 'accepted';
     await request.save();
 
-    const requestAmount = Number((request as any).amount ?? 0);
+    const vendor = await this.vendorService.findOne(String(request.vendorId));
+
+    let bookingAmount = Number((request as any).amount ?? 0);
+
+    // If request has no amount, look up the vendor's matching package price
+    if (bookingAmount === 0) {
+      const packageName = String((request as any).packageName ?? '');
+      const packages: Array<{ name: string; price: number }> = (vendor as any).packages ?? [];
+      const matchedPkg = packages.find(
+        (p) => p.name === packageName && Number(p.price) > 0,
+      );
+      if (matchedPkg) {
+        bookingAmount = Number(matchedPkg.price);
+        // Heal the request so future lookups have the amount
+        await this.requestModel.findByIdAndUpdate(request._id, { amount: bookingAmount });
+      } else if (packages.length > 0) {
+        // No packageName match — fall back to the first package with a price
+        const firstPkg = packages.find((p) => Number(p.price) > 0);
+        if (firstPkg) {
+          bookingAmount = Number(firstPkg.price);
+          await this.requestModel.findByIdAndUpdate(request._id, { amount: bookingAmount });
+        }
+      }
+    }
+
     const booking = await this.bookingService.createFromRequest({
       requestId: String(request._id),
       customerId: request.customerId,
       vendorId: request.vendorId,
       eventId: request.eventId,
-      ...(requestAmount > 0 ? { amount: requestAmount, price: requestAmount } : {}),
+      ...(bookingAmount > 0 ? { amount: bookingAmount, price: bookingAmount } : {}),
     });
-    const vendor = await this.vendorService.findOne(String(request.vendorId));
 
     this.eventsGateway.broadcastBookingUpdate({
       bookingId: String(booking._id),
@@ -279,6 +305,33 @@ export class RequestService {
     });
 
     return { request, booking };
+  }
+
+  /**
+   * Returns the booking-ready amount for a request.
+   * Tries request.amount first, then matches the vendor's package by packageName,
+   * then falls back to the first vendor package that has a price > 0.
+   * Heals request.amount in DB if a fallback value is found.
+   */
+  async resolveAmount(requestId: string): Promise<number> {
+    const request = await this.findOne(requestId);
+    let amount = Number((request as any).amount ?? 0);
+    if (amount > 0) return amount;
+
+    const packageName = String((request as any).packageName ?? '');
+    try {
+      const vendor = await this.vendorService.findOne(request.vendorId);
+      const packages: Array<{ name: string; price: number }> = (vendor as any).packages ?? [];
+      const pkg =
+        (packageName && packages.find((p) => p.name === packageName && Number(p.price) > 0)) ||
+        packages.find((p) => Number(p.price) > 0);
+      if (pkg) {
+        amount = Number(pkg.price);
+        await this.requestModel.findByIdAndUpdate(request._id, { amount });
+      }
+    } catch { /* ignore */ }
+
+    return amount;
   }
 
   async reject(id: string, actorUserIdFromToken: string) {

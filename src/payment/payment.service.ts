@@ -575,9 +575,19 @@ export class PaymentService {
       throw new BadRequestException('This booking has already been paid');
     }
 
-    const breakdown = this.buildPaymentBreakdown(
-      Number(booking.amount ?? booking.price ?? 0),
-    );
+    // For old bookings stored with amount=0, fall back through request → vendor packages
+    let bookingAmount = Number(booking.amount ?? booking.price ?? 0);
+    if (bookingAmount === 0 && booking.requestId) {
+      try {
+        bookingAmount = await this.requestService.resolveAmount(booking.requestId);
+        if (bookingAmount > 0) {
+          // Heal the booking so future calls don't need this fallback
+          await this.bookingService.update(bookingId, { amount: bookingAmount });
+        }
+      } catch { /* ignore — keep bookingAmount=0 */ }
+    }
+
+    const breakdown = this.buildPaymentBreakdown(bookingAmount);
     const amount = breakdown.totalCharge;
     try {
       const order = await this.getRazorpayClient().orders.create({
