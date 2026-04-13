@@ -85,7 +85,16 @@ export class VendorService {
     ).lean() as unknown as Vendor;
   }
 
-  async findOne(id: string): Promise<Vendor | null> { const vendor = await this.vendorModel.findById(id).lean(); if (vendor?.packages) { vendor.packages = vendor.packages.map((p: any) => ({ ...p, price: Number(p.price) || 0, })); } return vendor; } async findOneOrThrow(id: string): Promise<Vendor> { const vendor = await this.findOne(id); if (!vendor) { throw new NotFoundException(`Vendor #${id} not found`); } return vendor; }
+    async findOne(id: string): Promise<Vendor | null> {
+    const vendor = await this.vendorModel.findById(id).lean();
+    if (vendor?.packages) {
+      vendor.packages = (vendor.packages as any[]).map((p: any) => {
+        const parsed = parseFloat(String(p.price ?? ''));
+        return { ...p, price: isNaN(parsed) ? 0 : parsed };
+      });
+    }
+    return vendor;
+  } async findOneOrThrow(id: string): Promise<Vendor> { const vendor = await this.findOne(id); if (!vendor) { throw new NotFoundException(`Vendor #${id} not found`); } return vendor; }
 
   async findByUserIdOrThrow(userId: string): Promise<Vendor> {
     const vendor = await this.findByUserId(userId);
