@@ -641,34 +641,27 @@ export class PaymentService {
       throw new BadRequestException('Invalid payment: missing booking reference');
     }
 
-    // 4. Fetch and validate booking
     const booking = await this.bookingService.findById(bookingId);
 
-    // 5. Verify customer ownership
     if (booking.customerId !== actorUserId) {
       throw new ForbiddenException(
         'Customers can only verify payments for their own bookings',
       );
     }
-
-    // 6. Verify booking status
     if (booking.status !== 'accepted') {
       throw new BadRequestException('Booking is not awaiting payment');
     }
 
-    // 7. Calculate expected amount
     const expectedAmount = this.buildPaymentBreakdown(
       Number(booking.amount ?? booking.price ?? 0),
     ).totalCharge;
 
-    // 8. Validate payment with Razorpay data
     await this.validateRazorpayPayment(
       razorpayPayment,
       dto.razorpay_order_id,
       expectedAmount,
     );
 
-    // 9. Prevent duplicate successful payment processing
     const existingSuccessfulPayment =
       await this.findSuccessfulPaymentByBooking(bookingId);
     if (existingSuccessfulPayment || booking.paymentStatus === 'paid') {

@@ -26,6 +26,8 @@ import { AdminGuard } from '../auth/admin.guard';
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
+
+  
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles('customer')
@@ -108,36 +110,39 @@ export class PaymentController {
     return this.paymentService.getRevenue();
   }
 
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
-  @UseGuards(FirebaseAuthGuard, RolesGuard)
+@UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles('customer')
   @Post('create-order')
   async createOrder(
-    @Req() req: { user: { uid: string } },
-    @Body() createOrderDto: CreateOrderDto,
+    @Req() req,
+    @Body() dto: CreateOrderDto,
   ) {
     return this.paymentService.createRazorpayOrder(
-      createOrderDto.bookingId,
+      dto.bookingId,
       req.user.uid,
     );
   }
 
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles('customer')
   @Post('verify')
   async verify(
-    @Req() req: { user: { uid: string } },
+    @Req() req,
     @Body() dto: VerifyPaymentDto,
   ) {
     return this.paymentService.verifyPayment(dto, req.user.uid);
   }
 
-  // Razorpay webhook (no auth: signed by Razorpay)
-  @Throttle({ default: { limit: 120, ttl: 60000 } })
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles('customer')
+  @Get('me')
+  findMyPayments(@Req() req) {
+    return this.paymentService.findByCustomer(req.user.uid);
+  }
+
   @Post('webhook')
   async webhook(
-    @Req() req: { rawBody?: string; body?: unknown },
+    @Req() req,
     @Headers('x-razorpay-signature') signature: string,
   ) {
     const rawBody = req.rawBody ?? JSON.stringify(req.body ?? {});
