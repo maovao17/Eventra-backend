@@ -53,6 +53,18 @@ async findByUserId(userId: string): Promise<any | null> {
     }).lean();
   }
 
+  async findByServices(services: string[]): Promise<Vendor[]> {
+    const normalized = services.map(s => s.trim().toLowerCase()).filter(Boolean);
+    if (!normalized.length) return this.findAllCompleted();
+
+    const regex = normalized.map(s => new RegExp(s, 'i'));
+    return this.vendorModel.find({
+      profileCompleted: true,
+      $or: [{ status: 'approved' }, { isApproved: true }],
+      category: { $elemMatch: { $in: regex } },
+    }).lean();
+  }
+
 async approveVendor(id: string): Promise<Vendor> {
     return this.vendorModel.findByIdAndUpdate(
       id,

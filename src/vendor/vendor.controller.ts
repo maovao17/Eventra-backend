@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFile,
   UploadedFiles,
@@ -124,6 +125,13 @@ export class VendorController {
   @Delete('packages/:packageId')
   removePackage(@Req() req: { user: AuthenticatedUser }, @Param('packageId') packageId: string) {
     return this.vendorService.removePackage(req.user.userId, packageId);
+  }
+
+  // Named routes BEFORE ':id' so they are not swallowed
+  @Get('by-services')
+  findByServices(@Query('services') services: string) {
+    const list = services ? services.split(',') : [];
+    return this.vendorService.findByServices(list);
   }
 
   // Parameterised route LAST so it doesn't swallow named routes above
