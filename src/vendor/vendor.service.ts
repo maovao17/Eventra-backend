@@ -18,7 +18,7 @@ export class VendorService {
     private notificationService: NotificationService
   ) { }
 
-async findByUserId(userId: string): Promise<any | null> {
+  async findByUserId(userId: string): Promise<any | null> {
     return this.vendorModel.findOne({ userId }).lean();
   }
 
@@ -65,7 +65,7 @@ async findByUserId(userId: string): Promise<any | null> {
     }).lean();
   }
 
-async approveVendor(id: string): Promise<Vendor> {
+  async approveVendor(id: string): Promise<Vendor> {
     return this.vendorModel.findByIdAndUpdate(
       id,
       { isApproved: true, isVerified: true, status: 'approved' },
@@ -85,17 +85,7 @@ async approveVendor(id: string): Promise<Vendor> {
     ).lean() as unknown as Vendor;
   }
 
-  async findOne(id: string): Promise<Vendor | null> {
-    return this.vendorModel.findById(id).lean();
-  }
-
-  async findOneOrThrow(id: string): Promise<Vendor> {
-    const vendor = await this.findOne(id);
-    if (!vendor) {
-      throw new NotFoundException(`Vendor #${id} not found`);
-    }
-    return vendor;
-  }
+  async findOne(id: string): Promise<Vendor | null> { const vendor = await this.vendorModel.findById(id).lean(); if (vendor?.packages) { vendor.packages = vendor.packages.map((p: any) => ({ ...p, price: Number(p.price) || 0, })); } return vendor; } async findOneOrThrow(id: string): Promise<Vendor> { const vendor = await this.findOne(id); if (!vendor) { throw new NotFoundException(`Vendor #${id} not found`); } return vendor; }
 
   async findByUserIdOrThrow(userId: string): Promise<Vendor> {
     const vendor = await this.findByUserId(userId);
@@ -144,7 +134,7 @@ async approveVendor(id: string): Promise<Vendor> {
 
     const vendorId = String((vendor as any)._id);
     const currentYear = new Date().getFullYear();
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     const [bookings, pendingCount, reviews] = await Promise.all([
       this.bookingService.findByVendor(vendorId),

@@ -38,8 +38,12 @@ export class NotificationController {
     }
 
     if (req.user.role === 'vendor') {
-      const vendor = await this.vendorService.findByUserIdOrThrow(req.user.uid);
-      return this.notificationService.findByVendor(String((vendor as any)._id));
+      try {
+        const vendor = await this.vendorService.findByUserIdOrThrow(req.user.uid);
+        return this.notificationService.findByVendor(String((vendor as any)._id));
+      } catch {
+        return [];
+      }
     }
 
     return this.notificationService.findByUser(req.user.uid);

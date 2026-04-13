@@ -72,16 +72,12 @@ let VendorService = class VendorService {
     async rejectVendor(id) {
         return this.vendorModel.findByIdAndUpdate(id, { status: 'rejected' }, { new: true, upsert: true }).lean();
     }
-    async findOne(id) {
-        return this.vendorModel.findById(id).lean();
-    }
-    async findOneOrThrow(id) {
-        const vendor = await this.findOne(id);
-        if (!vendor) {
-            throw new common_1.NotFoundException(`Vendor #${id} not found`);
-        }
-        return vendor;
-    }
+    async findOne(id) { const vendor = await this.vendorModel.findById(id).lean(); if (vendor?.packages) {
+        vendor.packages = vendor.packages.map((p) => ({ ...p, price: Number(p.price) || 0, }));
+    } return vendor; }
+    async findOneOrThrow(id) { const vendor = await this.findOne(id); if (!vendor) {
+        throw new common_1.NotFoundException(`Vendor #${id} not found`);
+    } return vendor; }
     async findByUserIdOrThrow(userId) {
         const vendor = await this.findByUserId(userId);
         if (!vendor) {

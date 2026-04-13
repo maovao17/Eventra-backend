@@ -91,7 +91,13 @@ let RequestService = class RequestService {
         return this.requestModel.find({ vendorId }).sort({ createdAt: -1 }).exec();
     }
     async findByVendorUser(userId) {
-        const vendor = await this.vendorService.findByUserIdOrThrow(userId);
+        let vendor;
+        try {
+            vendor = await this.vendorService.findByUserIdOrThrow(userId);
+        }
+        catch {
+            return [];
+        }
         const vendorId = String(vendor._id);
         console.log(`[findByVendorUser] userId=${userId} vendorId=${vendorId}`);
         const requests = await this.findByVendor(vendorId);

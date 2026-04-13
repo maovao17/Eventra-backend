@@ -96,7 +96,13 @@ export class RequestService {
   }
 
   async findByVendorUser(userId: string) {
-    const vendor = await this.vendorService.findByUserIdOrThrow(userId);
+    let vendor: any;
+    try {
+      vendor = await this.vendorService.findByUserIdOrThrow(userId);
+    } catch {
+      // Vendor profile not created yet — return empty list
+      return [];
+    }
     const vendorId = String((vendor as any)._id);
     console.log(`[findByVendorUser] userId=${userId} vendorId=${vendorId}`);
 
