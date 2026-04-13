@@ -3,6 +3,7 @@ import { HydratedDocument } from 'mongoose';
 
 export type VendorDocument = HydratedDocument<Vendor>;
 
+@Schema({ _id: true })
 class Package {
   @Prop({ required: true })
   name!: string;
@@ -19,6 +20,7 @@ class Package {
 
 export const PackageSchema = SchemaFactory.createForClass(Package);
 
+@Schema({ _id: true })
 class Location {
   @Prop()
   city?: string;
