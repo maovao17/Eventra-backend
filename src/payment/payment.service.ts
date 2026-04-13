@@ -166,7 +166,7 @@ export class PaymentService {
 
   private async findSuccessfulPaymentByBooking(bookingId: string) {
     return this.paymentModel
-      .findOne({ bookingId, status: 'success' })
+      .findOne({ bookingId, status: 'paid' })
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -181,9 +181,9 @@ export class PaymentService {
   }
 
   async create(createPaymentDto: CreatePaymentDto): Promise<Payment> {
-    if (createPaymentDto.status === 'success') {
+    if (createPaymentDto.status === 'paid') {
       throw new ForbiddenException(
-        'Successful payments must be created through Razorpay verification',
+        'Successful payments must be created through Razorpay verification'
       );
     }
 
@@ -254,22 +254,26 @@ export class PaymentService {
       savedPayment = await createdPayment.save();
     } catch (error) {
       if (
-        createPaymentDto.status === 'success' &&
+        createPaymentDto.status === 'paid' &&
         this.isDuplicateKeyError(error)
       ) {
         throw new BadRequestException(
-          'A successful payment already exists for this booking',
+          'A paid payment already exists for this booking',
         );
       }
       throw error;
     }
 
-    if (createPaymentDto.status === 'success') {
+    if (createPaymentDto.status === 'paid') {
       try {
-        await this.bookingService.update(createPaymentDto.bookingId, {
+        console.log("PaymentService.create() - About to update booking:", createPaymentDto.bookingId);
+        
+        const updatedBooking = await this.bookingService.update(createPaymentDto.bookingId, {
           status: 'confirmed',
           paymentStatus: 'paid',
         });
+        
+        console.log("PaymentService.create() - Booking updated successfully:", createPaymentDto.bookingId, updatedBooking.status, updatedBooking.paymentStatus);
 
         const payout = await this.ensurePayoutRecord({
           bookingId: createPaymentDto.bookingId,
@@ -303,7 +307,7 @@ export class PaymentService {
             'A customer payment has been completed and payout is pending.',
         });
       } catch (error) {
-        console.error('Payment post-processing failed', error);
+        console.error(`PaymentService.create() post-processing failed for booking ${createPaymentDto.bookingId}:`, error);
       }
     }
 
@@ -448,7 +452,7 @@ export class PaymentService {
       return { success: true, message: 'Booking already paid' };
     }
 
-    const status = razorpayStatus === 'captured' ? 'success' : 'failed';
+    const status = razorpayStatus === 'captured' ? 'paid' : 'failed';
 
     const createdPayment = new this.paymentModel({
       bookingId,
@@ -476,7 +480,7 @@ export class PaymentService {
     try {
       savedPayment = await createdPayment.save();
     } catch (error) {
-      if (status === 'success' && this.isDuplicateKeyError(error)) {
+      if (status === 'paid' && this.isDuplicateKeyError(error)) {
         const successfulPayment =
           await this.findSuccessfulPaymentByBooking(bookingId);
         if (successfulPayment) {
@@ -490,12 +494,16 @@ export class PaymentService {
       throw error;
     }
 
-    if (status === 'success') {
+    if (status === 'paid') {
       try {
-        await this.bookingService.update(bookingId, {
+        console.log("PaymentService.processRazorpayWebhook() - About to update booking:", bookingId);
+        
+        const updatedBooking = await this.bookingService.update(bookingId, {
           status: 'confirmed',
           paymentStatus: 'paid',
         });
+        
+        console.log("PaymentService.processRazorpayWebhook() - Booking updated:", bookingId, updatedBooking?.status, updatedBooking?.paymentStatus);
 
         await this.ensurePayoutRecord({
           bookingId,
@@ -523,7 +531,7 @@ export class PaymentService {
             'A customer payment has been completed and payout is pending.',
         });
       } catch (error) {
-        console.error('Webhook payment post-processing failed', error);
+        console.error(`PaymentService.processRazorpayWebhook() post-processing failed for booking ${bookingId}:`, error);
       }
     }
 
@@ -537,7 +545,7 @@ export class PaymentService {
   }> {
     const payments = await this.findAll();
     const successfulPayments = payments.filter(
-      (payment) => payment.status === 'success',
+      (payment) => payment.status === 'paid',
     );
     const failedPayments = payments.filter(
       (payment) => payment.status === 'failed',
@@ -685,7 +693,7 @@ export class PaymentService {
         platformFee: breakdown.platformFee,
         commissionAmount: breakdown.commissionAmount,
         vendorPayoutAmount: breakdown.vendorPayoutAmount,
-        status: 'success',
+        status: 'paid',
         razorpayPaymentId: dto.razorpay_payment_id,
         razorpayOrderId: dto.razorpay_order_id,
       });
@@ -704,10 +712,14 @@ export class PaymentService {
     }
 
     try {
-      await this.bookingService.update(bookingId, {
+      console.log("PaymentService.verifyPayment() - About to update booking:", bookingId);
+      
+      const updatedBooking = await this.bookingService.update(bookingId, {
         status: 'confirmed',
         paymentStatus: 'paid',
       });
+      
+      console.log("PaymentService.verifyPayment() - Booking updated:", bookingId, updatedBooking.status, updatedBooking.paymentStatus);
 
       const payout = await this.ensurePayoutRecord({
         bookingId,
@@ -739,7 +751,7 @@ export class PaymentService {
         message: 'A customer payment has been completed and payout is pending.',
       });
     } catch (error) {
-      console.error('Verified payment post-processing failed', error);
+      console.error(`PaymentService.verifyPayment() post-processing failed for booking ${bookingId}:`, error);
     }
 
     return { success: true, paymentId: String(payment._id) };

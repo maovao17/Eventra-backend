@@ -81,7 +81,7 @@ __decorate([
     __metadata("design:type", String)
 ], Payment.prototype, "razorpayOrderId", void 0);
 __decorate([
-    (0, mongoose_1.Prop)({ required: true, enum: ['success', 'failed'] }),
+    (0, mongoose_1.Prop)({ required: true, enum: ['paid', 'failed'] }),
     __metadata("design:type", String)
 ], Payment.prototype, "status", void 0);
 exports.Payment = Payment = __decorate([
@@ -89,10 +89,7 @@ exports.Payment = Payment = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], Payment);
 exports.PaymentSchema = mongoose_1.SchemaFactory.createForClass(Payment);
-exports.PaymentSchema.index({ bookingId: 1 }, {
-    unique: true,
-    partialFilterExpression: { status: 'success' },
-});
+exports.PaymentSchema.index({ bookingId: 1 }, { unique: true, partialFilterExpression: { status: 'paid' }, });
 exports.PaymentSchema.index({ razorpayPaymentId: 1 }, { unique: true, sparse: true });
 exports.PaymentSchema.index({ razorpayOrderId: 1 });
 exports.PaymentSchema.set('toJSON', { versionKey: false });

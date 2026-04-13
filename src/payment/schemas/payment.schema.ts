@@ -42,23 +42,13 @@ export class Payment {
   @Prop({ required: false })
   razorpayPaymentId?: string;
 
-  @Prop({ required: false })
-  razorpayOrderId?: string;
-
-  @Prop({ required: true, enum: ['success', 'failed'] })
-  status: string;
+  @Prop({ required: false })  razorpayOrderId?: string;  @Prop({ required: true, enum: ['paid', 'failed'] }) status: string;
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment);
 
 // Performance indexes
-PaymentSchema.index(
-  { bookingId: 1 },
-  {
-    unique: true,
-    partialFilterExpression: { status: 'success' },
-  },
-);
+PaymentSchema.index(  { bookingId: 1 },  {  unique: true, partialFilterExpression: { status: 'paid' },  },);
 PaymentSchema.index({ razorpayPaymentId: 1 }, { unique: true, sparse: true });
 PaymentSchema.index({ razorpayOrderId: 1 });
 
